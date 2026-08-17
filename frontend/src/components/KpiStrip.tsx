@@ -20,6 +20,7 @@ import {
   signClass,
 } from '../lib/format'
 import type { MonteCarloPayload, RiskPayload, SummaryPayload } from '../lib/types'
+import { AnimatedNumber } from './AnimatedNumber'
 
 interface KpiStripProps {
   risk: RiskPayload
@@ -30,7 +31,9 @@ interface KpiStripProps {
 
 interface Kpi {
   label: string
-  value: string
+  /** Raw figure, so the cell can count into place. */
+  raw: number | null
+  format: (value: number | null | undefined) => string
   context: string
   tone?: string
 }
@@ -44,50 +47,64 @@ export function KpiStrip({ risk, montecarlo, summary, currency }: KpiStripProps)
       ? `${formatMonthYear(drawdown.peak_date)} – ${formatMonthYear(drawdown.trough_date)}`
       : 'no decline recorded'
 
+  const withCurrency = (value: number | null | undefined) =>
+    `${formatMoneyCompact(value)} ${currency}`
+
   const kpis: Kpi[] = [
     {
       label: 'Volatility',
-      value: formatPercent(risk.volatility_annualized_pct),
+      raw: risk.volatility_annualized_pct,
+      format: (value) => formatPercent(value),
       context: `annualised · ${risk.lookback_days}d sample`,
     },
     {
       label: 'Sharpe',
-      value: formatRatio(risk.sharpe_ratio),
+      raw: risk.sharpe_ratio,
+      format: formatRatio,
       tone: signClass(risk.sharpe_ratio),
       context: `excess return vs ${formatPercent(risk.risk_free_rate, 1)} rf`,
     },
     {
       label: 'Sortino',
-      value: formatRatio(risk.sortino_ratio),
+      raw: risk.sortino_ratio,
+      format: formatRatio,
       tone: signClass(risk.sortino_ratio),
       context: 'downside risk only',
     },
     {
       label: 'Max drawdown',
-      value: formatPercent(drawdown.pct),
+      raw: drawdown.pct,
+      format: (value) => formatPercent(value),
       tone: signClass(drawdown.pct),
       context: drawdownWindow,
     },
     {
       label: 'VaR 95%',
-      value: `${formatMoneyCompact(var95?.historical_value)} ${currency}`,
+      raw: var95?.historical_value ?? null,
+      format: withCurrency,
       tone: 'neg',
       context: `1-day historical · ${formatPercent(var95?.historical_pct)}`,
     },
     {
       label: `Beta vs ${risk.beta.benchmark_name}`,
-      value: formatRatio(risk.beta.value),
-      context: risk.beta.value !== null && risk.beta.value < 1 ? 'less reactive than index' : 'more reactive than index',
+      raw: risk.beta.value,
+      format: formatRatio,
+      context:
+        risk.beta.value !== null && risk.beta.value < 1
+          ? 'less reactive than index'
+          : 'more reactive than index',
     },
     {
       label: 'P(loss) 1Y',
-      value: formatPercent(montecarlo.probability_below_start_pct, 1),
+      raw: montecarlo.probability_below_start_pct,
+      format: (value) => formatPercent(value, 1),
       tone: montecarlo.probability_below_start_pct > 0.5 ? 'neg' : undefined,
       context: `${montecarlo.paths.toLocaleString('en-GB')} simulated paths`,
     },
     {
       label: 'Median 1Y',
-      value: `${formatMoneyCompact(montecarlo.median_value)} ${currency}`,
+      raw: montecarlo.median_value,
+      format: withCurrency,
       tone: signClass(montecarlo.median_value - summary.total_value),
       context: `${formatPercentSigned(montecarlo.median_value / summary.total_value - 1)} on today`,
     },
@@ -95,10 +112,16 @@ export function KpiStrip({ risk, montecarlo, summary, currency }: KpiStripProps)
 
   return (
     <section className="kpi" aria-label="Headline risk and outlook metrics">
-      {kpis.map((kpi) => (
+      {kpis.map((kpi, index) => (
         <div key={kpi.label} className="kpi__cell">
           <span className="kpi__label">{kpi.label}</span>
-          <span className={`num kpi__value ${kpi.tone ?? ''}`}>{kpi.value}</span>
+          <AnimatedNumber
+            value={kpi.raw}
+            format={kpi.format}
+            // Left-to-right cascade across the band.
+            delay={120 + index * 45}
+            className={`num kpi__value ${kpi.tone ?? ''}`}
+          />
           <span className="kpi__context">{kpi.context}</span>
         </div>
       ))}

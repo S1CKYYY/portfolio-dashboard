@@ -47,7 +47,12 @@ function heatmapOption(correlation: RiskPayload['correlation']): EChartsOption {
   })
 
   return {
-    animation: false,
+    // Cells scale in on a short diagonal cascade. Kept brief: 144 cells with a
+    // long stagger would read as a loading state rather than an entrance.
+    animation: true,
+    animationDuration: 420,
+    animationEasing: 'cubicOut',
+    animationDelay: (index: number) => index * 3,
     grid: { left: 66, right: 8, top: 8, bottom: 58, containLabel: false },
     tooltip: {
       ...tooltipStyle(),

@@ -14,6 +14,7 @@ import { toLineData } from '../charts/series'
 import { chartTheme } from '../charts/theme'
 import { TimeSeriesChart, type CrosshairState } from '../charts/TimeSeriesChart'
 import { formatDate, formatPercent } from '../lib/format'
+import { MOTION } from '../lib/motion'
 import type { HistoryPayload, RiskPayload } from '../lib/types'
 import { Panel } from './Panel'
 
@@ -72,6 +73,8 @@ export function DrawdownPanel({ history, risk }: DrawdownPanelProps) {
         <TimeSeriesChart
           series={series}
           fill
+          revealOnMount
+          revealDelay={MOTION.stagger * 4}
           valueFormatter={(value) => formatPercent(value, 1)}
           onCrosshair={setCrosshair}
           baselineValue={0}

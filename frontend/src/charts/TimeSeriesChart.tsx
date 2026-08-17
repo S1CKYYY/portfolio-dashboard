@@ -16,11 +16,13 @@ import {
   type IChartApi,
   type ISeriesApi,
   type LineData,
+  type AutoscaleInfo,
   type MouseEventParams,
   type Time,
 } from 'lightweight-charts'
 import { useEffect, useRef } from 'react'
 
+import { easeOutSine, MOTION, prefersReducedMotion } from '../lib/motion'
 import { fromTime } from './series'
 import { chartTheme } from './theme'
 
@@ -50,6 +52,13 @@ interface TimeSeriesChartProps {
    * a fixed height, so charts sharing a row all reach the same baseline.
    */
   fill?: boolean
+  /**
+   * Plot the line progressively on first mount instead of appearing complete.
+   * Only the initial render animates; range and view changes redraw instantly.
+   */
+  revealOnMount?: boolean
+  /** Milliseconds before the reveal starts, for sequencing with the page. */
+  revealDelay?: number
   /** Formats the right price axis and the crosshair line label. */
   valueFormatter: (value: number) => string
   onCrosshair?: (state: CrosshairState | null) => void
@@ -62,6 +71,8 @@ export function TimeSeriesChart({
   series,
   height,
   fill,
+  revealOnMount,
+  revealDelay = 0,
   valueFormatter,
   onCrosshair,
   ariaLabel,
@@ -70,6 +81,15 @@ export function TimeSeriesChart({
   const hostRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef(new Map<string, ISeriesApi<'Line'>>())
+
+  // Reveal runs at most once per mounted chart.
+  const revealDoneRef = useRef(!revealOnMount || prefersReducedMotion())
+  // While revealing, the price scale is pinned to the full data range so the
+  // axis does not rescale on every frame as new points arrive.
+  const revealingRef = useRef(false)
+  const rangeRef = useRef<{ minValue: number; maxValue: number } | null>(null)
+  const frameRef = useRef<number>(0)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // Latest props read by the (stable) crosshair handler without re-subscribing.
   const formatterRef = useRef(valueFormatter)
@@ -186,12 +206,83 @@ export function TimeSeriesChart({
         crosshairMarkerRadius: 3,
         crosshairMarkerBorderColor: theme.surface,
         crosshairMarkerBackgroundColor: spec.color,
+        // During the reveal, report the finished range so the price scale is
+        // stable; afterwards defer to the library's own autoscaling.
+        autoscaleInfoProvider: (base: () => AutoscaleInfo | null) =>
+          revealingRef.current && rangeRef.current
+            ? { priceRange: rangeRef.current }
+            : base(),
       })
-      api.setData(spec.data)
     })
 
+    const longest = series.reduce((max, spec) => Math.max(max, spec.data.length), 0)
+
+    if (revealDoneRef.current || longest < 2) {
+      series.forEach((spec) => seriesRef.current.get(spec.id)?.setData(spec.data))
+      chart.timeScale().fitContent()
+      return
+    }
+
+    // ---- Progressive plot -------------------------------------------------
+    // Lightweight Charts has no built-in draw animation, so the line is grown
+    // a slice at a time. The tail is padded with whitespace points, which
+    // occupy the time axis without drawing anything: the horizontal scale is
+    // therefore correct from the first frame and only the line advances.
+    revealDoneRef.current = true
+    revealingRef.current = true
+
+    const values = series.flatMap((spec) => spec.data.map((point) => point.value))
+    rangeRef.current = { minValue: Math.min(...values), maxValue: Math.max(...values) }
+
+    const whitespace = series.map((spec) => spec.data.map(({ time }) => ({ time })))
+    series.forEach((spec, index) => seriesRef.current.get(spec.id)?.setData(whitespace[index]))
     chart.timeScale().fitContent()
-  }, [series])
+
+    // Hold the horizontal span across the whole reveal. Left alone, the scale
+    // tracks the drawn data and the chart scrolls and rescales on every frame,
+    // which reads as a live tape rather than a line being drawn onto a plot.
+    //
+    // The edge locks have to come off first: they clamp the visible range to
+    // the real data, so with a partially-drawn series they would drag the view
+    // back to the last plotted point on every frame.
+    const fullSpan = { from: 0, to: longest - 1 }
+    chart.applyOptions({ timeScale: { fixLeftEdge: false, fixRightEdge: false } })
+
+    const start = performance.now()
+    const step = (now: number) => {
+      const t = Math.min((now - start) / MOTION.plot, 1)
+      const drawn = Math.max(2, Math.floor(easeOutSine(t) * longest))
+
+      series.forEach((spec, index) => {
+        const api = seriesRef.current.get(spec.id)
+        if (!api) return
+        const count = Math.min(drawn, spec.data.length)
+        api.setData([...spec.data.slice(0, count), ...whitespace[index].slice(count)])
+      })
+      chart.timeScale().setVisibleLogicalRange(fullSpan)
+
+      if (t < 1) {
+        frameRef.current = requestAnimationFrame(step)
+        return
+      }
+      revealingRef.current = false
+      series.forEach((spec) => seriesRef.current.get(spec.id)?.setData(spec.data))
+      chart.applyOptions({ timeScale: { fixLeftEdge: true, fixRightEdge: true } })
+      // Re-fit once the real data is in: the scale was last fitted against a
+      // whitespace-only series, which leaves the content narrower than the view.
+      chart.timeScale().fitContent()
+    }
+
+    timerRef.current = setTimeout(() => {
+      frameRef.current = requestAnimationFrame(step)
+    }, revealDelay)
+
+    return () => {
+      clearTimeout(timerRef.current)
+      cancelAnimationFrame(frameRef.current)
+      revealingRef.current = false
+    }
+  }, [series, revealDelay])
 
   // Baseline drawn as a price line on the first series (zero on returns views).
   useEffect(() => {

@@ -265,6 +265,49 @@ a `--line` background, so the gap itself *is* the rule — which guarantees each
 separator is exactly one physical pixel. Two adjacent borders would render as
 two.
 
+### Motion
+
+One rule: **motion introduces data, it never decorates it.** Everything runs
+once on first load, decelerates into place, and then the dashboard is still.
+Nothing bounces, overshoots or loops — an instrument that fidgets is an
+instrument you stop trusting. Timings live in `src/lib/motion.ts`.
+
+Each library needed a different technique:
+
+| Element | Technique |
+|---|---|
+| Headline value, KPI band | `requestAnimationFrame` count-up on an `easeOutCubic` curve, staggered left to right |
+| Allocation donuts | ECharts `animationType: 'expansion'` — sweeps each ring open around its centre, with a per-segment `animationDelay` so the order of the breakdown is legible as it builds |
+| Equity and drawdown curves | Progressive `setData` (see below) |
+| Monte Carlo fan | ECharts draws line series left-to-right natively; enabling animation opens the fan outward from today's value |
+| Outcome histogram | Per-bar `animationDelay`, so bars grow up from the axis across the distribution |
+| Correlation heatmap | Short diagonal cascade (3ms per cell — any longer and 144 cells read as a loading state) |
+| Panels | 6px rise and fade, staggered 60ms per row |
+
+**Plotting the equity curve.** Lightweight Charts has no draw animation, so the
+line is grown a slice at a time on an animation frame loop. Done naively that
+looks terrible: the axes rescale on every frame as new points arrive, so the
+chart lurches while it draws. Three details fix it:
+
+1. The tail is padded with **`WhitespaceData`** (`{time}` with no value), which
+   occupies the time axis without drawing, so the horizontal scale is correct
+   from the first frame.
+2. **`autoscaleInfoProvider`** reports the finished min/max during the reveal,
+   pinning the price axis; afterwards it defers to the library's own autoscaling.
+3. **`fixLeftEdge`/`fixRightEdge` are lifted** for the duration. They clamp the
+   visible range to the real data, which would otherwise drag the view back to
+   the last plotted point every frame — the line ends up pinned to the right
+   edge and the whole chart scrolls like a live tape instead of a line being
+   drawn onto a fixed plot.
+
+**No layout shift.** A counter running from "0" to "80,325" changes width as it
+goes and would shove its neighbours around. `AnimatedNumber` overlays the
+animating text on an invisible copy of the *final* string in the same grid cell,
+so the element is always sized for its end state.
+
+**`prefers-reduced-motion` disables all of it** — chart reveals, counters and
+panel entrances alike. Under that setting every figure is final on first paint.
+
 ### Libraries, and why
 
 | Concern | Library | Why |

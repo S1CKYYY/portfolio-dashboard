@@ -32,7 +32,12 @@ function donutOption(buckets: AllocationBucket[], currency: string): EChartsOpti
   const theme = chartTheme()
 
   return {
-    animationDuration: 300,
+    // 'expansion' sweeps each ring open around its centre rather than fading
+    // it in, so the donut reads as being drawn. The per-segment stagger makes
+    // the order of the breakdown legible as it builds.
+    animationDuration: 850,
+    animationEasing: 'cubicOut',
+    animationDelay: (index: number) => 140 + index * 70,
     tooltip: {
       ...tooltipStyle(),
       trigger: 'item',
@@ -46,6 +51,7 @@ function donutOption(buckets: AllocationBucket[], currency: string): EChartsOpti
         type: 'pie',
         radius: ['62%', '88%'],
         center: ['50%', '50%'],
+        animationType: 'expansion',
         avoidLabelOverlap: false,
         label: { show: false },
         labelLine: { show: false },

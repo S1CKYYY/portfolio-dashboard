@@ -23,6 +23,7 @@ import {
   PERIOD_LABELS,
   signClass,
 } from '../lib/format'
+import { MOTION } from '../lib/motion'
 import type { HistoryPayload, PeriodKey, ReturnsPayload, SummaryPayload } from '../lib/types'
 import { Panel, Segmented } from './Panel'
 
@@ -179,6 +180,8 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
         <TimeSeriesChart
           series={series}
           height={280}
+          revealOnMount
+          revealDelay={MOTION.stagger * 2}
           valueFormatter={valueFormatter}
           onCrosshair={setCrosshair}
           baselineValue={isPercentView ? 0 : undefined}

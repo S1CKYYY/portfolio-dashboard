@@ -51,7 +51,12 @@ function fanOption(mc: MonteCarloPayload, currency: string): EChartsOption {
   })
 
   return {
-    animation: false,
+    // ECharts draws line series left-to-right on first render, so simply
+    // enabling animation makes the fan open outward from today's value.
+    animation: true,
+    animationDuration: 1100,
+    animationEasing: 'cubicOut',
+    animationDelay: 260,
     grid: { left: 62, right: 14, top: 16, bottom: 30 },
     tooltip: {
       ...tooltipStyle(),
@@ -137,7 +142,11 @@ function histogramOption(mc: MonteCarloPayload): EChartsOption {
   )
 
   return {
-    animation: false,
+    // Bars grow up from the axis, left to right across the distribution.
+    animation: true,
+    animationDuration: 520,
+    animationEasing: 'cubicOut',
+    animationDelay: (index: number) => 300 + index * 9,
     grid: { left: 8, right: 12, top: 12, bottom: 26, containLabel: true },
     tooltip: {
       ...tooltipStyle(),

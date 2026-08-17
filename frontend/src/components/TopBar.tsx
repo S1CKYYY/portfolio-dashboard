@@ -6,6 +6,7 @@
 import { formatDate, formatMoneyCompact, formatMoneySigned, formatPercentSigned, signClass } from '../lib/format'
 import type { DataConfig } from '../lib/api'
 import type { Health, SummaryPayload } from '../lib/types'
+import { AnimatedNumber } from './AnimatedNumber'
 import { Sparkline } from './Sparkline'
 
 interface TopBarProps {
@@ -18,16 +19,25 @@ interface DeltaProps {
   label: string
   absolute: number | null
   percent: number | null
+  delay: number
 }
 
 /** One signed change readout: absolute above percentage, semantic colour. */
-function Delta({ label, absolute, percent }: DeltaProps) {
+function Delta({ label, absolute, percent, delay }: DeltaProps) {
   const tone = signClass(absolute)
   return (
     <div className="topbar__delta">
       <span className="topbar__delta-label">{label}</span>
-      <span className={`num ${tone}`}>{formatMoneySigned(absolute)}</span>
-      <span className={`num ${tone}`}>({formatPercentSigned(percent)})</span>
+      <AnimatedNumber
+        value={absolute}
+        format={formatMoneySigned}
+        delay={delay}
+        className={`num ${tone}`}
+      />
+      <span className={`num ${tone}`}>
+        (
+        <AnimatedNumber value={percent} format={formatPercentSigned} delay={delay} />)
+      </span>
     </div>
   )
 }
@@ -48,17 +58,24 @@ export function TopBar({ summary, health, config }: TopBarProps) {
         </div>
 
         <div className="topbar__value">
-          <span className="num topbar__amount">{formatMoneyCompact(summary.total_value)}</span>
+          <AnimatedNumber
+            value={summary.total_value}
+            format={formatMoneyCompact}
+            className="num topbar__amount"
+          />
           <span className="topbar__currency">{summary.base_currency}</span>
         </div>
 
+        {/* Deltas start fractionally after the headline so the eye lands on the
+            total first and the row resolves top-down rather than all at once. */}
         <div className="topbar__deltas">
-          <Delta label="Today" absolute={today.absolute} percent={today.pct} />
-          <Delta label="All time" absolute={allTime.absolute} percent={allTime.pct} />
+          <Delta label="Today" absolute={today.absolute} percent={today.pct} delay={90} />
+          <Delta label="All time" absolute={allTime.absolute} percent={allTime.pct} delay={150} />
           <Delta
             label="Unrealised P&L"
             absolute={summary.total_unrealized_pnl}
             percent={summary.total_unrealized_pnl_pct}
+            delay={210}
           />
         </div>
       </div>
