@@ -5,8 +5,10 @@
 
 import { AllocationPanel } from './components/AllocationPanel'
 import { CorrelationPanel } from './components/CorrelationPanel'
+import { DrawdownPanel } from './components/DrawdownPanel'
 import { HoldingsPanel } from './components/HoldingsPanel'
-import { MonteCarloPanel } from './components/MonteCarloPanel'
+import { KpiStrip } from './components/KpiStrip'
+import { MonteCarloPanel, OutcomeDistributionPanel } from './components/MonteCarloPanel'
 import { PerformancePanel } from './components/PerformancePanel'
 import { RiskPanel } from './components/RiskPanel'
 import { TopBar } from './components/TopBar'
@@ -51,34 +53,45 @@ export default function App() {
     <div className="app">
       <TopBar summary={summary} health={health} config={config} />
 
+      {/*
+        Layout is ordered by decreasing generality: the headline metrics and the
+        two charts that characterise the whole portfolio come first, so the
+        opening view answers "what is this worth, how risky is it, and where is
+        it heading" before asking the reader to look at any single position.
+        Position-level detail follows below.
+      */}
       <main className="app__main">
-        <div className="row row--holdings">
+        <KpiStrip risk={risk} montecarlo={montecarlo} summary={summary} currency={currency} />
+
+        <div className="row row--overview">
+          <PerformancePanel
+            history={history}
+            summary={summary}
+            returns={returns}
+            currency={currency}
+          />
           <AllocationPanel
             byClass={summary.allocation_by_class}
             byRegion={summary.allocation_by_region}
             currency={currency}
           />
-          <HoldingsPanel
-            holdings={holdings.holdings}
-            totalValue={holdings.total_value}
-            currency={currency}
-          />
         </div>
 
-        <PerformancePanel
-          history={history}
-          summary={summary}
-          returns={returns}
+        <div className="row row--analytics">
+          <DrawdownPanel history={history} risk={risk} />
+          <MonteCarloPanel montecarlo={montecarlo} currency={currency} />
+          <OutcomeDistributionPanel montecarlo={montecarlo} currency={currency} />
+        </div>
+
+        <HoldingsPanel
+          holdings={holdings.holdings}
+          totalValue={holdings.total_value}
           currency={currency}
         />
 
         <div className="row row--risk">
           <RiskPanel risk={risk} currency={currency} />
           <CorrelationPanel correlation={risk.correlation} />
-        </div>
-
-        <div className="row row--montecarlo">
-          <MonteCarloPanel montecarlo={montecarlo} currency={currency} />
         </div>
       </main>
 

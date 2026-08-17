@@ -27,7 +27,7 @@ import type { HistoryPayload, PeriodKey, ReturnsPayload, SummaryPayload } from '
 import { Panel, Segmented } from './Panel'
 
 type Range = '1w' | '1m' | 'ytd' | 'all'
-type View = 'value' | 'return' | 'drawdown'
+type View = 'value' | 'return'
 
 const RANGES = [
   { value: '1w' as const, label: '1W' },
@@ -39,7 +39,6 @@ const RANGES = [
 const VIEWS = [
   { value: 'value' as const, label: 'Value' },
   { value: 'return' as const, label: 'Return' },
-  { value: 'drawdown' as const, label: 'Drawdown' },
 ]
 
 const READOUT_PERIODS: PeriodKey[] = ['day', 'week', 'month', 'ytd', 'all']
@@ -94,18 +93,6 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
     const dates = history.dates.slice(start)
     const portfolio = history.portfolio.slice(start)
     const benchmark = history.benchmark_rebased.slice(start)
-
-    if (view === 'drawdown') {
-      return [
-        {
-          id: 'drawdown',
-          label: 'Drawdown',
-          color: theme.negative,
-          lineWidth: 1,
-          data: toLineData(dates, history.drawdown_pct.slice(start)),
-        },
-      ]
-    }
 
     if (view === 'return') {
       return [
@@ -191,7 +178,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
 
         <TimeSeriesChart
           series={series}
-          height={320}
+          height={280}
           valueFormatter={valueFormatter}
           onCrosshair={setCrosshair}
           baselineValue={isPercentView ? 0 : undefined}

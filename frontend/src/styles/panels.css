@@ -314,6 +314,43 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * Drawdown                                                            *
+ * ------------------------------------------------------------------ */
+
+.drawdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawdown__legend {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.drawdown__current,
+.drawdown__worst {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.drawdown__caption {
+  font-size: var(--size-micro);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.drawdown__value {
+  font-size: var(--size-heading);
+  color: var(--text-primary);
+}
+
+/* ------------------------------------------------------------------ *
  * Correlation                                                         *
  * ------------------------------------------------------------------ */
 

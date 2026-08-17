@@ -229,6 +229,25 @@ body {
   min-width: 0;
 }
 
+/**
+ * Fill mode: panels sharing a grid row all stretch to the tallest one, which
+ * would otherwise leave dead space under a fixed-height chart. `--fill` lets
+ * the chart absorb that slack so the charts in a row end on one baseline.
+ * `min-height` keeps the plot readable if the row is short.
+ */
+.panel--fill .panel__body,
+.panel--fill .panel__body > * {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.chart--fill {
+  flex: 1;
+  min-height: 200px;
+}
+
 /* Screen-reader-only text for chart and control labelling. */
 .sr-only {
   position: absolute;

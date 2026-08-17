@@ -38,13 +38,15 @@ echarts.use([
 interface EChartProps {
   option: EChartsOption
   /** CSS height of the chart host; the width always fills the parent. */
-  height: number | string
+  height?: number | string
+  /** Stretch to the remaining height of a `.panel--fill` body instead. */
+  fill?: boolean
   /** Accessible description, since a canvas conveys nothing to a screen reader. */
   ariaLabel: string
   className?: string
 }
 
-export function EChart({ option, height, ariaLabel, className }: EChartProps) {
+export function EChart({ option, height, fill, ariaLabel, className }: EChartProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<echarts.ECharts | null>(null)
 
@@ -74,8 +76,8 @@ export function EChart({ option, height, ariaLabel, className }: EChartProps) {
   return (
     <div
       ref={hostRef}
-      className={className ? `chart ${className}` : 'chart'}
-      style={{ height }}
+      className={[ 'chart', fill && 'chart--fill', className ].filter(Boolean).join(' ')}
+      style={fill ? undefined : { height }}
       role="img"
       aria-label={ariaLabel}
     />

@@ -43,7 +43,13 @@ export interface CrosshairState {
 
 interface TimeSeriesChartProps {
   series: SeriesSpec[]
-  height: number
+  /** Fixed pixel height. Ignored when `fill` is set. */
+  height?: number
+  /**
+   * Stretch to the remaining height of a `.panel--fill` body instead of taking
+   * a fixed height, so charts sharing a row all reach the same baseline.
+   */
+  fill?: boolean
   /** Formats the right price axis and the crosshair line label. */
   valueFormatter: (value: number) => string
   onCrosshair?: (state: CrosshairState | null) => void
@@ -55,6 +61,7 @@ interface TimeSeriesChartProps {
 export function TimeSeriesChart({
   series,
   height,
+  fill,
   valueFormatter,
   onCrosshair,
   ariaLabel,
@@ -208,8 +215,8 @@ export function TimeSeriesChart({
   return (
     <div
       ref={hostRef}
-      className="chart"
-      style={{ height }}
+      className={fill ? 'chart chart--fill' : 'chart'}
+      style={fill ? undefined : { height }}
       role="img"
       aria-label={ariaLabel}
       onMouseLeave={() => crosshairRef.current?.(null)}

@@ -187,87 +187,91 @@ function histogramOption(mc: MonteCarloPayload): EChartsOption {
   }
 }
 
+/** The percentile fan: the projection itself. */
 export function MonteCarloPanel({ montecarlo, currency }: MonteCarloPanelProps) {
   const fan = useMemo(() => fanOption(montecarlo, currency), [montecarlo, currency])
-  const histogram = useMemo(() => histogramOption(montecarlo), [montecarlo])
-
-  const lossProbability = montecarlo.probability_below_start_pct
   const subtitle = `${montecarlo.paths.toLocaleString('en-GB')} paths · ${montecarlo.horizon_days} trading days`
 
   return (
-    <>
-      <Panel title="Monte Carlo" subtitle={subtitle}>
-        <div className="montecarlo">
-          <div className="montecarlo__legend">
-            <span className="montecarlo__legend-item">
-              <span className="montecarlo__key montecarlo__key--outer" aria-hidden="true" />
-              5th – 95th percentile
-            </span>
-            <span className="montecarlo__legend-item">
-              <span className="montecarlo__key montecarlo__key--inner" aria-hidden="true" />
-              25th – 75th percentile
-            </span>
-            <span className="montecarlo__legend-item">
-              <span className="montecarlo__key montecarlo__key--median" aria-hidden="true" />
-              median
-            </span>
-          </div>
-          <EChart
-            option={fan}
-            height={330}
-            ariaLabel={`Simulated portfolio value over the next ${montecarlo.horizon_days} trading days, percentile bands`}
-          />
+    <Panel title="Monte Carlo" subtitle={subtitle} className="panel--fill">
+      <div className="montecarlo">
+        <div className="montecarlo__legend">
+          <span className="montecarlo__legend-item">
+            <span className="montecarlo__key montecarlo__key--outer" aria-hidden="true" />
+            5th – 95th percentile
+          </span>
+          <span className="montecarlo__legend-item">
+            <span className="montecarlo__key montecarlo__key--inner" aria-hidden="true" />
+            25th – 75th percentile
+          </span>
+          <span className="montecarlo__legend-item">
+            <span className="montecarlo__key montecarlo__key--median" aria-hidden="true" />
+            median
+          </span>
         </div>
-      </Panel>
+        <EChart
+          option={fan}
+          fill
+          ariaLabel={`Simulated portfolio value over the next ${montecarlo.horizon_days} trading days, percentile bands`}
+        />
+      </div>
+    </Panel>
+  )
+}
 
-      <Panel title="Outcome distribution" subtitle={`terminal value, ${currency}`}>
-        <div className="montecarlo__aside">
-          <EChart
-            option={histogram}
-            height={150}
-            ariaLabel="Histogram of simulated portfolio values after one year"
-          />
+/** Where those paths land after a year, and how likely each outcome is. */
+export function OutcomeDistributionPanel({ montecarlo, currency }: MonteCarloPanelProps) {
+  const histogram = useMemo(() => histogramOption(montecarlo), [montecarlo])
+  const lossProbability = montecarlo.probability_below_start_pct
 
-          <table className="readout montecarlo__summary">
-            <tbody>
-              <tr>
-                <td className="readout__label">Expected value</td>
-                <td className="readout__value num">{formatMoney(montecarlo.expected_value)}</td>
-              </tr>
-              <tr>
-                <td className="readout__label">Median (p50)</td>
-                <td className="readout__value num">{formatMoney(montecarlo.median_value)}</td>
-              </tr>
-              <tr>
-                <td className="readout__label">Expected return</td>
-                <td className={`readout__value num ${signClass(montecarlo.expected_return_pct)}`}>
-                  {formatPercentSigned(montecarlo.expected_return_pct)}
-                </td>
-              </tr>
-              <tr>
-                <td className="readout__label">P(loss)</td>
-                <td className={`readout__value num ${lossProbability > 0.5 ? 'neg' : ''}`}>
-                  {formatPercent(lossProbability, 1)}
-                </td>
-              </tr>
-              <tr>
-                <td className="readout__label">Worst 5% (p5)</td>
-                <td className="readout__value num neg">{formatMoney(montecarlo.final_values.p5)}</td>
-              </tr>
-              <tr>
-                <td className="readout__label">Best 5% (p95)</td>
-                <td className="readout__value num pos">{formatMoney(montecarlo.final_values.p95)}</td>
-              </tr>
-            </tbody>
-          </table>
+  return (
+    <Panel title="Outcome" subtitle={`terminal value, ${currency}`}>
+      <div className="montecarlo__aside">
+        <EChart
+          option={histogram}
+          height={132}
+          ariaLabel="Histogram of simulated portfolio values after one year"
+        />
 
-          <p className="montecarlo__assumptions">
-            {montecarlo.assumptions.distribution}, {montecarlo.assumptions.correlation}, fitted on{' '}
-            {montecarlo.assumptions.lookback_days} trading days. Rebalancing:{' '}
-            {montecarlo.assumptions.rebalancing}. Past distributions do not bound future outcomes.
-          </p>
-        </div>
-      </Panel>
-    </>
+        <table className="readout montecarlo__summary">
+          <tbody>
+            <tr>
+              <td className="readout__label">Expected</td>
+              <td className="readout__value num">{formatMoney(montecarlo.expected_value)}</td>
+            </tr>
+            <tr>
+              <td className="readout__label">Median (p50)</td>
+              <td className="readout__value num">{formatMoney(montecarlo.median_value)}</td>
+            </tr>
+            <tr>
+              <td className="readout__label">Expected return</td>
+              <td className={`readout__value num ${signClass(montecarlo.expected_return_pct)}`}>
+                {formatPercentSigned(montecarlo.expected_return_pct)}
+              </td>
+            </tr>
+            <tr>
+              <td className="readout__label">P(loss)</td>
+              <td className={`readout__value num ${lossProbability > 0.5 ? 'neg' : ''}`}>
+                {formatPercent(lossProbability, 1)}
+              </td>
+            </tr>
+            <tr>
+              <td className="readout__label">Worst 5%</td>
+              <td className="readout__value num neg">{formatMoney(montecarlo.final_values.p5)}</td>
+            </tr>
+            <tr>
+              <td className="readout__label">Best 5%</td>
+              <td className="readout__value num pos">{formatMoney(montecarlo.final_values.p95)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p className="montecarlo__assumptions">
+          {montecarlo.assumptions.distribution}, {montecarlo.assumptions.correlation}, fitted on{' '}
+          {montecarlo.assumptions.lookback_days} trading days. Rebalancing:{' '}
+          {montecarlo.assumptions.rebalancing}. Past distributions do not bound future outcomes.
+        </p>
+      </div>
+    </Panel>
   )
 }

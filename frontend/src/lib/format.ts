@@ -109,6 +109,18 @@ export function formatDateShort(iso: string | null | undefined): string {
   }).format(date)
 }
 
+/** `2026-08-14` -> `Aug 2026`, for compact window captions. */
+export function formatMonthYear(iso: string | null | undefined): string {
+  if (!iso) return EM_DASH
+  const date = new Date(`${iso}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return EM_DASH
+  return new Intl.DateTimeFormat(LOCALE, {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date)
+}
+
 /** ISO timestamp -> `14 Aug 2026 12:20 UTC`, for the "generated at" label. */
 export function formatTimestamp(iso: string | null | undefined): string {
   if (!iso) return EM_DASH

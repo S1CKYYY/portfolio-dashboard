@@ -106,7 +106,7 @@ Edit `backend/holdings.json` and regenerate:
       "asset_class": "ETF",             // ETF | Stock | Crypto (free text; drives grouping)
       "region": "Global",               // null for region-less assets (crypto)
       "currency": "EUR",                // EUR or USD
-      "quantity": 108.661909,           // fractional units allowed
+      "quantity": 110,                  // fractional units allowed
       "cost_basis_per_unit": 110.2,     // in the instrument's own currency
       "acquired": "2025-11-14"          // sets the FX rate applied to the cost basis
     }
@@ -127,11 +127,16 @@ simulation size and seed) all live in `backend/config.py`.
 
 ### How the demo positions were built
 
-Quantities were sized so each position matched a target EUR value at the close
-of 2026-08-14, then frozen. Cost bases are the instrument's **actual closing
-price** on the `acquired` date, with entry dates spread across the preceding
-four to fourteen months. That yields a believable mix — six winners, six losers,
-about -4.3% overall — rather than a portfolio that is implausibly all green.
+Quantities are **natural position sizes** — whole shares for instruments that
+trade in whole shares, round fractions for crypto and for high-priced ASML.
+Nothing was tuned to hit a round total, so the portfolio comes to an ordinary
+uneven €80,324.83 and the weights land on values like 17.6% and 10.2% rather
+than a suspiciously tidy 17.5% and 10.0%.
+
+Cost bases are the instrument's **actual closing price** on the `acquired` date,
+with entry dates spread across the preceding four to fourteen months. That
+yields a believable mix — six winners, six losers, about -4.4% overall — rather
+than a portfolio that is implausibly all green.
 
 ---
 
@@ -239,7 +244,11 @@ down the grid — the property that makes a dense financial table scannable.
 
 Flat, solid tokens only. **No gradients anywhere**, no shadows, no elevation.
 
-- A near-black page (`#0a0b0d`) with panels exactly one step lighter (`#101215`).
+- A **true black page** (`#000000`) with panels barely lifted off it (`#08090b`).
+  On a trading floor the display is the only light source, so pure black gives
+  the figures the maximum available contrast ratio; lifting panels by only three
+  or four points of luminance keeps the grid reading as one continuous surface
+  divided by rules, rather than as a stack of slabs.
 - Separation comes from **1px hairline rules**, never from floating cards.
 - One accent (`#4589ff`), used for interaction and the primary data series.
 - Semantic green/red apply **only to numbers and small markers**, never as
@@ -274,11 +283,37 @@ overlay mark inside the plot area.
 
 ### Layout
 
-Top bar → allocation + holdings → performance → risk + correlation → Monte
-Carlo. The shell collapses to a single column below 1240px, and the holdings
-grid sheds its least load-bearing columns in priority order (name, then class
-and quantity, then region and day change) rather than clipping or scrolling
-sideways — so it stays clean cropped to a vertical screen recording.
+Ordered by **decreasing generality**, so the opening view answers "what is this
+worth, how risky is it, and where is it heading" before asking the reader to
+look at any individual position:
+
+```
+top bar            headline value, today / all-time change, inline sparkline
+KPI band           8 figures: vol, Sharpe, Sortino, max DD, VaR, beta, P(loss), median 1Y
+performance        equity curve vs benchmark + period readout   |  allocation
+drawdown           underwater curve  |  Monte Carlo fan  |  outcome distribution
+─────────────────────────────────── typical fold ───────────────────────────────
+holdings           the position-level grid
+risk               full metric readout with plain-English meanings | correlation
+```
+
+Everything above the fold is portfolio-level. The holdings table — the densest
+but least summarising element — sits below it, because a reader who wants a
+specific position will scroll for it, whereas a reader forming a first
+impression should not have to scroll past twelve rows to find the risk numbers.
+
+Drawdown gets a panel of its own rather than a toggle inside the performance
+chart: depth and duration of losses is the question an equity curve hides, since
+a portfolio that ends flat looks calm even if it fell 25% along the way.
+
+Charts sharing a row use a fill mode so they stretch to a common baseline
+instead of leaving dead space under whichever panel is shortest.
+
+The shell collapses to a single column below 1240px; the KPI band steps 8 → 4 →
+2 columns (all divisors of eight, so a row is never left with an orphan cell);
+and the holdings grid sheds its least load-bearing columns in priority order
+(name, then class and quantity, then region and day change) rather than clipping
+or scrolling sideways — so it stays clean cropped to a vertical screen recording.
 
 ---
 
@@ -301,7 +336,9 @@ sideways — so it stays clean cropped to a vertical screen recording.
 │       ├── styles/          # tokens.css (the design contract), base, layout, panels
 │       ├── lib/             # types mirroring the API, data access, formatters
 │       ├── charts/          # ECharts + Lightweight Charts wrappers, token bridge
-│       └── components/      # one file per panel
+│       └── components/      # one file per panel: KpiStrip, Performance,
+│                            # Drawdown, MonteCarlo, Allocation, Holdings,
+│                            # Risk, Correlation, TopBar
 ├── snapshot.json            # committed: the frontend runs from this with no backend
 └── API.md                   # every endpoint, with units and example JSON
 ```

@@ -1,6 +1,6 @@
 {
   "base_currency": "EUR",
-  "_comment": "Example portfolio for demonstration purposes only - not a real net worth. Quantities were sized so each position matched its target EUR value at the close of 2026-08-14, then frozen. cost_basis_per_unit is the actual close of that instrument on 'acquired', in the instrument's own currency; it is converted to EUR at the FX rate of that date.",
+  "_comment": "Example portfolio for demonstration purposes only - not a real net worth. Quantities are natural position sizes (whole shares where the instrument trades in whole shares), so the total is an ordinary uneven number rather than a round target. cost_basis_per_unit is the actual close of that instrument on 'acquired', in the instrument's own currency; it is converted to EUR at the FX rate of that date.",
   "holdings": [
     {
       "ticker": "IWDA.AS",
@@ -8,7 +8,7 @@
       "asset_class": "ETF",
       "region": "Global",
       "currency": "EUR",
-      "quantity": 108.661909,
+      "quantity": 110,
       "cost_basis_per_unit": 110.2,
       "acquired": "2025-11-14"
     },
@@ -18,7 +18,7 @@
       "asset_class": "ETF",
       "region": "US",
       "currency": "EUR",
-      "quantity": 94.172302,
+      "quantity": 95,
       "cost_basis_per_unit": 113.2871,
       "acquired": "2026-01-15"
     },
@@ -28,7 +28,7 @@
       "asset_class": "ETF",
       "region": "Europe",
       "currency": "EUR",
-      "quantity": 90.036015,
+      "quantity": 90,
       "cost_basis_per_unit": 57.34,
       "acquired": "2026-03-16"
     },
@@ -38,7 +38,7 @@
       "asset_class": "Stock",
       "region": "US",
       "currency": "USD",
-      "quantity": 22.623521,
+      "quantity": 22,
       "cost_basis_per_unit": 327.2178,
       "acquired": "2026-07-15"
     },
@@ -48,7 +48,7 @@
       "asset_class": "Stock",
       "region": "US",
       "currency": "USD",
-      "quantity": 30.73909,
+      "quantity": 31,
       "cost_basis_per_unit": 184.7447,
       "acquired": "2026-02-17"
     },
@@ -58,7 +58,7 @@
       "asset_class": "Stock",
       "region": "US",
       "currency": "USD",
-      "quantity": 11.642467,
+      "quantity": 12,
       "cost_basis_per_unit": 512.1166,
       "acquired": "2025-09-15"
     },
@@ -68,7 +68,7 @@
       "asset_class": "Stock",
       "region": "Europe",
       "currency": "EUR",
-      "quantity": 2.532287,
+      "quantity": 2.5,
       "cost_basis_per_unit": 1620.2488,
       "acquired": "2026-06-15"
     },
@@ -78,7 +78,7 @@
       "asset_class": "Stock",
       "region": "Europe",
       "currency": "EUR",
-      "quantity": 10.56338,
+      "quantity": 10,
       "cost_basis_per_unit": 220.3,
       "acquired": "2026-03-16"
     },
@@ -88,7 +88,7 @@
       "asset_class": "Stock",
       "region": "China",
       "currency": "USD",
-      "quantity": 55.901896,
+      "quantity": 56,
       "cost_basis_per_unit": 169.3745,
       "acquired": "2026-01-15"
     },
@@ -98,7 +98,7 @@
       "asset_class": "Stock",
       "region": "China",
       "currency": "USD",
-      "quantity": 81.62771,
+      "quantity": 82,
       "cost_basis_per_unit": 130.95,
       "acquired": "2025-11-14"
     },
@@ -108,7 +108,7 @@
       "asset_class": "Crypto",
       "region": null,
       "currency": "USD",
-      "quantity": 0.146537,
+      "quantity": 0.15,
       "cost_basis_per_unit": 94397.7891,
       "acquired": "2025-11-14"
     },
@@ -118,7 +118,7 @@
       "asset_class": "Crypto",
       "region": null,
       "currency": "USD",
-      "quantity": 2.453483,
+      "quantity": 2.45,
       "cost_basis_per_unit": 1794.9612,
       "acquired": "2026-06-15"
     }
