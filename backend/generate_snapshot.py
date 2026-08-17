@@ -16,6 +16,7 @@ import argparse
 import json
 import logging
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from config import SETTINGS
@@ -32,6 +33,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=SETTINGS.snapshot_path,
         help=f"output path (default: {SETTINGS.snapshot_path})",
+    )
+    parser.add_argument(
+        "--holdings",
+        type=Path,
+        default=SETTINGS.holdings_path,
+        help=f"portfolio definition to use (default: {SETTINGS.holdings_path})",
     )
     parser.add_argument(
         "--no-cache",
@@ -51,14 +58,16 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     args = parse_args(argv)
 
-    analytics = build_analytics(SETTINGS, use_cache=not args.no_cache)
+    settings = replace(SETTINGS, holdings_path=args.holdings)
+    analytics = build_analytics(settings, use_cache=not args.no_cache)
     logger.info("Priced %d holdings as of %s", len(analytics.positions), analytics.as_of)
 
     payloads = analytics.all_payloads()
+    base_currency = analytics.portfolio.base_currency
     snapshot = {
         "generated_at": payloads["/health"]["generated_at"],
         "as_of": analytics.as_of,
-        "base_currency": SETTINGS.base_currency,
+        "base_currency": base_currency,
         "endpoints": payloads,
     }
 
@@ -74,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     logger.info(
         "Total value %.2f %s | Monte Carlo p50 %.2f | P(loss) %.1f%%",
         payloads["/portfolio/summary"]["total_value"],
-        SETTINGS.base_currency,
+        base_currency,
         payloads["/portfolio/montecarlo"]["median_value"],
         payloads["/portfolio/montecarlo"]["probability_below_start_pct"] * 100,
     )

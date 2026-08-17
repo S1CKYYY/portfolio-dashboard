@@ -17,6 +17,22 @@ frontend/.vite/
 # Environment
 .env
 .env.*
+!.env.example
+
+# Your own portfolio.
+#
+# These are tracked by default so a fresh clone renders the example dashboard
+# immediately. If you fork this repo and put real positions in, uncomment the
+# two lines below and run:
+#
+#   git rm --cached backend/holdings.json snapshot.json
+#
+# otherwise your holdings would be published with your fork.
+# backend/holdings.json
+# snapshot.json
+
+# Backups written by setup_holdings.py
+backend/holdings.backup-*.json
 
 # OS
 .DS_Store

@@ -25,7 +25,7 @@ import pandas as pd
 import metrics
 import montecarlo
 from config import SETTINGS, Settings
-from data import MarketData, Portfolio, fx_rate_on, to_iso_dates
+from data import MarketData, Portfolio, fx_rate_on, normalise_currency, to_iso_dates
 from serialize import iso, json_safe, money_series, ratio_series, round_money, round_ratio
 
 SPARKLINE_DAYS: int = 90
@@ -134,11 +134,11 @@ class PortfolioAnalytics:
             price_base = float(latest_base[ticker])
 
             # Cost basis is converted at the FX rate of the acquisition date, so
-            # unrealised P&L includes the currency move since entry.
-            if holding.currency == self.settings.base_currency:
-                cost_base = holding.cost_basis_per_unit
-            else:
-                cost_base = holding.cost_basis_per_unit / fx_rate_on(self.market.fx, holding.acquired)
+            # unrealised P&L includes the currency move since entry. The unit
+            # factor handles venues quoting in a minor unit (London's pence).
+            _, unit = normalise_currency(holding.currency)
+            rate = fx_rate_on(self.market.rate_series(holding.currency), holding.acquired)
+            cost_base = holding.cost_basis_per_unit * unit * rate
 
             pnl_abs, pnl_pct = metrics.unrealized_pnl(holding.quantity, price_base, cost_base)
             prev = float(previous_base[ticker])
@@ -193,7 +193,7 @@ class PortfolioAnalytics:
         """Fields every payload carries, so any response is self-describing."""
         return {
             "as_of": self.as_of,
-            "base_currency": self.settings.base_currency,
+            "base_currency": self.portfolio.base_currency,
             "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }
 

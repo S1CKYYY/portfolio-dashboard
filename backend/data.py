@@ -11,12 +11,20 @@ Responsibilities
 
 FX handling
 -----------
-``EURUSD=X`` is quoted as *USD per 1 EUR*. Any instrument priced in USD is
-therefore converted with ``price_eur = price_usd / eurusd``. The same daily FX
-series is applied to the historical price series, so the equity curve reflects
-both asset performance and currency movement — the honest view for a EUR-based
-investor. Cost bases are converted at the FX rate observed on the acquisition
-date, not today's rate, so unrealised P&L includes the currency effect.
+Any base currency is supported, and holdings may be quoted in any number of
+currencies. Yahoo Finance names a pair ``{FROM}{TO}=X``, quoted as *TO per 1
+FROM*, so converting an instrument priced in ``C`` into base ``B`` needs the
+series ``{C}{B}=X`` and a multiplication: ``price_B = price_C * rate``.
+
+The full daily FX series is applied across the whole history, not just today,
+so the equity curve reflects both asset performance and currency movement —
+the honest view for an investor reporting in ``B``. Cost bases are converted at
+the rate observed on the acquisition date, not today's, so unrealised P&L
+includes the currency effect.
+
+Some venues quote in a minor unit: London lists in ``GBp`` (pence), not pounds.
+Those are normalised to the major unit before conversion, otherwise every UK
+holding would be overstated by 100x.
 
 Calendar alignment
 ------------------
@@ -49,7 +57,31 @@ from config import SETTINGS, Settings
 
 logger = logging.getLogger(__name__)
 
-CACHE_FORMAT_VERSION = 3
+CACHE_FORMAT_VERSION = 4
+
+# Venues that quote in a minor unit, mapped to their major unit and the factor
+# that converts to it. Yahoo reports these codes verbatim in its metadata.
+MINOR_UNITS: dict[str, tuple[str, float]] = {
+    "GBp": ("GBP", 0.01),  # London: pence
+    "ZAc": ("ZAR", 0.01),  # Johannesburg: cents
+    "ILA": ("ILS", 0.01),  # Tel Aviv: agorot
+}
+
+
+def normalise_currency(code: str) -> tuple[str, float]:
+    """Resolve a quote currency to its major unit and a scaling factor.
+
+    Returns:
+        ``(major_code, factor)`` such that ``price_major = price_quoted *
+        factor``. Unrecognised codes pass through unchanged with a factor of 1.
+    """
+    major, factor = MINOR_UNITS.get(code, (code, 1.0))
+    return major, factor
+
+
+def fx_symbol(from_currency: str, to_currency: str) -> str:
+    """Yahoo Finance symbol for a currency pair, quoted as *to* per 1 *from*."""
+    return f"{from_currency}{to_currency}=X"
 
 
 @dataclass(frozen=True)
@@ -109,21 +141,37 @@ class MarketData:
         prices_native: Daily closes as quoted by the exchange, one column per
             holding ticker, indexed by trading day.
         prices_base: The same closes converted to the base currency.
-        fx: ``EURUSD=X`` daily close (USD per 1 EUR), aligned to the index.
-        benchmark: Benchmark daily close (USD; only returns are ever used).
+        fx: Per-currency conversion series, keyed by the instrument's quote
+            currency and giving *base units per 1 unit of that currency*. The
+            base currency itself maps to a constant 1.0.
+        benchmark: Benchmark daily close (only returns are ever used, so its
+            own currency does not matter).
+        base_currency: Reporting currency these frames are denominated in.
         fetched_at: UTC timestamp of the underlying download.
     """
 
     prices_native: pd.DataFrame
     prices_base: pd.DataFrame
-    fx: pd.Series
+    fx: dict[str, pd.Series]
     benchmark: pd.Series
+    base_currency: str
     fetched_at: datetime
 
     @property
     def as_of(self) -> date:
         """Date of the most recent observation."""
         return self.prices_base.index[-1].date()
+
+    def rate_series(self, currency: str) -> pd.Series:
+        """Conversion series for ``currency``, in base units per unit.
+
+        Raises:
+            KeyError: if the currency was not part of the loaded portfolio.
+        """
+        major, _ = normalise_currency(currency)
+        if major == self.base_currency:
+            return pd.Series(1.0, index=self.prices_base.index)
+        return self.fx[major]
 
 
 def load_portfolio(path: Path | None = None) -> Portfolio:
@@ -262,7 +310,19 @@ def load_market_data(
     Returns:
         A :class:`MarketData` with native and base-currency price frames.
     """
-    symbols = list(dict.fromkeys([*portfolio.tickers, settings.benchmark, settings.fx_pair]))
+    base = portfolio.base_currency
+
+    # One FX series per foreign quote currency in the portfolio.
+    foreign = sorted(
+        {
+            normalise_currency(holding.currency)[0]
+            for holding in portfolio.holdings
+            if normalise_currency(holding.currency)[0] != base
+        }
+    )
+    pairs = {currency: fx_symbol(currency, base) for currency in foreign}
+
+    symbols = list(dict.fromkeys([*portfolio.tickers, settings.benchmark, *pairs.values()]))
     end = date.today() + timedelta(days=1)  # yfinance `end` is exclusive
     start = end - timedelta(days=int(365.25 * settings.history_years) + 10)
 
@@ -279,25 +339,25 @@ def load_market_data(
 
     aligned = _align_to_trading_calendar(closes, settings.benchmark)
 
-    fx = aligned[settings.fx_pair]
+    fx = {currency: aligned[symbol] for currency, symbol in pairs.items()}
     benchmark = aligned[settings.benchmark]
     prices_native = aligned.loc[:, list(portfolio.tickers)]
 
     prices_base = prices_native.copy()
     for holding in portfolio.holdings:
-        if holding.currency == "USD":
-            prices_base[holding.ticker] = prices_native[holding.ticker] / fx
-        elif holding.currency != settings.base_currency:
-            raise ValueError(
-                f"{holding.ticker}: unsupported currency {holding.currency!r} "
-                f"(expected {settings.base_currency!r} or 'USD')"
-            )
+        currency, unit = normalise_currency(holding.currency)
+        if currency == base:
+            # Still applies the minor-unit factor: GBp priced against a GBP base.
+            prices_base[holding.ticker] = prices_native[holding.ticker] * unit
+        else:
+            prices_base[holding.ticker] = prices_native[holding.ticker] * unit * fx[currency]
 
     return MarketData(
         prices_native=prices_native,
         prices_base=prices_base,
         fx=fx,
         benchmark=benchmark,
+        base_currency=base,
         fetched_at=fetched_at,
     )
 

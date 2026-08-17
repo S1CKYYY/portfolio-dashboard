@@ -1,362 +1,293 @@
-# Portfolio Analytics Dashboard
+# Portfolio Dashboard
 
-A portfolio analytics application: a Python backend that computes allocation,
-performance, risk and Monte Carlo metrics from real market data, and a React
-dashboard that presents them as a dense, institutional-style terminal.
+[![CI](https://github.com/chrispathway/portfolio-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/chrispathway/portfolio-dashboard/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+Enter your holdings, get an institutional-grade analytics dashboard for your own
+portfolio — allocation, performance against a benchmark, drawdown, Sharpe,
+Sortino, Value at Risk, beta, a correlation matrix, and a 10,000-path Monte
+Carlo projection of the year ahead.
+
+Runs entirely on your own machine. A Python backend computes the metrics from
+real market data; a React front end presents them as a dense terminal-style
+dashboard.
 
 ![Dashboard](docs/dashboard.png)
 
-> **The portfolio is an example, not a real net worth.** `backend/holdings.json`
-> defines a demonstration portfolio of roughly €80,000 across twelve
-> instruments. The *prices, returns and every derived metric are real* — pulled
-> from Yahoo Finance — but the positions are invented for demonstration.
-> Nothing here is investment advice.
+> **Your data stays local.** Your holdings never leave your computer. The only
+> outbound requests are to Yahoo Finance for public price history. There is no
+> account, no telemetry, and no server other than the one you run.
 
----
-
-## Contents
-
-- [Quick start](#quick-start)
-- [Data sources](#data-sources)
-- [Editing the portfolio](#editing-the-portfolio)
-- [How the numbers are computed](#how-the-numbers-are-computed)
-  - [FX handling](#fx-handling)
-  - [Calendar alignment](#calendar-alignment)
-  - [Cost basis and P&L](#cost-basis-and-pl)
-  - [Monte Carlo method](#monte-carlo-method)
-- [Design decisions](#design-decisions)
-- [Project layout](#project-layout)
-- [Testing](#testing)
-- [Limitations](#limitations)
+> **Not investment advice.** This is an analytics tool, not a recommendation
+> engine. The portfolio committed to this repo is a worked example, not anyone's
+> real net worth.
 
 ---
 
 ## Quick start
 
-Requires **Python 3.11+** and **Node 18+**.
-
-### 1. Backend
+You need **Python 3.11+** and **Node 18+**.
 
 ```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
+git clone https://github.com/chrispathway/portfolio-dashboard.git
+cd portfolio-dashboard
+
+make setup       # install backend + frontend dependencies
+make holdings    # enter your positions (interactive)
+make snapshot    # fetch prices and compute everything
+make dev         # open http://localhost:5173
+```
+
+No `make`? The same four steps, spelled out:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
+cd frontend && npm install && cd ..
 
 cd backend
-python generate_snapshot.py       # fetch prices, compute everything, write ../snapshot.json
-uvicorn api:app --reload --port 8000
+python setup_holdings.py        # enter your positions
+python generate_snapshot.py     # fetch prices, compute metrics
+cd ../frontend && npm run dev
 ```
 
-The API is then at `http://localhost:8000` (OpenAPI docs at `/docs`).
+Want to look around before entering anything? Skip straight to `make dev` — the
+repo ships with a worked example portfolio so the dashboard renders immediately.
 
-### 2. Frontend
+---
+
+## Entering your holdings
+
+Three ways in, easiest first.
+
+### 1. Interactive (recommended)
 
 ```bash
-cd frontend
-npm install
-npm run dev                       # http://localhost:5173
+make holdings          # or: cd backend && python setup_holdings.py
 ```
 
-The dashboard reads the committed `snapshot.json` by default, so **it runs with
-no backend process at all**. To point it at the live API instead, append
-`?source=api` to the URL, or set it permanently — see below.
+Asks for one position at a time and fills in everything it can:
 
----
+```
+Ticker (blank to finish): AAPL
+  Apple Inc. · Stock · 305.66 USD
+  Quantity: 22
+  Purchase date (YYYY-MM-DD) [2026-08-17]: 2026-01-15
+  Cost per unit in USD (blank = close on that date):
+  Added AAPL: 6,724.42 USD at today's price
+```
 
-## Data sources
+You only ever type the ticker, the quantity and the date. The instrument's
+name, **quote currency** and asset class are read from Yahoo Finance, and
+leaving the cost blank looks up the actual closing price on your purchase date.
 
-The frontend reads from either source through one configurable base URL, and no
-component knows which is in use — both resolve to the same `Analytics` shape in
-`src/lib/api.ts`.
+### 2. From a spreadsheet
 
-| Source | When | How |
-|---|---|---|
-| `snapshot` (default) | No backend needed; what the committed demo uses | Fetches `snapshot.json` |
-| `api` | Live, refetchable data | Fetches the seven FastAPI endpoints in parallel |
+Export a CSV with `ticker` and `quantity` columns (see
+[`holdings.example.csv`](holdings.example.csv)):
 
-Resolution order:
+```csv
+ticker,quantity,cost_basis,acquired
+IWDA.AS,110,110.20,2025-11-14
+AAPL,22,,2026-07-15
+BTC-USD,0.15,,2025-11-14
+```
 
-1. `?source=api` or `?source=snapshot` in the URL
-2. `frontend/.env`:
-   ```ini
-   VITE_DATA_SOURCE=api
-   VITE_API_BASE_URL=http://localhost:8000
-   ```
-3. Defaults: `snapshot`, `http://localhost:8000`
+```bash
+make holdings-csv FILE=holdings.example.csv
+```
 
-The top bar always shows which source is active.
+`cost_basis` is in the instrument's own currency; leave it blank to use the
+close on `acquired`. Optional extra columns: `name`, `asset_class`, `region`.
 
-Prices are cached to `backend/.cache/` (git-ignored) for 12 hours, so repeated
-runs do not refetch. Force a refresh with `python generate_snapshot.py
---no-cache` or `POST /refresh`.
+### 3. By hand
 
----
-
-## Editing the portfolio
-
-Edit `backend/holdings.json` and regenerate:
+Edit `backend/holdings.json` directly:
 
 ```jsonc
 {
-  "base_currency": "EUR",
+  "base_currency": "EUR",             // report everything in this currency
   "holdings": [
     {
-      "ticker": "IWDA.AS",              // yfinance symbol
+      "ticker": "IWDA.AS",            // any Yahoo Finance symbol
       "name": "iShares Core MSCI World",
-      "asset_class": "ETF",             // ETF | Stock | Crypto (free text; drives grouping)
-      "region": "Global",               // null for region-less assets (crypto)
-      "currency": "EUR",                // EUR or USD
-      "quantity": 110,                  // fractional units allowed
-      "cost_basis_per_unit": 110.2,     // in the instrument's own currency
-      "acquired": "2025-11-14"          // sets the FX rate applied to the cost basis
+      "asset_class": "ETF",           // free text; drives the allocation grouping
+      "region": "Global",             // null for region-less assets like crypto
+      "currency": "EUR",              // the instrument's quote currency
+      "quantity": 110,                // fractional units allowed
+      "cost_basis_per_unit": 110.20,  // in the instrument's own currency
+      "acquired": "2025-11-14"        // sets the FX rate used for the cost basis
     }
   ]
 }
 ```
 
-```bash
-cd backend && python generate_snapshot.py
-```
+Then re-run `make snapshot`.
 
-Adding a currency other than EUR/USD requires extending the conversion in
-`data.py::load_market_data`, which currently raises on unknown currencies rather
-than silently mispricing them.
+### Finding tickers
 
-Risk conventions (risk-free rate, benchmark, lookback, VaR confidences,
-simulation size and seed) all live in `backend/config.py`.
+Search on [finance.yahoo.com](https://finance.yahoo.com) and use the symbol
+exactly as shown. Non-US listings carry a suffix — `.AS` Amsterdam, `.DE`
+Frankfurt, `.L` London, `.SW` Zurich, `.TO` Toronto, `.T` Tokyo, `.AX` Sydney.
+Crypto is `BTC-USD`, `ETH-USD`. If the setup wizard accepts it, it will work.
 
-### How the demo positions were built
+### Any currency
 
-Quantities are **natural position sizes** — whole shares for instruments that
-trade in whole shares, round fractions for crypto and for high-priced ASML.
-Nothing was tuned to hit a round total, so the portfolio comes to an ordinary
-uneven €80,324.83 and the weights land on values like 17.6% and 10.2% rather
-than a suspiciously tidy 17.5% and 10.0%.
+Set `base_currency` to whatever you report in — `USD`, `GBP`, `CHF`, `SEK`,
+anything Yahoo quotes. Holdings may be quoted in any mix of currencies; each is
+converted using its own daily FX series. London listings priced in pence
+(`GBp`) are handled correctly.
 
-Cost bases are the instrument's **actual closing price** on the `acquired` date,
-with entry dates spread across the preceding four to fourteen months. That
-yields a believable mix — six winners, six losers, about -4.4% overall — rather
-than a portfolio that is implausibly all green.
+> **Forking this repo?** `backend/holdings.json` and `snapshot.json` are tracked
+> so the demo works out of the box — which means they would be published along
+> with your fork. `.gitignore` has commented-out lines to exclude them; uncomment
+> those and run `git rm --cached backend/holdings.json snapshot.json` before
+> pushing anything real.
+
+---
+
+## What you get
+
+| Panel | Contents |
+|---|---|
+| **Headline** | Total value, today's and all-time change, unrealised P&L, inline sparkline |
+| **KPI band** | Volatility, Sharpe, Sortino, max drawdown, VaR 95%, beta, probability of loss, median 1-year outcome |
+| **Performance** | Equity curve against a rebased benchmark, with 1W / 1M / YTD / All ranges and a value/return toggle |
+| **Allocation** | By asset class and by region |
+| **Drawdown** | Underwater curve with peak, trough and recovery dates |
+| **Monte Carlo** | 10,000 correlated paths over 252 trading days, p5–p95 fan and terminal distribution |
+| **Holdings** | Sortable grid: quantity, price, value, weight, P&L, day change, 90-day sparkline |
+| **Risk** | Full metric readout, each with a plain-English explanation |
+| **Correlation** | Heatmap of daily-return correlations between every pair of holdings |
+
+---
+
+## Configuration
+
+Risk conventions live in [`backend/config.py`](backend/config.py):
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `benchmark` | `^GSPC` | Index used for beta and the comparison line |
+| `risk_free_rate` | `0.02` | Annual rate for Sharpe and Sortino |
+| `history_years` | `2` | Lookback for every metric |
+| `var_confidences` | `(0.95, 0.99)` | VaR levels |
+| `mc_paths` | `10_000` | Monte Carlo paths |
+| `mc_horizon_days` | `252` | Simulation horizon (~1 year) |
+| `mc_seed` | fixed | Makes results reproducible |
+| `cache_ttl_hours` | `12` | How long prices are cached before refetching |
+
+Front-end data source is set in `frontend/.env` (see
+[`.env.example`](frontend/.env.example)): read the committed `snapshot.json`
+(default, no backend needed) or the live API. Append `?source=api` to the URL to
+switch per-visit.
+
+Prices are cached in `backend/.cache/` (git-ignored). Force a refresh with
+`python generate_snapshot.py --no-cache`.
 
 ---
 
 ## How the numbers are computed
 
-Every metric is computed from the holdings and real price history. No figure in
-the UI is hard-coded. `backend/metrics.py` states the formula for each one in
-its docstring; `API.md` tabulates them.
+Every metric comes from your holdings and real price history — nothing is
+hard-coded. [`backend/metrics.py`](backend/metrics.py) states the formula for
+each one in its docstring, and [`API.md`](API.md) tabulates them with units.
 
 ### FX handling
 
-The base currency is EUR, but seven of the twelve instruments are quoted in USD.
+Yahoo names a pair `{FROM}{TO}=X`, quoted as *TO per 1 FROM*, so an instrument
+priced in `C` converts to base `B` via the series `{C}{B}=X`.
 
-`EURUSD=X` is quoted as **USD per 1 EUR**, so a USD price converts as
-`price_eur = price_usd / eurusd`.
+The full daily FX series is applied across the **whole history**, not just
+today, so the equity curve reflects both asset performance and currency
+movement — the honest view for an investor reporting in `B`. A US holding can
+lose value in EUR terms on a day it rose in USD.
 
-The daily FX series is applied across the **whole history**, not just today, so
-the equity curve reflects both asset performance and currency movement — the
-honest view for a EUR-based investor. A US position can lose value in EUR terms
-on a day when it rose in USD.
+Cost bases convert at the rate on the **acquisition date**, not today's, so
+unrealised P&L includes the currency move since you bought.
+
+Venues quoting in a minor unit (London's `GBp` pence) are normalised to the
+major unit first; otherwise every UK holding would be overstated 100x.
 
 ### Calendar alignment
 
-Crypto trades seven days a week; listed equities do not. Mixing them naively
+Crypto trades seven days a week, listed equities do not. Mixing them naively
 either inflates the observation count — breaking the `sqrt(252)` annualisation
 convention — or injects artificial zero-return days that understate volatility.
 
-The benchmark's trading calendar (NYSE, via `^GSPC`) is therefore the master
-index:
+The benchmark's trading calendar is therefore the master index: crypto
+observations on non-trading days are dropped, and instrument-specific gaps
+(one venue closed while another is open) are forward-filled. Every series then
+has exactly one observation per trading day. The trade-off is explicit — a
+weekend crypto crash shows up on the following Monday.
 
-- Crypto observations on non-trading days are **dropped**.
-- Instrument-specific gaps (Euronext closed while NYSE is open) are
-  **forward-filled** from the last close.
-- Leading rows that are still incomplete are removed.
+### Monte Carlo
 
-Every series then has exactly one observation per trading day, and `sqrt(252)`
-annualisation is valid. The trade-off is explicit: a weekend crypto crash shows
-up on the following Monday rather than as its own observation.
+10,000 paths over 252 trading days, simulated across the **individual
+holdings** rather than the portfolio aggregate, which keeps the diversification
+effect intact.
 
-### Cost basis and P&L
+1. Convert daily simple returns to log returns, `x = ln(1 + r)`.
+2. Estimate the mean vector `mu` and covariance `Sigma`.
+3. Draw `x_t ~ N(mu, Sigma)` via a Cholesky factor, reproducing the historical
+   correlation structure.
+4. Compound each asset and sum.
 
-`cost_basis_per_unit` is stored in the instrument's own currency and converted
-to EUR at the FX rate **on the acquisition date**, not today's rate. Unrealised
-P&L therefore includes the currency move since entry, which is what a EUR
-investor actually experienced.
+Log returns make compounding exact and keep prices positive — sampling *simple*
+returns from a normal distribution can draw below -100%, implying a negative
+price. Paths run in batches so memory stays bounded, and a singular covariance
+matrix is repaired by eigenvalue clipping rather than crashing.
 
-### Monte Carlo method
-
-10,000 paths over 252 trading days, simulated across the **individual holdings**
-rather than the portfolio aggregate — which keeps the diversification effect
-intact.
-
-1. Convert historical daily simple returns to log returns, `x = ln(1 + r)`.
-2. Estimate the mean vector `mu` and covariance matrix `Sigma` of `x`.
-3. Draw `x_t ~ N(mu, Sigma)` via a Cholesky factor (`x = mu + Lz`), reproducing
-   the historical correlation structure.
-4. Compound each asset (`v_i(t) = v_i(0) * exp(cumsum(x_i))`) and sum across
-   assets.
-
-**Why log returns:** compounding is exact and prices stay positive. Sampling
-*simple* returns from a normal distribution can draw below -100%, implying a
-negative price.
-
-Paths are generated in batches (`mc_batch_paths`), so peak memory stays bounded
-regardless of path count; only the aggregated portfolio paths are retained. A
-singular or numerically indefinite covariance matrix is repaired by eigenvalue
-clipping rather than crashing.
-
-The seed is fixed (`config.mc_seed`), so the committed snapshot is reproducible.
-
-**Assumptions, stated plainly:** buy and hold with no rebalancing, contributions,
-fees or taxes; normally distributed log returns with constant parameters; and
-the past two years taken as representative of the next one. Real markets have
-fatter tails and time-varying volatility, so the extreme percentile bands are
-optimistic. The dashboard prints these assumptions beneath the chart.
+**Assumptions:** buy and hold, no rebalancing, contributions, fees or taxes;
+normally distributed log returns with constant parameters; and the lookback
+window taken as representative of the year ahead. Real markets have fatter tails
+and time-varying volatility, so the extreme percentile bands are optimistic.
 
 ---
 
 ## Design decisions
 
 The brief was an institutional finance tool — a Bloomberg terminal or a FINOS
-internal tool — not a template. Concretely:
+internal tool — not a template.
 
-### Governing system: IBM Carbon
+**Governing system: [IBM Carbon](https://carbondesignsystem.com/).** Its 2/4/8
+spacing scale, type scale and colour-token discipline are adopted directly in
+`tokens.css`, which is why the density reads as enterprise software rather than
+as arbitrary numbers.
 
-[Carbon](https://carbondesignsystem.com/) is the UX guideline. Its 2/4/8 spacing
-scale, type scale and colour-token discipline are adopted directly in
-`tokens.css`, which is why the density and rhythm read as enterprise software
-rather than as arbitrary numbers. Carbon's Gray 100 dark theme informed the
-surface ramp, and its status colours (`#42be65` green, `#fa4d56` red) are used
-for semantic sign.
+**Typography.** IBM Plex Sans for UI text, **IBM Plex Mono for every number** —
+prices, percentages, ratios, dates, axis labels. Self-hosted via `@fontsource`,
+so there are no external font requests. Numerals use `tabular-nums`, so digits
+occupy identical widths and columns align exactly down the grid.
 
-### Typography
+**Colour.** Flat, solid tokens only: no gradients anywhere, no shadows, no
+elevation. A true black page with panels lifted only three or four points of
+luminance, separated by 1px hairline rules rather than floating cards. One
+accent; semantic green/red reserved for the sign of a number and never used as
+decorative fill.
 
-**IBM Plex Sans** for UI text, **IBM Plex Mono for every number** — prices,
-percentages, ratios, dates, axis labels, tooltips. Self-hosted via
-`@fontsource`, bundled by Vite: no external font requests at runtime, no system
-font stack, no `-apple-system`.
+**Layout** is ordered by decreasing generality, so the opening view answers
+"what is this worth, how risky is it, where is it heading" before showing any
+individual position. The holdings table — densest but least summarising — sits
+below the fold. Drawdown gets its own panel rather than a toggle, because depth
+and duration of losses is exactly what an equity curve hides.
 
-Numerals use `font-variant-numeric: tabular-nums` with `tnum` and `zero`
-feature settings, so digits occupy identical widths and columns align exactly
-down the grid — the property that makes a dense financial table scannable.
-
-### Colour
-
-Flat, solid tokens only. **No gradients anywhere**, no shadows, no elevation.
-
-- A **true black page** (`#000000`) with panels barely lifted off it (`#08090b`).
-  On a trading floor the display is the only light source, so pure black gives
-  the figures the maximum available contrast ratio; lifting panels by only three
-  or four points of luminance keeps the grid reading as one continuous surface
-  divided by rules, rather than as a stack of slabs.
-- Separation comes from **1px hairline rules**, never from floating cards.
-- One accent (`#4589ff`), used for interaction and the primary data series.
-- Semantic green/red apply **only to numbers and small markers**, never as
-  decorative fills. A histogram bar is never coloured by profitability; the
-  break-even point is marked with a reference line instead.
-- The allocation donuts use a restrained steel ramp; the correlation heatmap
-  uses a **single-hue sequential** ramp so magnitude is encoded by luminance
-  alone. A rainbow scale would imply categories that do not exist.
-
-### No cards
-
-Panels have no border, no radius and no shadow. Every grid uses `gap: 1px` over
-a `--line` background, so the gap itself *is* the rule — which guarantees each
-separator is exactly one physical pixel. Two adjacent borders would render as
-two.
-
-### Motion
-
-One rule: **motion introduces data, it never decorates it.** Everything runs
-once on first load, decelerates into place, and then the dashboard is still.
-Nothing bounces, overshoots or loops — an instrument that fidgets is an
-instrument you stop trusting. Timings live in `src/lib/motion.ts`.
-
-Each library needed a different technique:
-
-| Element | Technique |
-|---|---|
-| Headline value, KPI band | `requestAnimationFrame` count-up on an `easeOutCubic` curve, staggered left to right |
-| Allocation donuts | ECharts `animationType: 'expansion'` — sweeps each ring open around its centre, with a per-segment `animationDelay` so the order of the breakdown is legible as it builds |
-| Equity and drawdown curves | Progressive `setData` (see below) |
-| Monte Carlo fan | ECharts draws line series left-to-right natively; enabling animation opens the fan outward from today's value |
-| Outcome histogram | Per-bar `animationDelay`, so bars grow up from the axis across the distribution |
-| Correlation heatmap | Short diagonal cascade (3ms per cell — any longer and 144 cells read as a loading state) |
-| Panels | 6px rise and fade, staggered 60ms per row |
-
-**Plotting the equity curve.** Lightweight Charts has no draw animation, so the
-line is grown a slice at a time on an animation frame loop. Done naively that
-looks terrible: the axes rescale on every frame as new points arrive, so the
-chart lurches while it draws. Three details fix it:
-
-1. The tail is padded with **`WhitespaceData`** (`{time}` with no value), which
-   occupies the time axis without drawing, so the horizontal scale is correct
-   from the first frame.
-2. **`autoscaleInfoProvider`** reports the finished min/max during the reveal,
-   pinning the price axis; afterwards it defers to the library's own autoscaling.
-3. **`fixLeftEdge`/`fixRightEdge` are lifted** for the duration. They clamp the
-   visible range to the real data, which would otherwise drag the view back to
-   the last plotted point every frame — the line ends up pinned to the right
-   edge and the whole chart scrolls like a live tape instead of a line being
-   drawn onto a fixed plot.
-
-**No layout shift.** A counter running from "0" to "80,325" changes width as it
-goes and would shove its neighbours around. `AnimatedNumber` overlays the
-animating text on an invisible copy of the *final* string in the same grid cell,
-so the element is always sized for its end state.
-
-**`prefers-reduced-motion` disables all of it** — chart reveals, counters and
-panel entrances alike. Under that setting every figure is final on first paint.
+**Motion** introduces data and never decorates it. On first load the numbers
+count into place, the donuts sweep open, and the curves plot themselves left to
+right; then the dashboard is still. `prefers-reduced-motion` disables all of it.
 
 ### Libraries, and why
 
 | Concern | Library | Why |
 |---|---|---|
-| Equity curve, returns, drawdown | [TradingView Lightweight Charts](https://github.com/tradingview/lightweight-charts) v5 | The professional standard for financial time series. Thin lines, hairline axes, magnet crosshair. Area *gradients* are its default look and are deliberately not used — only line series, matching the flat system. |
-| Correlation heatmap, Monte Carlo fan, histogram, donuts | [Apache ECharts](https://echarts.apache.org/) v6 | Best-in-class heatmap and stacked-band support. Imported through `echarts/core` with only the five chart types and five components actually used, so tree shaking keeps the bundle to a fraction of the full library. |
-| Holdings grid | [TanStack Table](https://tanstack.com/table) v9 | Headless — it supplies sorting and row models but zero styling, which is what a bespoke design system needs. Only the core and row-sorting features are registered. |
-| Row sparklines | Hand-rolled inline SVG | At 84×18px a charting runtime would cost far more than the twenty lines of path maths it replaces, and twelve canvas instances inside a table would be wasteful. |
+| Equity, drawdown curves | [TradingView Lightweight Charts](https://github.com/tradingview/lightweight-charts) | The professional standard for financial time series. Thin lines, hairline axes, magnet crosshair. Its default area *gradients* are deliberately unused. |
+| Heatmap, Monte Carlo fan, histogram, donuts | [Apache ECharts](https://echarts.apache.org/) | Best-in-class heatmap and stacked-band support. Imported through `echarts/core` with only the pieces used, so tree shaking keeps the bundle small. |
+| Holdings grid | [TanStack Table](https://tanstack.com/table) | Headless — sorting and row models with zero styling, which is what a bespoke design system needs. |
+| Row sparklines | Hand-rolled inline SVG | At 84×18px a charting runtime would cost more than the twenty lines of path maths it replaces. |
 
-Both chart libraries read their colours from the **live CSS custom properties**
-via `charts/theme.ts`, so `tokens.css` stays the single source of truth: change
-a token and every chart follows. No palette is duplicated in JavaScript.
-
-Chart attribution is given in the application footer and here, rather than as an
-overlay mark inside the plot area.
-
-### Layout
-
-Ordered by **decreasing generality**, so the opening view answers "what is this
-worth, how risky is it, and where is it heading" before asking the reader to
-look at any individual position:
-
-```
-top bar            headline value, today / all-time change, inline sparkline
-KPI band           8 figures: vol, Sharpe, Sortino, max DD, VaR, beta, P(loss), median 1Y
-performance        equity curve vs benchmark + period readout   |  allocation
-drawdown           underwater curve  |  Monte Carlo fan  |  outcome distribution
-─────────────────────────────────── typical fold ───────────────────────────────
-holdings           the position-level grid
-risk               full metric readout with plain-English meanings | correlation
-```
-
-Everything above the fold is portfolio-level. The holdings table — the densest
-but least summarising element — sits below it, because a reader who wants a
-specific position will scroll for it, whereas a reader forming a first
-impression should not have to scroll past twelve rows to find the risk numbers.
-
-Drawdown gets a panel of its own rather than a toggle inside the performance
-chart: depth and duration of losses is the question an equity curve hides, since
-a portfolio that ends flat looks calm even if it fell 25% along the way.
-
-Charts sharing a row use a fill mode so they stretch to a common baseline
-instead of leaving dead space under whichever panel is shortest.
-
-The shell collapses to a single column below 1240px; the KPI band steps 8 → 4 →
-2 columns (all divisors of eight, so a row is never left with an orphan cell);
-and the holdings grid sheds its least load-bearing columns in priority order
-(name, then class and quantity, then region and day change) rather than clipping
-or scrolling sideways — so it stays clean cropped to a vertical screen recording.
+Both chart libraries read their colours from the live CSS custom properties, so
+`tokens.css` stays the single source of truth: change a token and every chart
+follows.
 
 ---
 
@@ -364,59 +295,50 @@ or scrolling sideways — so it stays clean cropped to a vertical screen recordi
 
 ```
 ├── backend/
-│   ├── config.py            # every tunable: currency, benchmark, rf rate, MC size, seed
-│   ├── data.py              # yfinance fetch, disk cache, FX conversion, calendar alignment
-│   ├── metrics.py           # pure metric functions, each documenting its formula
-│   ├── montecarlo.py        # batched correlated simulation
-│   ├── portfolio.py         # assembly layer: the only module that knows the JSON contract
-│   ├── serialize.py         # rounding + JSON-safety (no NaN/inf ever reaches the wire)
-│   ├── api.py               # FastAPI routes, CORS, error boundary
-│   ├── generate_snapshot.py # runs everything once, writes ../snapshot.json
-│   ├── holdings.json        # the portfolio definition — edit this
-│   └── tests/               # 78 tests, no network access
-├── frontend/
-│   └── src/
-│       ├── styles/          # tokens.css (the design contract), base, layout, panels
-│       ├── lib/             # types mirroring the API, data access, formatters
-│       ├── charts/          # ECharts + Lightweight Charts wrappers, token bridge
-│       └── components/      # one file per panel: KpiStrip, Performance,
-│                            # Drawdown, MonteCarlo, Allocation, Holdings,
-│                            # Risk, Correlation, TopBar
-├── snapshot.json            # committed: the frontend runs from this with no backend
-└── API.md                   # every endpoint, with units and example JSON
+│   ├── config.py             # every tunable: benchmark, rf rate, MC size, seed
+│   ├── data.py               # yfinance fetch, cache, FX, calendar alignment
+│   ├── metrics.py            # pure metric functions, each documenting its formula
+│   ├── montecarlo.py         # batched correlated simulation
+│   ├── portfolio.py          # assembly layer: the only module that knows the JSON contract
+│   ├── serialize.py          # rounding + JSON-safety (no NaN/inf on the wire)
+│   ├── api.py                # FastAPI routes, CORS, error boundary
+│   ├── setup_holdings.py     # interactive + CSV portfolio builder
+│   ├── generate_snapshot.py  # runs everything once, writes ../snapshot.json
+│   ├── holdings.json         # your portfolio — edit this
+│   └── tests/                # 87 tests, no network access
+├── frontend/src/
+│   ├── styles/               # tokens.css (the design contract), base, layout, panels
+│   ├── lib/                  # API types, data access, formatters, motion
+│   ├── charts/               # ECharts + Lightweight Charts wrappers, token bridge
+│   └── components/           # one file per panel
+├── snapshot.json             # committed, so the frontend runs with no backend
+└── API.md                    # every endpoint, with units and example JSON
 ```
 
 The layering rule: `metrics.py` and `montecarlo.py` are pure and unrounded;
 `portfolio.py` composes, rounds and shapes; `api.py` only routes. The wire
-format can change without touching a single computation.
+format can change without touching a computation.
 
 ---
 
 ## Testing
 
 ```bash
-cd backend && python -m pytest        # 78 tests
+make test        # or: cd backend && python -m pytest
 ```
 
-The suite is hermetic — it never touches the network. A synthetic portfolio and
-price history stand in for Yahoo Finance.
+87 tests, hermetic — the suite never touches the network, using a synthetic
+portfolio and price history instead, so it passes offline and in CI.
 
-- `test_metrics.py` pins each metric against a hand-computable input, so a
-  refactor that silently changes a formula fails here rather than in the UI.
+- `test_metrics.py` pins each metric against a hand-computable input.
 - `test_montecarlo.py` asserts the properties a stochastic simulation must
-  satisfy: determinism under a fixed seed, correctly ordered and widening
-  percentile bands, a normalised histogram, preserved correlation structure,
-  positive values, and recovery from a singular covariance matrix.
-- `test_api.py` checks the JSON contract itself — allocations summing to 1,
-  per-holding series summing to the equity curve, VaR rising with confidence,
-  Monte Carlo bands aligning with their date array, and strict JSON-safety on
-  every route.
-
-Frontend typecheck and build:
-
-```bash
-cd frontend && npx tsc -b && npm run build
-```
+  satisfy: determinism under a fixed seed, ordered and widening percentile
+  bands, a normalised histogram, preserved correlation structure, and recovery
+  from a singular covariance matrix.
+- `test_currency.py` covers pair direction and the minor-unit (pence) trap.
+- `test_api.py` checks the JSON contract: allocations summing to 1, per-holding
+  series summing to the equity curve, VaR rising with confidence, strict
+  JSON-safety on every route.
 
 ---
 
@@ -425,17 +347,21 @@ cd frontend && npx tsc -b && npm run build
 Worth knowing before reading anything into the output:
 
 - **Yahoo Finance is the single data source.** It is free and occasionally
-  wrong: adjusted closes get revised, and thin instruments can carry bad prints.
+  wrong: adjusted closes get revised, and thin instruments carry bad prints.
 - **Two years of history** is a short window for volatility and correlation
-  estimates, and it covers one particular regime.
+  estimates, and covers one particular regime.
 - **Correlations are not stable.** The matrix is a historical average; in a
-  sell-off, correlations tend toward 1 exactly when diversification is needed.
+  sell-off correlations tend toward 1 exactly when diversification is needed.
 - **Monte Carlo assumes normal log returns** with constant parameters. Real
-  markets have fatter tails and volatility clustering, so the p5/p95 bands are
-  wider in reality than shown.
-- **No fees, taxes, dividends-as-cash, contributions or rebalancing** are
-  modelled. Prices are auto-adjusted, so dividends are reflected in the price
-  series rather than as separate cash flows.
-- **Beta is measured against the S&P 500 in USD** while the portfolio is valued
-  in EUR, so the FX move is inside the portfolio's returns but not the
-  benchmark's.
+  markets have fatter tails, so the p5/p95 bands are wider in reality.
+- **No fees, taxes, cash dividends, contributions or rebalancing** are modelled.
+  Prices are auto-adjusted, so dividends are reflected in the price series.
+- **Beta is measured against the benchmark in its own currency** while the
+  portfolio is valued in yours, so the FX move sits inside the portfolio's
+  returns but not the benchmark's.
+
+---
+
+## License
+
+[MIT](LICENSE) — use it, fork it, change it.

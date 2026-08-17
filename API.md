@@ -18,7 +18,7 @@ These hold for **every** endpoint.
 
 | Rule | Detail |
 |---|---|
-| Currency | All monetary values are in the portfolio base currency (**EUR**), rounded to **2 dp**. |
+| Currency | All monetary values are in the portfolio base currency, set by `base_currency` in `holdings.json` (**EUR** in the bundled example) and echoed on every response. Rounded to **2 dp**. |
 | `*_pct` fields | Always a **fraction**, never a percentage. `0.1234` means 12.34%. Rounded to **4 dp**. |
 | Ratios | Sharpe, Sortino, beta and correlations are unitless, rounded to **4 dp**. |
 | Dates | ISO `YYYY-MM-DD` strings. Timestamps are ISO 8601 UTC. |
@@ -109,7 +109,7 @@ Priced positions — the source for the holdings grid.
 |---|---|---|
 | `quantity` | units | Fractional allowed; frozen in `holdings.json`. |
 | `price_native` | native currency | As quoted by the exchange (see `currency`). |
-| `price_base` | EUR | `price_native / EURUSD` for USD instruments. |
+| `price_base` | base currency | `price_native * rate`, where the rate comes from the `{quote}{base}=X` pair. Minor units (London's `GBp`) are normalised first. |
 | `allocation_pct` | fraction | Share of `total_value`. Sums to 1 across holdings. |
 | `cost_basis_base` | EUR | Entry price converted at the FX rate **on `acquired`**, so P&L includes the currency move. |
 | `unrealized_pnl` | EUR | `quantity * (price_base - cost_basis_base)`. |

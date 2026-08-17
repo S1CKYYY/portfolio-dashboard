@@ -53,22 +53,24 @@ def synthetic_market(synthetic_portfolio: Portfolio) -> MarketData:
         },
         index=index,
     )
-    fx = pd.Series(
-        1.08 * np.exp(np.cumsum(rng.normal(0.0, 0.003, len(index)))), index=index, name="EURUSD=X"
+    # USDEUR=X: EUR per 1 USD, i.e. base units per unit of the quote currency.
+    usd_eur = pd.Series(
+        0.925 * np.exp(np.cumsum(rng.normal(0.0, 0.003, len(index)))), index=index, name="USDEUR=X"
     )
     benchmark = pd.Series(
         5000.0 * np.exp(np.cumsum(rng.normal(0.0005, 0.009, len(index)))), index=index, name="^GSPC"
     )
 
     base = native.copy()
-    base["BBB"] = native["BBB"] / fx
-    base["CCC-USD"] = native["CCC-USD"] / fx
+    base["BBB"] = native["BBB"] * usd_eur
+    base["CCC-USD"] = native["CCC-USD"] * usd_eur
 
     return MarketData(
         prices_native=native,
         prices_base=base,
-        fx=fx,
+        fx={"USD": usd_eur},
         benchmark=benchmark,
+        base_currency="EUR",
         fetched_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
     )
 

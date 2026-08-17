@@ -112,12 +112,12 @@ def test_holdings_expose_every_field_the_grid_renders(analytics: PortfolioAnalyt
 
 
 def test_usd_holdings_are_converted_into_the_base_currency(analytics: PortfolioAnalytics) -> None:
-    """A USD position's EUR price must equal price_native / EURUSD."""
+    """A USD position's EUR price must equal price_native * (EUR per USD)."""
     holdings = {h["ticker"]: h for h in analytics.holdings()["holdings"]}
-    fx = float(analytics.market.fx.iloc[-1])
+    rate = float(analytics.market.rate_series("USD").iloc[-1])
 
     usd_position = holdings["BBB"]
-    assert usd_position["price_base"] == pytest.approx(usd_position["price_native"] / fx, rel=1e-4)
+    assert usd_position["price_base"] == pytest.approx(usd_position["price_native"] * rate, rel=1e-4)
 
     eur_position = holdings["AAA.AS"]
     assert eur_position["price_base"] == pytest.approx(eur_position["price_native"], rel=1e-9)

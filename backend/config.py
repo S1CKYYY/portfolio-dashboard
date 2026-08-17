@@ -18,10 +18,8 @@ class Settings:
     """Immutable runtime settings.
 
     Attributes:
-        base_currency: Reporting currency for every monetary figure.
-        fx_pair: yfinance symbol quoting ``base_currency`` against USD.
-            ``EURUSD=X`` is quoted as *USD per 1 EUR*, so a USD price is
-            converted with ``price_usd / eurusd``.
+        base_currency: Fallback reporting currency. ``holdings.json`` is the
+            authority; this is only used when that file omits the field.
         benchmark: yfinance symbol used for beta and relative comparisons.
         history_years: Years of daily history to fetch.
         trading_days_per_year: Annualisation factor for volatility/Sharpe.
@@ -39,7 +37,6 @@ class Settings:
     """
 
     base_currency: str = "EUR"
-    fx_pair: str = "EURUSD=X"
     benchmark: str = "^GSPC"
     benchmark_name: str = "S&P 500"
 
