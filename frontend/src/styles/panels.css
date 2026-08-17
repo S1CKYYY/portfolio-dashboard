@@ -1,0 +1,497 @@
+/**
+ * Panel-specific styles.
+ *
+ * Grouped in one file because every rule below is a small refinement of the
+ * primitives in base.css - splitting them per component would trade one short
+ * file for eight fragments of five lines each.
+ */
+
+/* ------------------------------------------------------------------ *
+ * Allocation                                                          *
+ * ------------------------------------------------------------------ */
+
+.allocation {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tuned so the two breakdowns together stand roughly as tall as the holdings
+   grid beside them, keeping the row visually balanced. */
+.allocation__group {
+  padding: var(--space-3) 0 var(--space-4);
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.allocation__group:last-child {
+  border-bottom: 0;
+}
+
+.allocation__caption {
+  padding: 0 var(--space-5) var(--space-2);
+}
+
+.allocation__legend {
+  width: 100%;
+  margin-top: var(--space-2);
+  border-collapse: collapse;
+}
+
+.allocation__legend tr {
+  transition: background-color var(--duration-fast) var(--easing);
+}
+
+.allocation__legend tr:hover {
+  background: var(--surface-hover);
+}
+
+.allocation__legend td {
+  padding: var(--space-1) 0;
+  font-size: var(--size-caption);
+  vertical-align: middle;
+}
+
+.allocation__swatch-cell {
+  width: var(--space-8);
+  padding-left: var(--space-5) !important;
+}
+
+.allocation__swatch {
+  display: block;
+  width: 8px;
+  height: 8px;
+}
+
+.allocation__key {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.allocation__value {
+  text-align: right;
+  color: var(--text-primary);
+}
+
+.allocation__pct {
+  width: 56px;
+  padding-right: var(--space-5) !important;
+  text-align: right;
+}
+
+/* ------------------------------------------------------------------ *
+ * Holdings grid                                                       *
+ * ------------------------------------------------------------------ */
+
+.grid__scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.grid__th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: var(--header-height);
+  padding: 0 var(--space-4);
+  background: var(--surface-header);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-size: var(--size-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.grid__th--right {
+  text-align: right;
+}
+
+.grid__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--easing);
+}
+
+.grid__th--right .grid__sort {
+  flex-direction: row;
+}
+
+.grid__sort:hover {
+  color: var(--text-primary);
+}
+
+.grid__sort:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.grid__caret {
+  color: var(--accent);
+}
+
+.grid__row {
+  border-bottom: 1px solid var(--line-faint);
+  transition: background-color var(--duration-fast) var(--easing);
+}
+
+.grid__row:hover {
+  background: var(--surface-hover);
+}
+
+.grid__td {
+  height: var(--row-height);
+  padding: 0 var(--space-4);
+  font-size: var(--size-caption);
+  color: var(--text-secondary);
+}
+
+.grid__td--right {
+  text-align: right;
+}
+
+.grid__ticker {
+  font-size: var(--size-caption);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.grid__name {
+  color: var(--text-secondary);
+}
+
+.grid__tag {
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.grid__strong {
+  color: var(--text-primary);
+}
+
+/* Weight cell: figure with a proportional rule beneath it. */
+.grid__weight {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+.grid__weight-bar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--accent-dim);
+}
+
+.grid__total {
+  border-top: 1px solid var(--line);
+  background: var(--surface-header);
+}
+
+.grid__total .grid__td {
+  height: var(--row-height);
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ *
+ * Performance                                                         *
+ * ------------------------------------------------------------------ */
+
+.performance {
+  display: flex;
+  flex-direction: column;
+}
+
+.performance__legend {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--line-faint);
+  font-size: var(--size-caption);
+}
+
+.performance__date {
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.performance__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.performance__legend-key {
+  width: 10px;
+  height: 2px;
+}
+
+.performance__legend-label {
+  color: var(--text-tertiary);
+}
+
+.performance__legend-value {
+  color: var(--text-primary);
+}
+
+/* Divided readout row - hairline separated cells, never floating cards. */
+.performance__readout {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line-faint);
+  border-top: 1px solid var(--line-faint);
+}
+
+.performance__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-panel);
+}
+
+.performance__cell-label {
+  font-size: var(--size-micro);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.performance__cell-value {
+  font-size: var(--size-heading);
+}
+
+.performance__cell-sub {
+  font-size: var(--size-caption);
+  opacity: 0.75;
+}
+
+.performance__stats {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--line-faint);
+  font-size: var(--size-caption);
+}
+
+.performance__stats > span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.performance__stat-label {
+  font-size: var(--size-micro);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ *
+ * Correlation                                                         *
+ * ------------------------------------------------------------------ */
+
+.correlation {
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--space-4);
+}
+
+.correlation__scale {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5) var(--space-4);
+  font-size: var(--size-micro);
+  color: var(--text-tertiary);
+}
+
+.correlation__ramp {
+  display: flex;
+  height: 8px;
+  width: 140px;
+}
+
+.correlation__ramp > span {
+  flex: 1;
+}
+
+.correlation__note {
+  margin-left: auto;
+  text-align: right;
+}
+
+/* ------------------------------------------------------------------ *
+ * Monte Carlo                                                         *
+ * ------------------------------------------------------------------ */
+
+.montecarlo {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--space-4);
+}
+
+.montecarlo__legend {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--line-faint);
+  font-size: var(--size-caption);
+  color: var(--text-tertiary);
+}
+
+.montecarlo__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.montecarlo__key {
+  width: 10px;
+  height: 8px;
+}
+
+.montecarlo__key--outer {
+  background: var(--viz-band);
+}
+
+.montecarlo__key--inner {
+  background: var(--viz-band-inner);
+}
+
+.montecarlo__key--median {
+  height: 2px;
+  background: var(--accent);
+}
+
+.montecarlo__aside {
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--space-3);
+}
+
+.montecarlo__summary {
+  border-top: 1px solid var(--line-faint);
+}
+
+.montecarlo__summary .readout__label {
+  width: auto;
+}
+
+.montecarlo__summary .readout__value {
+  width: auto;
+}
+
+.montecarlo__assumptions {
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--line-faint);
+  font-size: var(--size-micro);
+  line-height: var(--leading-snug);
+  color: var(--text-tertiary);
+}
+
+/* ------------------------------------------------------------------ *
+ * Responsive refinements                                              *
+ *                                                                     *
+ * Once the shell collapses to one column the allocation rail is no    *
+ * longer a rail, and the holdings grid loses its horizontal budget.   *
+ * Rather than let either sprawl or clip, the donuts sit side by side  *
+ * and the grid sheds its least load-bearing columns in priority order.*
+ * ------------------------------------------------------------------ */
+
+@media (max-width: 1440px) {
+  .grid [data-column='name'] {
+    display: none;
+  }
+}
+
+@media (max-width: 1150px) {
+  .grid [data-column='asset_class'],
+  .grid [data-column='quantity'] {
+    display: none;
+  }
+}
+
+@media (max-width: 850px) {
+  .grid [data-column='region'],
+  .grid [data-column='day_change_pct'] {
+    display: none;
+  }
+}
+
+@media (max-width: 1240px) {
+  .allocation {
+    flex-direction: row;
+  }
+
+  .allocation__group {
+    flex: 1;
+    border-bottom: 0;
+    border-right: 1px solid var(--line-faint);
+  }
+
+  .allocation__group:last-child {
+    border-right: 0;
+  }
+
+  /* Keeps the donut at a sensible size instead of filling the full width. */
+  .allocation__chart {
+    max-width: 190px;
+    margin: 0 auto;
+  }
+
+  .allocation__legend {
+    max-width: 340px;
+  }
+}
+
+@media (max-width: 720px) {
+  .allocation {
+    flex-direction: column;
+  }
+
+  .allocation__group {
+    border-right: 0;
+    border-bottom: 1px solid var(--line-faint);
+  }
+
+  .performance__readout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .performance__stats {
+    gap: var(--space-5);
+  }
+
+  .readout__meaning {
+    display: none;
+  }
+}

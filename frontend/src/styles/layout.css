@@ -1,0 +1,260 @@
+/**
+ * Application shell and the panel grid.
+ *
+ * The hairline technique: every grid uses `gap: 1px` over a `--line`
+ * background, so the gap itself *is* the rule. Panels stay borderless and no
+ * rule is ever doubled.
+ */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  max-width: var(--max-width);
+  min-height: 100%;
+  margin: 0 auto;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+
+/**
+ * Stack of full-width rows, hairline-separated.
+ *
+ * Deliberately not `flex: 1`: the 1px gaps are painted by this element's
+ * background, so stretching it would flood any leftover viewport height with
+ * the hairline colour. The footer takes the slack instead (`margin-top: auto`).
+ */
+.app__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--line);
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+}
+
+/* Allocation rail beside the holdings grid. */
+.row--holdings {
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+}
+
+/* Risk readout beside the correlation matrix. */
+.row--risk {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+/* Monte Carlo fan beside its terminal distribution. */
+.row--montecarlo {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Top bar                                                             *
+ * ------------------------------------------------------------------ */
+
+.topbar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-6) var(--space-7);
+  background: var(--surface-panel);
+}
+
+.topbar__identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.topbar__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.topbar__title {
+  margin: 0;
+  font-size: var(--size-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.topbar__value {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+.topbar__amount {
+  font-size: var(--size-display);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+.topbar__currency {
+  font-size: var(--size-caption);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+}
+
+.topbar__deltas {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.topbar__delta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--size-caption);
+}
+
+.topbar__delta-label {
+  font-size: var(--size-micro);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* Right side: inline sparkline over the as-of metadata. */
+.topbar__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.topbar__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  font-size: var(--size-micro);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.topbar__meta-value {
+  color: var(--text-secondary);
+}
+
+.topbar__source {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line-strong);
+  color: var(--text-secondary);
+}
+
+.topbar__source-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--positive);
+}
+
+.topbar__source-dot--snapshot {
+  background: var(--accent);
+}
+
+/* ------------------------------------------------------------------ *
+ * Status / load states                                                *
+ * ------------------------------------------------------------------ */
+
+.state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.state__title {
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.state__detail {
+  max-width: 60ch;
+  font-size: var(--size-caption);
+  line-height: var(--leading-snug);
+  color: var(--text-tertiary);
+}
+
+.state__detail code {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------ *
+ * Footer                                                              *
+ * ------------------------------------------------------------------ */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  /* Absorbs leftover viewport height so the shell stays bottom-anchored. */
+  margin-top: auto;
+  padding: var(--space-4) var(--space-7);
+  border-top: 1px solid var(--line);
+  background: var(--surface-panel);
+  font-size: var(--size-micro);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-disabled);
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ *
+ * Responsive - collapse to a single column, staying dense and legible *
+ * when cropped to a narrow vertical viewport.                         *
+ * ------------------------------------------------------------------ */
+
+@media (max-width: 1240px) {
+  .row--holdings,
+  .row--risk,
+  .row--montecarlo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    flex-direction: column;
+    gap: var(--space-5);
+    padding: var(--space-5);
+  }
+
+  .topbar__aside {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .topbar__amount {
+    font-size: var(--size-large);
+  }
+
+  .footer {
+    padding: var(--space-4) var(--space-5);
+  }
+}

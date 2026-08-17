@@ -1,0 +1,320 @@
+"""Market-data acquisition, caching, FX conversion and calendar alignment.
+
+Responsibilities
+----------------
+1. Load the portfolio definition from ``holdings.json``.
+2. Fetch ~2 years of daily closes for every holding, the benchmark and the
+   EUR/USD rate from Yahoo Finance, caching the result on disk.
+3. Convert USD-denominated instruments into the base currency (EUR).
+4. Align the crypto (7-day) and equity (5-day) calendars onto a single
+   trading-day index.
+
+FX handling
+-----------
+``EURUSD=X`` is quoted as *USD per 1 EUR*. Any instrument priced in USD is
+therefore converted with ``price_eur = price_usd / eurusd``. The same daily FX
+series is applied to the historical price series, so the equity curve reflects
+both asset performance and currency movement — the honest view for a EUR-based
+investor. Cost bases are converted at the FX rate observed on the acquisition
+date, not today's rate, so unrealised P&L includes the currency effect.
+
+Calendar alignment
+------------------
+Crypto trades 7 days a week, listed equities do not. Mixing the two naively
+either inflates the observation count (breaking the ``sqrt(252)`` annualisation
+convention) or injects artificial zero-return days. We therefore take the
+benchmark's trading calendar (NYSE via ``^GSPC``) as the master index, drop
+crypto observations on non-trading days, and forward-fill instrument prices
+across venue-specific holidays (e.g. Euronext closed while NYSE is open). Every
+series then has exactly one observation per trading day.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+import pickle
+import time
+from collections import Counter
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+from typing import Iterable, Sequence
+
+import pandas as pd
+import yfinance as yf
+
+from config import SETTINGS, Settings
+
+logger = logging.getLogger(__name__)
+
+CACHE_FORMAT_VERSION = 3
+
+
+@dataclass(frozen=True)
+class Holding:
+    """One position in the portfolio.
+
+    Attributes:
+        ticker: yfinance symbol.
+        name: Human-readable instrument name.
+        asset_class: ``ETF`` | ``Stock`` | ``Crypto``.
+        region: Geographic bucket, or ``None`` for region-less assets (crypto).
+        currency: Currency the instrument is quoted in (``EUR`` or ``USD``).
+        quantity: Units held. Frozen in ``holdings.json``; fractional allowed.
+        cost_basis_per_unit: Entry price per unit, in ``currency``.
+        acquired: ISO date of the (notional) purchase, used to pick the FX rate
+            applied to the cost basis.
+    """
+
+    ticker: str
+    name: str
+    asset_class: str
+    region: str | None
+    currency: str
+    quantity: float
+    cost_basis_per_unit: float
+    acquired: str
+
+    @property
+    def region_label(self) -> str:
+        """Region for grouping; crypto has no meaningful geography."""
+        return self.region or "Crypto"
+
+
+@dataclass(frozen=True)
+class Portfolio:
+    """The portfolio definition as loaded from ``holdings.json``."""
+
+    base_currency: str
+    holdings: tuple[Holding, ...]
+
+    @property
+    def tickers(self) -> tuple[str, ...]:
+        return tuple(h.ticker for h in self.holdings)
+
+    def by_ticker(self, ticker: str) -> Holding:
+        for holding in self.holdings:
+            if holding.ticker == ticker:
+                return holding
+        raise KeyError(ticker)
+
+
+@dataclass(frozen=True)
+class MarketData:
+    """Aligned market data in both native and base currency.
+
+    Attributes:
+        prices_native: Daily closes as quoted by the exchange, one column per
+            holding ticker, indexed by trading day.
+        prices_base: The same closes converted to the base currency.
+        fx: ``EURUSD=X`` daily close (USD per 1 EUR), aligned to the index.
+        benchmark: Benchmark daily close (USD; only returns are ever used).
+        fetched_at: UTC timestamp of the underlying download.
+    """
+
+    prices_native: pd.DataFrame
+    prices_base: pd.DataFrame
+    fx: pd.Series
+    benchmark: pd.Series
+    fetched_at: datetime
+
+    @property
+    def as_of(self) -> date:
+        """Date of the most recent observation."""
+        return self.prices_base.index[-1].date()
+
+
+def load_portfolio(path: Path | None = None) -> Portfolio:
+    """Read and validate ``holdings.json``.
+
+    Raises:
+        ValueError: if the file is malformed or a holding is missing a field.
+    """
+    path = path or SETTINGS.holdings_path
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+
+    if "holdings" not in raw:
+        raise ValueError(f"{path}: missing 'holdings' array")
+
+    holdings: list[Holding] = []
+    for index, item in enumerate(raw["holdings"]):
+        try:
+            holdings.append(
+                Holding(
+                    ticker=str(item["ticker"]),
+                    name=str(item["name"]),
+                    asset_class=str(item["asset_class"]),
+                    region=item.get("region") or None,
+                    currency=str(item["currency"]),
+                    quantity=float(item["quantity"]),
+                    cost_basis_per_unit=float(item["cost_basis_per_unit"]),
+                    acquired=str(item["acquired"]),
+                )
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"{path}: holding #{index} is invalid: {exc}") from exc
+
+    if not holdings:
+        raise ValueError(f"{path}: portfolio is empty")
+
+    counts = Counter(h.ticker for h in holdings)
+    duplicates = sorted(t for t, n in counts.items() if n > 1)
+    if duplicates:
+        raise ValueError(f"{path}: duplicate tickers {duplicates}")
+
+    return Portfolio(base_currency=str(raw.get("base_currency", "EUR")), holdings=tuple(holdings))
+
+
+def _cache_file(cache_dir: Path, symbols: Sequence[str], years: int) -> Path:
+    """Deterministic cache path for a given symbol set and lookback."""
+    key = f"v{CACHE_FORMAT_VERSION}-{years}y-{'_'.join(sorted(symbols))}"
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
+    return cache_dir / f"prices-{years}y-{digest}.pkl"
+
+
+def _download_closes(symbols: Sequence[str], start: date, end: date) -> pd.DataFrame:
+    """Download adjusted daily closes for ``symbols`` from Yahoo Finance.
+
+    Returns:
+        DataFrame of closes indexed by date with one column per symbol.
+
+    Raises:
+        RuntimeError: if the download returns nothing usable.
+    """
+    logger.info("Downloading %d symbols from Yahoo Finance (%s .. %s)", len(symbols), start, end)
+    raw = yf.download(
+        list(symbols),
+        start=start.isoformat(),
+        end=end.isoformat(),
+        auto_adjust=True,
+        progress=False,
+        group_by="column",
+        threads=True,
+    )
+    if raw is None or raw.empty:
+        raise RuntimeError("Yahoo Finance returned no data; check connectivity or symbols")
+
+    closes = raw["Close"] if isinstance(raw.columns, pd.MultiIndex) else raw[["Close"]]
+    if isinstance(closes, pd.Series):  # single-symbol edge case
+        closes = closes.to_frame(symbols[0])
+
+    missing = [s for s in symbols if s not in closes.columns or closes[s].dropna().empty]
+    if missing:
+        raise RuntimeError(f"No price data returned for: {missing}")
+
+    closes = closes.loc[:, list(symbols)]
+    closes.index = pd.to_datetime(closes.index).tz_localize(None).normalize()
+    closes.index.name = "date"
+    return closes.sort_index()
+
+
+def _load_cached(path: Path, ttl_hours: float) -> tuple[pd.DataFrame, datetime] | None:
+    """Return cached closes if the cache exists and is fresh, else ``None``."""
+    if not path.exists():
+        return None
+    age_hours = (time.time() - path.stat().st_mtime) / 3600.0
+    if age_hours > ttl_hours:
+        logger.info("Price cache is %.1fh old (ttl %.1fh); refetching", age_hours, ttl_hours)
+        return None
+    try:
+        with path.open("rb") as handle:
+            payload = pickle.load(handle)
+        return payload["closes"], payload["fetched_at"]
+    except Exception as exc:  # noqa: BLE001 - a corrupt cache must never be fatal
+        logger.warning("Ignoring unreadable price cache %s: %s", path, exc)
+        return None
+
+
+def _store_cache(path: Path, closes: pd.DataFrame, fetched_at: datetime) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as handle:
+        pickle.dump({"closes": closes, "fetched_at": fetched_at}, handle)
+
+
+def _align_to_trading_calendar(closes: pd.DataFrame, benchmark_symbol: str) -> pd.DataFrame:
+    """Project every series onto the benchmark's trading calendar.
+
+    Crypto rows falling on non-trading days are dropped; instrument-specific
+    gaps (foreign exchange holidays) are forward-filled from the last close.
+    Leading rows that are still incomplete after the fill are removed so that
+    no metric is computed against a partially-populated portfolio.
+    """
+    calendar = closes[benchmark_symbol].dropna().index
+    aligned = closes.reindex(calendar).ffill()
+    return aligned.dropna(how="any")
+
+
+def load_market_data(
+    portfolio: Portfolio,
+    settings: Settings = SETTINGS,
+    *,
+    use_cache: bool = True,
+) -> MarketData:
+    """Fetch, cache, align and FX-convert all price history the app needs.
+
+    Args:
+        portfolio: Portfolio whose tickers should be fetched.
+        settings: Runtime settings (lookback, benchmark, FX pair, cache).
+        use_cache: When ``False``, always hit the network.
+
+    Returns:
+        A :class:`MarketData` with native and base-currency price frames.
+    """
+    symbols = list(dict.fromkeys([*portfolio.tickers, settings.benchmark, settings.fx_pair]))
+    end = date.today() + timedelta(days=1)  # yfinance `end` is exclusive
+    start = end - timedelta(days=int(365.25 * settings.history_years) + 10)
+
+    cache_path = _cache_file(settings.cache_dir, symbols, settings.history_years)
+    cached = _load_cached(cache_path, settings.cache_ttl_hours) if use_cache else None
+
+    if cached is not None:
+        closes, fetched_at = cached
+        logger.info("Using cached prices from %s", fetched_at.isoformat())
+    else:
+        closes = _download_closes(symbols, start, end)
+        fetched_at = datetime.now(timezone.utc)
+        _store_cache(cache_path, closes, fetched_at)
+
+    aligned = _align_to_trading_calendar(closes, settings.benchmark)
+
+    fx = aligned[settings.fx_pair]
+    benchmark = aligned[settings.benchmark]
+    prices_native = aligned.loc[:, list(portfolio.tickers)]
+
+    prices_base = prices_native.copy()
+    for holding in portfolio.holdings:
+        if holding.currency == "USD":
+            prices_base[holding.ticker] = prices_native[holding.ticker] / fx
+        elif holding.currency != settings.base_currency:
+            raise ValueError(
+                f"{holding.ticker}: unsupported currency {holding.currency!r} "
+                f"(expected {settings.base_currency!r} or 'USD')"
+            )
+
+    return MarketData(
+        prices_native=prices_native,
+        prices_base=prices_base,
+        fx=fx,
+        benchmark=benchmark,
+        fetched_at=fetched_at,
+    )
+
+
+def fx_rate_on(fx: pd.Series, day: str | date) -> float:
+    """FX rate on ``day``, or the most recent rate before it.
+
+    Used to convert a cost basis at its acquisition-date rate rather than
+    today's, so unrealised P&L correctly includes the currency effect.
+    """
+    stamp = pd.Timestamp(day).normalize()
+    window = fx.loc[:stamp]
+    if window.empty:
+        return float(fx.iloc[0])
+    return float(window.iloc[-1])
+
+
+def to_iso_dates(index: Iterable[pd.Timestamp]) -> list[str]:
+    """Format a datetime index as ``YYYY-MM-DD`` strings for JSON output."""
+    return [pd.Timestamp(ts).strftime("%Y-%m-%d") for ts in index]

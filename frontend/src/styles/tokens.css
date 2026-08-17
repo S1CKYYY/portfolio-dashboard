@@ -1,0 +1,164 @@
+/**
+ * Design tokens - the single source of truth for the visual system.
+ *
+ * Rules this file encodes (see README "Design decisions"):
+ *   - Flat, solid colours only. No gradients, no shadows, no elevation.
+ *   - Separation comes from 1px hairline rules, never from floating cards.
+ *   - Semantic green/red are reserved for numeric sign; they are never used as
+ *     decorative fills.
+ *   - Every number in the UI is set in IBM Plex Mono with tabular figures.
+ *
+ * The spacing and type scales follow the IBM Carbon Design System, so the
+ * density and rhythm match a real enterprise analytics tool rather than an
+ * arbitrary set of magic numbers.
+ */
+
+:root {
+  /* ---------------------------------------------------------------- *
+   * Surfaces - a near-black page with panels exactly one step lighter *
+   * ---------------------------------------------------------------- */
+  --surface-page: #0a0b0d;
+  --surface-panel: #101215;
+  --surface-header: #14171b;
+  --surface-raised: #191d22;
+  --surface-hover: #1b1f25;
+  --surface-active: #22272e;
+
+  /* Hairlines. --line is the default 1px rule that separates every region. */
+  --line: #202126;
+  --line-strong: #2c2f36;
+  --line-faint: #17191d;
+
+  /* ---------------------------------------------------------------- *
+   * Text - high-contrast primary, progressively muted supporting text *
+   * ---------------------------------------------------------------- */
+  --text-primary: #e9ebee;
+  --text-secondary: #9ba3ae;
+  --text-tertiary: #6a7280;
+  --text-disabled: #4a505a;
+  --text-inverse: #0a0b0d;
+
+  /* ---------------------------------------------------------------- *
+   * Accent - exactly one, used for interaction and the primary series *
+   * ---------------------------------------------------------------- */
+  --accent: #4589ff;
+  --accent-dim: #2f5fb0;
+  --accent-faint: #16233a;
+
+  /* ---------------------------------------------------------------- *
+   * Semantic - sign of a number only (gain / loss / neutral)          *
+   * ---------------------------------------------------------------- */
+  --positive: #42be65;
+  --positive-dim: #1f6b38;
+  --negative: #fa4d56;
+  --negative-dim: #8a2c31;
+  --neutral: var(--text-secondary);
+  --warning: #d9a441;
+
+  /* ---------------------------------------------------------------- *
+   * Data visualisation                                                *
+   * ---------------------------------------------------------------- */
+
+  /* Categorical: a restrained steel ramp for allocation breakdowns.
+     Ordered light-to-dark so the largest slice reads strongest. */
+  --viz-cat-1: #7aa5e8;
+  --viz-cat-2: #5b83bd;
+  --viz-cat-3: #446596;
+  --viz-cat-4: #344d72;
+  --viz-cat-5: #2a3c56;
+  --viz-cat-6: #232f42;
+
+  /* Sequential: single hue, dark to light, for the correlation heatmap.
+     Deliberately not a rainbow - luminance alone encodes magnitude. */
+  --viz-seq-1: #12161c;
+  --viz-seq-2: #1b2838;
+  --viz-seq-3: #234057;
+  --viz-seq-4: #2c5a7c;
+  --viz-seq-5: #3b7ba8;
+  --viz-seq-6: #59a0d0;
+  --viz-seq-7: #8cc3e8;
+
+  /* Negative correlation is rare here but must not be silently clipped. */
+  --viz-negative: #7a4a52;
+
+  /* Chart furniture */
+  --viz-grid: #1a1d22;
+  --viz-axis: #2a2e35;
+  --viz-band: #1d2a3d;
+  --viz-band-inner: #274468;
+  --viz-crosshair: #5d6673;
+  --viz-benchmark: #6a7280;
+
+  /* ---------------------------------------------------------------- *
+   * Typography                                                        *
+   * ---------------------------------------------------------------- */
+  --font-sans: 'IBM Plex Sans', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  /* Carbon type scale, trimmed to what this dashboard actually uses. */
+  --size-micro: 10px;
+  --size-label: 11px;
+  --size-caption: 12px;
+  --size-body: 13px;
+  --size-data: 14px;
+  --size-heading: 16px;
+  --size-large: 20px;
+  --size-display: 34px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+
+  /* Uppercase panel and column labels */
+  --tracking-label: 0.08em;
+  --tracking-wide: 0.04em;
+
+  /* ---------------------------------------------------------------- *
+   * Spacing - Carbon's 2/4/8 based scale                              *
+   * ---------------------------------------------------------------- */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
+  --space-9: 40px;
+  --space-10: 48px;
+
+  /* Dense, terminal-like row rhythm */
+  --row-height: 30px;
+  --row-height-compact: 26px;
+  --header-height: 30px;
+  --panel-header-height: 34px;
+
+  /* ---------------------------------------------------------------- *
+   * Motion - subtle only; nothing bounces, nothing slides             *
+   * ---------------------------------------------------------------- */
+  --duration-fast: 90ms;
+  --duration-base: 140ms;
+  --easing: cubic-bezier(0.2, 0, 0.38, 0.9);
+
+  /* Layout */
+  --max-width: 1800px;
+  --sidebar-width: 300px;
+
+  /* Deliberately square. Rounded corners read as "card"; this is a terminal. */
+  --radius: 0px;
+}
+
+/**
+ * Respect a reduced-motion preference: transitions are decorative here, so
+ * removing them costs nothing.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}

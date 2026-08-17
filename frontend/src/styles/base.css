@@ -1,0 +1,243 @@
+/**
+ * Base element styles and the shared primitives used across panels.
+ *
+ * Everything here reads from tokens.css. No literal colours, sizes or spacing
+ * values below this line.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--size-body);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Every numeral in the product is monospaced and column-aligned. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  letter-spacing: -0.01em;
+}
+
+.pos {
+  color: var(--positive);
+}
+
+.neg {
+  color: var(--negative);
+}
+
+.flat {
+  color: var(--text-secondary);
+}
+
+/* Uppercase micro-label used for panel titles and column headers. */
+.label {
+  font-size: var(--size-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+.tabular-right {
+  text-align: right;
+}
+
+/* ------------------------------------------------------------------ *
+ * Panel - the only container primitive. Flat, square, hairline-edged. *
+ * ------------------------------------------------------------------ */
+
+/**
+ * Panels carry no border of their own. Separation is produced by the 1px grid
+ * gaps in layout.css showing the container's line colour through, which keeps
+ * every rule in the product exactly one physical pixel - two adjacent borders
+ * would render as two.
+ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface-panel);
+}
+
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--panel-header-height);
+  padding: 0 var(--space-5);
+  background: var(--surface-header);
+  border-bottom: 1px solid var(--line);
+}
+
+.panel__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--size-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.panel__subtitle {
+  font-size: var(--size-micro);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  text-transform: none;
+}
+
+.panel__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.panel__body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.panel__body--pad {
+  padding: var(--space-5);
+}
+
+/* ------------------------------------------------------------------ *
+ * Segmented control - the range toggle. Flat, square, hairline-boxed. *
+ * ------------------------------------------------------------------ */
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+}
+
+.segmented__option {
+  appearance: none;
+  min-width: 38px;
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  border-right: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--easing),
+    background-color var(--duration-fast) var(--easing);
+}
+
+.segmented__option:last-child {
+  border-right: 0;
+}
+
+.segmented__option:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.segmented__option[aria-pressed='true'] {
+  color: var(--text-primary);
+  background: var(--surface-active);
+}
+
+.segmented__option:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Readout - the dense label/value rows used by the risk terminal      *
+ * ------------------------------------------------------------------ */
+
+.readout {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.readout tr {
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.readout tr:last-child {
+  border-bottom: 0;
+}
+
+.readout tr:hover {
+  background: var(--surface-hover);
+}
+
+.readout td {
+  padding: var(--space-3) var(--space-5);
+  vertical-align: baseline;
+}
+
+.readout__label {
+  width: 30%;
+  white-space: nowrap;
+  font-size: var(--size-caption);
+  color: var(--text-secondary);
+}
+
+.readout__value {
+  width: 18%;
+  white-space: nowrap;
+  text-align: right;
+  font-size: var(--size-data);
+  color: var(--text-primary);
+}
+
+.readout__meaning {
+  font-size: var(--size-caption);
+  line-height: var(--leading-snug);
+  color: var(--text-tertiary);
+}
+
+/* Chart hosts must never collapse to zero height inside flex/grid parents. */
+.chart {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Screen-reader-only text for chart and control labelling. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
