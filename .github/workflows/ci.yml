@@ -58,7 +58,7 @@ jobs:
         run: npm ci
 
       - name: Copy snapshot to frontend
-        run: cp snapshot.json frontend/public/snapshot.json
+        run: mkdir -p frontend/public && cp snapshot.json frontend/public/snapshot.json
 
       - name: Build frontend
         working-directory: frontend
