@@ -31,7 +31,12 @@ CATEGORY_MAP = {
 # XTB používá např. VUAA.DE, Yahoo Finance totéž — většinou funguje přímo.
 # Pokud by nefungovalo, přidat sem výjimku.
 TICKER_OVERRIDE = {
-    # "EGLN.UK": "EGLN.L",  # příklad: UK listing (pence) se liší
+    "BRKB.US": "BRK-B",
+    "DUOL.US": "DUOL",
+    "PYPL.US": "PYPL",
+    "META.US": "META",
+    "MSFT.US": "MSFT",
+    "NFLX.US": "NFLX",
 }
 
 NAMES = {
