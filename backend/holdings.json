@@ -1,126 +1,113 @@
 {
   "base_currency": "EUR",
-  "_comment": "Example portfolio for demonstration purposes only - not a real net worth. Quantities are natural position sizes (whole shares where the instrument trades in whole shares), so the total is an ordinary uneven number rather than a round target. cost_basis_per_unit is the actual close of that instrument on 'acquired', in the instrument's own currency; it is converted to EUR at the FX rate of that date.",
   "holdings": [
     {
-      "ticker": "IWDA.AS",
-      "name": "iShares Core MSCI World",
-      "asset_class": "ETF",
-      "region": "Global",
+      "ticker": "BRK-B",
+      "name": "BRK-B",
       "currency": "EUR",
-      "quantity": 110,
-      "cost_basis_per_unit": 110.2,
-      "acquired": "2025-11-14"
-    },
-    {
-      "ticker": "VUSA.AS",
-      "name": "Vanguard S&P 500",
-      "asset_class": "ETF",
-      "region": "US",
-      "currency": "EUR",
-      "quantity": 95,
-      "cost_basis_per_unit": 113.2871,
-      "acquired": "2026-01-15"
-    },
-    {
-      "ticker": "EXW1.DE",
-      "name": "iShares Euro Stoxx 50",
-      "asset_class": "ETF",
-      "region": "Europe",
-      "currency": "EUR",
-      "quantity": 90,
-      "cost_basis_per_unit": 57.34,
-      "acquired": "2026-03-16"
-    },
-    {
-      "ticker": "AAPL",
-      "name": "Apple",
+      "quantity": 5.4653,
       "asset_class": "Stock",
-      "region": "US",
-      "currency": "USD",
-      "quantity": 22,
-      "cost_basis_per_unit": 327.2178,
-      "acquired": "2026-07-15"
+      "cost_basis_per_unit": 489.141604,
+      "acquired": "2025-01-13"
     },
     {
-      "ticker": "NVDA",
-      "name": "Nvidia",
+      "ticker": "DUOL",
+      "name": "DUOL",
+      "currency": "EUR",
+      "quantity": 10.8342,
       "asset_class": "Stock",
-      "region": "US",
-      "currency": "USD",
-      "quantity": 31,
-      "cost_basis_per_unit": 184.7447,
-      "acquired": "2026-02-17"
+      "cost_basis_per_unit": 199.693674,
+      "acquired": "2025-11-04"
+    },
+    {
+      "ticker": "PYPL",
+      "name": "PYPL",
+      "currency": "EUR",
+      "quantity": 24.0308,
+      "asset_class": "Stock",
+      "cost_basis_per_unit": 60.962872,
+      "acquired": "2025-12-15"
+    },
+    {
+      "ticker": "META",
+      "name": "META",
+      "currency": "EUR",
+      "quantity": 1.9146,
+      "asset_class": "Stock",
+      "cost_basis_per_unit": 614.394561,
+      "acquired": "2026-01-14"
     },
     {
       "ticker": "MSFT",
-      "name": "Microsoft",
-      "asset_class": "Stock",
-      "region": "US",
-      "currency": "USD",
-      "quantity": 12,
-      "cost_basis_per_unit": 512.1166,
-      "acquired": "2025-09-15"
-    },
-    {
-      "ticker": "ASML.AS",
-      "name": "ASML",
-      "asset_class": "Stock",
-      "region": "Europe",
+      "name": "MSFT",
       "currency": "EUR",
-      "quantity": 2.5,
-      "cost_basis_per_unit": 1620.2488,
-      "acquired": "2026-06-15"
+      "quantity": 1.4525,
+      "asset_class": "Stock",
+      "cost_basis_per_unit": 413.08,
+      "acquired": "2026-02-03"
     },
     {
-      "ticker": "SIE.DE",
-      "name": "Siemens",
-      "asset_class": "Stock",
-      "region": "Europe",
+      "ticker": "NFLX",
+      "name": "NFLX",
       "currency": "EUR",
-      "quantity": 10,
-      "cost_basis_per_unit": 220.3,
-      "acquired": "2026-03-16"
-    },
-    {
-      "ticker": "BABA",
-      "name": "Alibaba",
+      "quantity": 8.01,
       "asset_class": "Stock",
-      "region": "China",
-      "currency": "USD",
-      "quantity": 56,
-      "cost_basis_per_unit": 169.3745,
-      "acquired": "2026-01-15"
+      "cost_basis_per_unit": 81.02,
+      "acquired": "2026-02-04"
     },
     {
-      "ticker": "PDD",
-      "name": "PDD Holdings",
-      "asset_class": "Stock",
-      "region": "China",
-      "currency": "USD",
-      "quantity": 82,
-      "cost_basis_per_unit": 130.95,
-      "acquired": "2025-11-14"
+      "ticker": "VUAA.DE",
+      "name": "Vanguard S&P 500 UCITS ETF",
+      "currency": "EUR",
+      "quantity": 90.8762,
+      "asset_class": "ETF",
+      "cost_basis_per_unit": 102.648904,
+      "acquired": "2025-03-27"
     },
     {
-      "ticker": "BTC-USD",
-      "name": "Bitcoin",
-      "asset_class": "Crypto",
-      "region": null,
-      "currency": "USD",
-      "quantity": 0.15,
-      "cost_basis_per_unit": 94397.7891,
-      "acquired": "2025-11-14"
+      "ticker": "ZPRV.DE",
+      "name": "SPDR MSCI USA Small Cap Value Weighted UCITS ETF",
+      "currency": "EUR",
+      "quantity": 93.1437,
+      "asset_class": "ETF",
+      "cost_basis_per_unit": 61.368184,
+      "acquired": "2025-02-19"
     },
     {
-      "ticker": "ETH-USD",
-      "name": "Ethereum",
-      "asset_class": "Crypto",
-      "region": null,
-      "currency": "USD",
-      "quantity": 2.45,
-      "cost_basis_per_unit": 1794.9612,
-      "acquired": "2026-06-15"
+      "ticker": "XNAS.DE",
+      "name": "Xtrackers NASDAQ 100 UCITS ETF",
+      "currency": "EUR",
+      "quantity": 122.5219,
+      "asset_class": "ETF",
+      "cost_basis_per_unit": 42.349418,
+      "acquired": "2025-04-22"
+    },
+    {
+      "ticker": "VWCE.DE",
+      "name": "Vanguard FTSE All-World UCITS ETF",
+      "currency": "EUR",
+      "quantity": 31.8105,
+      "asset_class": "ETF",
+      "cost_basis_per_unit": 130.975099,
+      "acquired": "2025-03-27"
+    },
+    {
+      "ticker": "4GLD.DE",
+      "name": "Xetra-Gold",
+      "currency": "EUR",
+      "quantity": 44.7964,
+      "asset_class": "ETC",
+      "cost_basis_per_unit": 94.992835,
+      "acquired": "2025-02-04"
+    },
+    {
+      "ticker": "IS3N.DE",
+      "name": "iShares Core MSCI EM IMI UCITS ETF",
+      "currency": "EUR",
+      "quantity": 55.4271,
+      "asset_class": "ETF",
+      "cost_basis_per_unit": 33.399803,
+      "acquired": "2024-12-19"
     }
   ]
 }
