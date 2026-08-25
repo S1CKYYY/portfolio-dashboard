@@ -147,10 +147,26 @@ def parse_open_positions(xlsx_path: Path) -> list[dict]:
         yahoo_ticker = TICKER_OVERRIDE.get(ticker, ticker)
         asset_class = CATEGORY_MAP.get(data["category"].upper(), data["category"])
 
+                NAMES = {
+            "VUAA.DE": "Vanguard S&P 500 UCITS ETF",
+            "ZPRV.DE": "SPDR MSCI USA Small Cap Value Weighted UCITS ETF",
+            "XNAS.DE": "Xtrackers NASDAQ 100 UCITS ETF",
+            "VWCE.DE": "Vanguard FTSE All-World UCITS ETF",
+            "4GLD.DE": "Xetra-Gold",
+            "IS3N.DE": "iShares Core MSCI EM IMI UCITS ETF",
+            "BRKB.US": "Berkshire Hathaway Inc.",
+            "DUOL.US": "Duolingo Inc.",
+            "PYPL.US": "PayPal Holdings Inc.",
+            "META.US": "Meta Platforms Inc.",
+            "MSFT.US": "Microsoft Corporation",
+            "NFLX.US": "Netflix Inc.",
+        }
         holding = {
             "ticker": yahoo_ticker,
+            "name": NAMES.get(yahoo_ticker, yahoo_ticker),
             "quantity": round(total_qty, 6),
             "asset_class": asset_class,
+        }
         }
         if vwap is not None:
             holding["cost_basis_per_unit"] = round(vwap, 6)
