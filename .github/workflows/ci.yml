@@ -62,7 +62,7 @@ jobs:
 
       - name: Build frontend
         working-directory: frontend
-        run: npm run build
+        run: npm run build -- --base=/portfolio-dashboard/
 
       - name: Commit updated snapshot
         run: |
