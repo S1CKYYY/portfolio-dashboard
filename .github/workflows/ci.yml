@@ -33,7 +33,7 @@ jobs:
 
       - name: Process XTB XLSX exports
         run: |
-          FILES=$(find uploads/ -name "*.xlsx" 2>/dev/null | tr '\n' ' ')
+          FILES=$(find . -maxdepth 1 -name "*.xlsx" 2>/dev/null | tr '\n' ' ')
           if [ -n "$FILES" ]; then
             echo "Zpracovávám: $FILES"
             python tools/xtb_to_holdings.py $FILES \
