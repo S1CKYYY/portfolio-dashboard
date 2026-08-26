@@ -1,15 +1,7 @@
 /**
- * Underwater chart: how far below its running peak the portfolio has been, at
- * every point in its history.
- *
- * Promoted to a panel of its own rather than a view toggle, because depth and
- * duration of losses is the risk question a drawdown curve answers instantly
- * and an equity curve hides — a portfolio that ends flat looks calm on a value
- * chart even if it fell 25% on the way.
+ * Underwater chart: how far below its running peak the portfolio has been.
  */
-
 import { useMemo, useState } from 'react'
-
 import { toLineData } from '../charts/series'
 import { chartTheme } from '../charts/theme'
 import { TimeSeriesChart, type CrosshairState } from '../charts/TimeSeriesChart'
@@ -26,7 +18,6 @@ interface DrawdownPanelProps {
 export function DrawdownPanel({ history, risk }: DrawdownPanelProps) {
   const theme = chartTheme()
   const [crosshair, setCrosshair] = useState<CrosshairState | null>(null)
-
   const series = useMemo(
     () => [
       {
@@ -39,37 +30,34 @@ export function DrawdownPanel({ history, risk }: DrawdownPanelProps) {
     ],
     [history, theme],
   )
-
   const current = history.drawdown_pct[history.drawdown_pct.length - 1]
   const hovered = crosshair?.values.drawdown
   const shown = hovered ?? current
   const drawdown = risk.max_drawdown
-
   const recovery = drawdown.recovery_date
-    ? `recovered ${formatDate(drawdown.recovery_date)}`
-    : 'not yet recovered'
+    ? `zotavení ${formatDate(drawdown.recovery_date)}`
+    : 'zatím nezotaveno'
 
   return (
-    <Panel title="Drawdown" subtitle="below running peak" className="panel--fill">
+    <Panel title="Drawdown" subtitle="pod průběžným maximem" className="panel--fill">
       <div className="drawdown">
         <div className="drawdown__legend">
           <span className="drawdown__current">
             <span className="drawdown__caption">
-              {crosshair ? formatDate(crosshair.time) : 'Current'}
+              {crosshair ? formatDate(crosshair.time) : 'Aktuální'}
             </span>
             <span className={`num drawdown__value ${shown && shown < -0.0001 ? 'neg' : ''}`}>
               {formatPercent(shown)}
             </span>
           </span>
           <span className="drawdown__worst">
-            <span className="drawdown__caption">Worst</span>
+            <span className="drawdown__caption">Nejhorší</span>
             <span className="num neg">{formatPercent(drawdown.pct)}</span>
             <span className="drawdown__caption">
               {formatDate(drawdown.trough_date)} · {recovery}
             </span>
           </span>
         </div>
-
         <TimeSeriesChart
           series={series}
           fill
@@ -78,7 +66,7 @@ export function DrawdownPanel({ history, risk }: DrawdownPanelProps) {
           valueFormatter={(value) => formatPercent(value, 1)}
           onCrosshair={setCrosshair}
           baselineValue={0}
-          ariaLabel="Portfolio drawdown from its running peak over the full history"
+          ariaLabel="Drawdown portfolia od průběžného maxima za celou historii"
         />
       </div>
     </Panel>
