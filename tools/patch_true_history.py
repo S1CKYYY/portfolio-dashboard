@@ -271,11 +271,23 @@ def main():
     print("\n📊 Přebazuji benchmark...")
     benchmark_rebased = rebase_benchmark(args.benchmark, dates, values[0])
 
-    print("\n💾 Aktualizuji snapshot.json...")
-    snapshot["history"]["dates"] = dates
-    snapshot["history"]["portfolio"] = [round(v, 2) for v in values]
-    snapshot["history"]["drawdown_pct"] = [round(v, 6) for v in drawdown]
-    snapshot["history"]["benchmark_rebased"] = [round(v, 2) for v in benchmark_rebased]
+        print("\n💾 Aktualizuji snapshot.json...")
+    print(f"  Klíče v snapshot: {list(snapshot.keys())}")
+
+    # Najdi history sekci — může být vnořená
+    if "history" in snapshot:
+        target = snapshot["history"]
+    elif "data" in snapshot and "history" in snapshot["data"]:
+        target = snapshot["data"]["history"]
+    else:
+        # Vytvoř novou history sekci
+        snapshot["history"] = {}
+        target = snapshot["history"]
+
+    target["dates"] = dates
+    target["portfolio"] = [round(v, 2) for v in values]
+    target["drawdown_pct"] = [round(v, 6) for v in drawdown]
+    target["benchmark_rebased"] = [round(v, 2) for v in benchmark_rebased]
 
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")))
     print(f"✅ Hotovo — skutečná historie {dates[0]} → {dates[-1]} zapsána do snapshot.json")
