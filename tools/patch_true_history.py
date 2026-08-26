@@ -221,10 +221,13 @@ def main():
     print("\n💾 Aktualizuji snapshot.json...")
     print(f"  Klíče v snapshot: {list(snapshot.keys())}")
 
-    if "history" in snapshot:
+    if "endpoints" in snapshot and "/portfolio/history" in snapshot["endpoints"]:
+        target = snapshot["endpoints"]["/portfolio/history"]
+    elif "history" in snapshot:
         target = snapshot["history"]
-    elif "data" in snapshot and "history" in snapshot["data"]:
-        target = snapshot["data"]["history"]
+    else:
+        snapshot["history"] = {}
+        target = snapshot["history"]
     else:
         snapshot["history"] = {}
         target = snapshot["history"]
