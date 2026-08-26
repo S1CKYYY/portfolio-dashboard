@@ -1,8 +1,6 @@
 /**
- * Headline bar: total value, all-time and intraday change, an inline equity
- * sparkline, and the provenance of the data on screen.
+ * Headline bar: total value, all-time and intraday change, sparkline.
  */
-
 import { formatDate, formatMoneyCompact, formatMoneySigned, formatPercentSigned, signClass } from '../lib/format'
 import type { DataConfig } from '../lib/api'
 import type { Health, SummaryPayload } from '../lib/types'
@@ -22,7 +20,6 @@ interface DeltaProps {
   delay: number
 }
 
-/** One signed change readout: absolute above percentage, semantic colour. */
 function Delta({ label, absolute, percent, delay }: DeltaProps) {
   const tone = signClass(absolute)
   return (
@@ -46,17 +43,15 @@ export function TopBar({ summary, health, config }: TopBarProps) {
   const allTime = summary.changes.all
   const today = summary.changes.day
   const live = config.source === 'api'
-
   return (
     <header className="topbar">
       <div className="topbar__identity">
         <div className="topbar__eyebrow">
-          <h1 className="topbar__title">Portfolio Analytics</h1>
+          <h1 className="topbar__title">Analytika portfolia</h1>
           <span className="panel__subtitle">
-            {summary.holdings_count} holdings · {health.benchmark} benchmark
+            {summary.holdings_count} pozic · benchmark {health.benchmark}
           </span>
         </div>
-
         <div className="topbar__value">
           <AnimatedNumber
             value={summary.total_value}
@@ -65,35 +60,31 @@ export function TopBar({ summary, health, config }: TopBarProps) {
           />
           <span className="topbar__currency">{summary.base_currency}</span>
         </div>
-
-        {/* Deltas start fractionally after the headline so the eye lands on the
-            total first and the row resolves top-down rather than all at once. */}
         <div className="topbar__deltas">
-          <Delta label="Today" absolute={today.absolute} percent={today.pct} delay={90} />
-          <Delta label="All time" absolute={allTime.absolute} percent={allTime.pct} delay={150} />
+          <Delta label="Dnes" absolute={today.absolute} percent={today.pct} delay={90} />
+          <Delta label="Celkem" absolute={allTime.absolute} percent={allTime.pct} delay={150} />
           <Delta
-            label="Unrealised P&L"
+            label="Nerealizovaný P&L"
             absolute={summary.total_unrealized_pnl}
             percent={summary.total_unrealized_pnl_pct}
             delay={210}
           />
         </div>
       </div>
-
       <div className="topbar__aside">
         <Sparkline
           values={summary.sparkline.values}
           width={220}
           height={44}
           showEndpoint
-          ariaLabel={`Portfolio value over the last ${summary.sparkline.values.length} trading days`}
+          ariaLabel={`Hodnota portfolia za posledních ${summary.sparkline.values.length} obchodních dní`}
         />
         <div className="topbar__meta">
           <span>
-            Base <span className="topbar__meta-value num">{summary.base_currency}</span>
+            Měna <span className="topbar__meta-value num">{summary.base_currency}</span>
           </span>
           <span>
-            As of <span className="topbar__meta-value num">{formatDate(summary.as_of)}</span>
+            Ke dni <span className="topbar__meta-value num">{formatDate(summary.as_of)}</span>
           </span>
           <span className="topbar__source">
             <span className={live ? 'topbar__source-dot' : 'topbar__source-dot topbar__source-dot--snapshot'} />
