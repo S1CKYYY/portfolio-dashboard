@@ -1,15 +1,8 @@
 /**
  * Allocation by asset class and by region.
- *
- * Each breakdown pairs a flat ECharts donut with a tabular legend. The donut
- * conveys proportion at a glance; the legend carries the exact figures, which
- * is what the numbers-first house style demands - a chart is never the only
- * place a value appears.
  */
-
 import { useMemo } from 'react'
 import type { EChartsOption } from 'echarts'
-
 import { EChart } from '../charts/EChart'
 import { chartTheme, tooltipStyle } from '../charts/theme'
 import { formatMoneyCompact, formatPercent } from '../lib/format'
@@ -30,11 +23,7 @@ interface BreakdownProps {
 
 function donutOption(buckets: AllocationBucket[], currency: string): EChartsOption {
   const theme = chartTheme()
-
   return {
-    // 'expansion' sweeps each ring open around its centre rather than fading
-    // it in, so the donut reads as being drawn. The per-segment stagger makes
-    // the order of the breakdown legible as it builds.
     animationDuration: 850,
     animationEasing: 'cubicOut',
     animationDelay: (index: number) => 140 + index * 70,
@@ -55,7 +44,6 @@ function donutOption(buckets: AllocationBucket[], currency: string): EChartsOpti
         avoidLabelOverlap: false,
         label: { show: false },
         labelLine: { show: false },
-        // A 1px panel-coloured border reads as a hairline gap between segments.
         itemStyle: { borderColor: theme.surface, borderWidth: 1, borderRadius: 0 },
         emphasis: {
           scale: false,
@@ -74,14 +62,13 @@ function donutOption(buckets: AllocationBucket[], currency: string): EChartsOpti
 function Breakdown({ title, buckets, currency }: BreakdownProps) {
   const theme = chartTheme()
   const option = useMemo(() => donutOption(buckets, currency), [buckets, currency])
-
   return (
     <div className="allocation__group">
       <div className="allocation__caption label">{title}</div>
       <EChart
         option={option}
         height={104}
-        ariaLabel={`Allocation by ${title.toLowerCase()}`}
+        ariaLabel={`Alokace dle ${title.toLowerCase()}`}
         className="allocation__chart"
       />
       <table className="allocation__legend">
@@ -107,9 +94,9 @@ function Breakdown({ title, buckets, currency }: BreakdownProps) {
 
 export function AllocationPanel({ byClass, byRegion, currency }: AllocationPanelProps) {
   return (
-    <Panel title="Allocation" subtitle={currency}>
+    <Panel title="Alokace" subtitle={currency}>
       <div className="allocation">
-        <Breakdown title="Asset class" buckets={byClass} currency={currency} />
+        <Breakdown title="Třída aktiv" buckets={byClass} currency={currency} />
         <Breakdown title="Region" buckets={byRegion} currency={currency} />
       </div>
     </Panel>
