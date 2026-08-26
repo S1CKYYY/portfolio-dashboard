@@ -6,7 +6,7 @@
 Enter your holdings, get an institutional-grade analytics dashboard for your own
 portfolio — allocation, performance against a benchmark, drawdown, Sharpe,
 Sortino, Value at Risk, beta, a correlation matrix, and a 10,000-path Monte
-Carlo projection of the year ahead.
+Carlo projection of the year ahead. 
 
 Runs entirely on your own machine. A Python backend computes the metrics from
 real market data; a React front end presents them as a dense terminal-style
