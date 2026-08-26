@@ -3,9 +3,6 @@ tools/patch_true_history.py
 
 Nahradí syntetickou equity křivku v snapshot.json skutečnou historií
 portfolia rekonstruovanou z individuálních lotů v XTB XLSX exportu.
-
-Použití:
-    python tools/patch_true_history.py EUR_*.xlsx USD_*.xlsx --snapshot snapshot.json
 """
 
 import argparse
@@ -32,7 +29,7 @@ TICKER_OVERRIDE = {
 USD_TICKERS = {"BRKB.US", "DUOL.US", "PYPL.US", "META.US", "MSFT.US", "NFLX.US"}
 
 
-def parse_lots(xlsx_path: Path) -> list[dict]:
+def parse_lots(xlsx_path):
     df = pd.read_excel(xlsx_path, sheet_name="Open Positions", header=None)
     header_row = None
     for i, row in df.iterrows():
@@ -201,7 +198,7 @@ def main():
         print("❌ Žádné loty nenalezeny", file=sys.stderr)
         sys.exit(1)
 
-    end_date = snapshot.get("summary", {}).get("as_of", datetime.today().strftime("%Y-%m-%d"))
+    end_date = snapshot.get("as_of", datetime.today().strftime("%Y-%m-%d"))
 
     print("\n📈 Rekonstruuji skutečnou historii portfolia...")
     dates, values = build_true_history(all_lots, end_date)
@@ -219,18 +216,18 @@ def main():
     benchmark_rebased = rebase_benchmark(args.benchmark, dates, values[0])
 
     print("\n💾 Aktualizuji snapshot.json...")
-    print(f"  Klíče v snapshot: {list(snapshot.keys())}")
 
+    # Najdi správný cíl v snapshot struktuře
     if "endpoints" in snapshot and "/portfolio/history" in snapshot["endpoints"]:
         target = snapshot["endpoints"]["/portfolio/history"]
+        print("  Cíl: endpoints['/portfolio/history']")
     elif "history" in snapshot:
         target = snapshot["history"]
+        print("  Cíl: history")
     else:
         snapshot["history"] = {}
         target = snapshot["history"]
-    else:
-        snapshot["history"] = {}
-        target = snapshot["history"]
+        print("  Cíl: nový history klíč")
 
     target["dates"] = dates
     target["portfolio"] = [round(v, 2) for v in values]
@@ -238,7 +235,7 @@ def main():
     target["benchmark_rebased"] = [round(v, 2) for v in benchmark_rebased]
 
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")))
-    print(f"✅ Hotovo — skutečná historie {dates[0]} → {dates[-1]} zapsána do snapshot.json")
+    print(f"✅ Hotovo — skutečná historie {dates[0]} → {dates[-1]} zapsána")
 
 
 if __name__ == "__main__":
