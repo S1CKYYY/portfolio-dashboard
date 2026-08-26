@@ -45,7 +45,7 @@ jobs:
 
       - name: Generate snapshot
         working-directory: backend
-        run: python generate_snapshot.py
+        run: python generate_snapshot.py --no-cache
 
       - uses: actions/setup-node@v4
         with:
