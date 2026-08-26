@@ -1,11 +1,6 @@
 /**
  * Dense, sortable holdings grid built on TanStack Table.
- *
- * Only the features the grid actually uses are registered (core + row
- * sorting), which is TanStack v9's model for keeping the runtime small. Every
- * numeric cell is monospaced with tabular figures so columns align exactly.
  */
-
 import {
   createColumnHelper,
   createSortedRowModel,
@@ -17,7 +12,6 @@ import {
   useTable,
 } from '@tanstack/react-table'
 import { useMemo } from 'react'
-
 import {
   formatMoney,
   formatMoneySigned,
@@ -43,12 +37,10 @@ const features = tableFeatures({
 
 const column = createColumnHelper<typeof features, Holding>()
 
-/** Right-aligned monospaced cell; the default for every figure in the grid. */
 function Num({ children, tone }: { children: React.ReactNode; tone?: string }) {
   return <span className={tone ? `num ${tone}` : 'num'}>{children}</span>
 }
 
-/** Functional sort affordance - direction only, no decorative iconography. */
 function SortCaret({ direction }: { direction: false | 'asc' | 'desc' }) {
   if (!direction) return null
   return (
@@ -58,8 +50,6 @@ function SortCaret({ direction }: { direction: false | 'asc' | 'desc' }) {
   )
 }
 
-// `helper.columns([...])` (rather than a bare array) preserves each column's
-// own value type through the tuple, which a plain array would widen away.
 const columns = column.columns([
   column.accessor('ticker', {
     header: 'Ticker',
@@ -67,12 +57,12 @@ const columns = column.columns([
     cell: (info) => <span className="num grid__ticker">{info.getValue()}</span>,
   }),
   column.accessor('name', {
-    header: 'Name',
+    header: 'Název',
     sortFn: 'text',
     cell: (info) => <span className="grid__name">{info.getValue()}</span>,
   }),
   column.accessor('asset_class', {
-    header: 'Class',
+    header: 'Třída',
     sortFn: 'text',
     cell: (info) => <span className="grid__tag">{info.getValue()}</span>,
   }),
@@ -82,23 +72,21 @@ const columns = column.columns([
     cell: (info) => <span className="grid__tag">{info.getValue()}</span>,
   }),
   column.accessor('quantity', {
-    header: 'Quantity',
+    header: 'Počet',
     sortFn: 'basic',
     meta: { align: 'right' },
     cell: (info) => <Num>{formatQuantity(info.getValue())}</Num>,
   }),
   column.accessor('price_base', {
-    header: 'Price',
+    header: 'Cena',
     sortFn: 'basic',
     meta: { align: 'right' },
     cell: (info) => {
       const holding = info.row.original
-      // Native price is shown on hover for instruments not quoted in the base
-      // currency, so the FX conversion stays inspectable.
       const title =
         holding.currency === 'EUR'
           ? undefined
-          : `${formatPrice(holding.price_native, holding.currency)} native`
+          : `${formatPrice(holding.price_native, holding.currency)} v původní měně`
       return (
         <span className="num" title={title}>
           {formatMoney(info.getValue())}
@@ -107,19 +95,17 @@ const columns = column.columns([
     },
   }),
   column.accessor('value_base', {
-    header: 'Value',
+    header: 'Hodnota',
     sortFn: 'basic',
     meta: { align: 'right' },
     cell: (info) => <Num tone="grid__strong">{formatMoney(info.getValue())}</Num>,
   }),
   column.accessor('allocation_pct', {
-    header: 'Weight',
+    header: 'Váha',
     sortFn: 'basic',
     meta: { align: 'right' },
     cell: (info) => {
       const weight = info.getValue()
-      // Scaled so the largest position fills the cell, making the bars a true
-      // proportional comparison rather than an arbitrary multiple.
       const heaviest = info.table.options.data.reduce(
         (max, holding) => Math.max(max, holding.allocation_pct),
         0,
@@ -134,7 +120,7 @@ const columns = column.columns([
     },
   }),
   column.accessor('unrealized_pnl', {
-    header: 'Unreal. P&L',
+    header: 'Nerealizovaný P&L',
     sortFn: 'basic',
     meta: { align: 'right' },
     cell: (info) => <Num tone={signClass(info.getValue())}>{formatMoneySigned(info.getValue())}</Num>,
@@ -146,7 +132,7 @@ const columns = column.columns([
     cell: (info) => <Num tone={signClass(info.getValue())}>{formatPercentSigned(info.getValue())}</Num>,
   }),
   column.accessor('day_change_pct', {
-    header: 'Day',
+    header: 'Den',
     sortFn: 'basic',
     meta: { align: 'right' },
     cell: (info) => <Num tone={signClass(info.getValue())}>{formatPercentSigned(info.getValue())}</Num>,
@@ -159,7 +145,7 @@ const columns = column.columns([
         values={info.row.original.sparkline}
         width={84}
         height={18}
-        ariaLabel={`${info.row.original.ticker} price over the last 90 trading days`}
+        ariaLabel={`${info.row.original.ticker} cena za posledních 90 obchodních dní`}
       />
     ),
   }),
@@ -185,7 +171,7 @@ export function HoldingsPanel({ holdings, totalValue, currency }: HoldingsPanelP
   )
 
   return (
-    <Panel title="Holdings" subtitle={`${holdings.length} positions · values in ${currency}`}>
+    <Panel title="Pozice" subtitle={`${holdings.length} pozic · hodnoty v ${currency}`}>
       <div className="grid__scroll">
         <table className="grid">
           <thead>
@@ -198,7 +184,6 @@ export function HoldingsPanel({ holdings, totalValue, currency }: HoldingsPanelP
                   return (
                     <th
                       key={header.id}
-                      // Drives responsive column hiding in panels.css.
                       data-column={header.column.id}
                       className={align === 'right' ? 'grid__th grid__th--right' : 'grid__th'}
                       aria-sort={sorted ? (sorted === 'asc' ? 'ascending' : 'descending') : undefined}
@@ -242,7 +227,7 @@ export function HoldingsPanel({ holdings, totalValue, currency }: HoldingsPanelP
           <tfoot>
             <tr className="grid__total">
               <td className="grid__td" colSpan={6}>
-                Total
+                Celkem
               </td>
               <td className="grid__td grid__td--right">
                 <Num tone="grid__strong">{formatMoney(totalValue)}</Num>
