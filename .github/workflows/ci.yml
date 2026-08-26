@@ -68,9 +68,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git stash
+          git rebase origin/main
+          git stash pop
           git add snapshot.json backend/holdings.json
           if ! git diff --staged --quiet; then
-            git pull --rebase origin main
             git commit -m "chore: update snapshot $(date -u '+%Y-%m-%d %H:%M UTC')"
             git push
           else
