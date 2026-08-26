@@ -29,41 +29,31 @@ TICKER_OVERRIDE = {
     "NFLX.US": "NFLX",
 }
 
-# Tickers kotované v USD (zbytek je EUR)
 USD_TICKERS = {"BRKB.US", "DUOL.US", "PYPL.US", "META.US", "MSFT.US", "NFLX.US"}
 
 
 def parse_lots(xlsx_path: Path) -> list[dict]:
-    """Načte individuální BUY loty z listu Open Positions."""
     df = pd.read_excel(xlsx_path, sheet_name="Open Positions", header=None)
-
     header_row = None
     for i, row in df.iterrows():
         vals = [str(v) for v in row if pd.notna(v)]
         if "Ticker" in vals and "Volume" in vals:
             header_row = i
             break
-
     if header_row is None:
         print(f"  ⚠️ {xlsx_path.name}: hlavička nenalezena", file=sys.stderr)
         return []
-
     df.columns = df.iloc[header_row]
     df = df.iloc[header_row + 1:].reset_index(drop=True)
-
     lots = []
     current_ticker = None
-
     for _, row in df.iterrows():
         ticker = row.get("Ticker")
         typ = row.get("Type")
         volume = row.get("Volume")
         open_time = row.get("Open time (UTC)")
-
-        # Souhrnný řádek — aktualizuj current_ticker
         if pd.isna(typ) and pd.notna(ticker):
             current_ticker = str(ticker).strip()
-        # BUY lot
         elif str(typ).strip().upper() == "BUY" and current_ticker:
             if pd.isna(volume) or pd.isna(open_time):
                 continue
@@ -74,7 +64,6 @@ def parse_lots(xlsx_path: Path) -> list[dict]:
                     date_str = pd.to_datetime(open_time).strftime("%Y-%m-%d")
                 except Exception:
                     continue
-
             yahoo_ticker = TICKER_OVERRIDE.get(current_ticker, current_ticker)
             lots.append({
                 "xtb_ticker": current_ticker,
@@ -83,52 +72,29 @@ def parse_lots(xlsx_path: Path) -> list[dict]:
                 "open_date": date_str,
                 "is_usd": current_ticker in USD_TICKERS,
             })
-
     return lots
 
 
-def build_true_history(
-    lots: list[dict], end_date: str
-) -> tuple[list[str], list[float]]:
-    """
-    Pro každý obchodní den od prvního nákupu do end_date spočítá
-    skutečnou hodnotu portfolia = Σ(počet × cena) pro loty otevřené k danému dni.
-    USD pozice jsou přepočítány na EUR přes kurz EURUSD=X.
-    """
+def build_true_history(lots, end_date):
     if not lots:
         return [], []
-
     start_date = min(lot["open_date"] for lot in lots)
     print(f"  Rozsah dat: {start_date} → {end_date}")
-
     yahoo_tickers = list(set(lot["yahoo_ticker"] for lot in lots))
     has_usd = any(lot["is_usd"] for lot in lots)
     all_tickers = yahoo_tickers + (["EURUSD=X"] if has_usd else [])
-
     print(f"  Stahuji historické ceny: {', '.join(all_tickers)}")
     end_plus = (pd.Timestamp(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-
-    raw = yf.download(
-        all_tickers,
-        start=start_date,
-        end=end_plus,
-        auto_adjust=True,
-        progress=False,
-    )
-
+    raw = yf.download(all_tickers, start=start_date, end=end_plus, auto_adjust=True, progress=False)
     if raw.empty:
         print("  ❌ Žádná data z Yahoo Finance", file=sys.stderr)
         return [], []
-
-    # Normalizuj sloupce pro jeden i více tickerů
     if isinstance(raw.columns, pd.MultiIndex):
         closes = raw["Close"].copy()
     else:
         closes = raw[["Close"]].rename(columns={"Close": all_tickers[0]}).copy()
-
     closes = closes.ffill()
     dates = [d.strftime("%Y-%m-%d") for d in closes.index]
-
     portfolio_values = []
     for date_str in dates:
         try:
@@ -136,49 +102,38 @@ def build_true_history(
         except KeyError:
             portfolio_values.append(None)
             continue
-
         eurusd = 1.0
         if has_usd:
             raw_fx = day_prices.get("EURUSD=X")
             if raw_fx is not None and not pd.isna(raw_fx) and float(raw_fx) > 0:
                 eurusd = float(raw_fx)
-
         total = 0.0
         for lot in lots:
             if lot["open_date"] > date_str:
-                continue  # Ještě není otevřeno
+                continue
             price = day_prices.get(lot["yahoo_ticker"])
             if price is None or pd.isna(price):
                 continue
             value = lot["quantity"] * float(price)
             if lot["is_usd"]:
-                value /= eurusd  # USD → EUR
+                value /= eurusd
             total += value
-
         portfolio_values.append(total if total > 0 else None)
-
-    # Ořízni prázdný začátek (před prvním nákupem)
-    first_valid = next(
-        (i for i, v in enumerate(portfolio_values) if v is not None), None
-    )
+    first_valid = next((i for i, v in enumerate(portfolio_values) if v is not None), None)
     if first_valid is None:
         return [], []
-
     dates = dates[first_valid:]
     portfolio_values = portfolio_values[first_valid:]
-
-    # Forward-fill případné mezery
     last = None
     result = []
     for v in portfolio_values:
         if v is not None:
             last = v
         result.append(last or 0.0)
-
     return dates, result
 
 
-def compute_drawdown(values: list[float]) -> list[float]:
+def compute_drawdown(values):
     drawdown = []
     peak = float("-inf")
     for v in values:
@@ -188,24 +143,18 @@ def compute_drawdown(values: list[float]) -> list[float]:
     return drawdown
 
 
-def rebase_benchmark(
-    ticker: str, dates: list[str], start_value: float
-) -> list[float]:
-    """Stáhne benchmark a přebazuje ho na start_value portfolia."""
+def rebase_benchmark(ticker, dates, start_value):
     if not dates:
         return []
     print(f"  Stahuji benchmark {ticker}...")
     end_plus = (pd.Timestamp(dates[-1]) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     raw = yf.download(ticker, start=dates[0], end=end_plus, auto_adjust=True, progress=False)
-
     if raw.empty:
         return [start_value] * len(dates)
-
     if isinstance(raw.columns, pd.MultiIndex):
         closes = raw["Close"].iloc[:, 0].ffill()
     else:
         closes = raw["Close"].ffill()
-
     base = None
     rebased = []
     for date_str in dates:
@@ -216,14 +165,12 @@ def rebase_benchmark(
                 price = float(closes.asof(pd.Timestamp(date_str)))
             except Exception:
                 price = None
-
         if price is not None and not pd.isna(price):
             if base is None:
                 base = price
             rebased.append(start_value * price / base)
         else:
             rebased.append(rebased[-1] if rebased else start_value)
-
     return rebased
 
 
@@ -271,16 +218,14 @@ def main():
     print("\n📊 Přebazuji benchmark...")
     benchmark_rebased = rebase_benchmark(args.benchmark, dates, values[0])
 
-        print("\n💾 Aktualizuji snapshot.json...")
+    print("\n💾 Aktualizuji snapshot.json...")
     print(f"  Klíče v snapshot: {list(snapshot.keys())}")
 
-    # Najdi history sekci — může být vnořená
     if "history" in snapshot:
         target = snapshot["history"]
     elif "data" in snapshot and "history" in snapshot["data"]:
         target = snapshot["data"]["history"]
     else:
-        # Vytvoř novou history sekci
         snapshot["history"] = {}
         target = snapshot["history"]
 
