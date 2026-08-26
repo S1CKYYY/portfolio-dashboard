@@ -1,16 +1,8 @@
 /**
- * Monte Carlo outcome distribution: a percentile fan over the next 252 trading
- * days, the terminal-value histogram, and the summary probabilities.
- *
- * The fan is built from stacked *flat* bands (each a solid fill, never a
- * gradient): the p5 series is an invisible base, and each visible band carries
- * the delta to the next percentile. A separate unstacked series draws the
- * median at its true value on the same axis.
+ * Monte Carlo outcome distribution.
  */
-
 import { useMemo } from 'react'
 import type { EChartsOption } from 'echarts'
-
 import { EChart } from '../charts/EChart'
 import { axisLabelStyle, chartTheme, tooltipStyle } from '../charts/theme'
 import {
@@ -29,7 +21,6 @@ interface MonteCarloPanelProps {
   currency: string
 }
 
-/** Element-wise difference, used to turn percentiles into stackable bands. */
 function delta(upper: number[], lower: number[]): number[] {
   return upper.map((value, index) => value - lower[index])
 }
@@ -37,7 +28,6 @@ function delta(upper: number[], lower: number[]): number[] {
 function fanOption(mc: MonteCarloPayload, currency: string): EChartsOption {
   const theme = chartTheme()
   const { p5, p25, p50, p75, p95 } = mc.percentile_bands
-
   const invisible = {
     type: 'line' as const,
     stack: 'fan',
@@ -49,10 +39,7 @@ function fanOption(mc: MonteCarloPayload, currency: string): EChartsOption {
     ...invisible,
     areaStyle: { color, opacity: 1 },
   })
-
   return {
-    // ECharts draws line series left-to-right on first render, so simply
-    // enabling animation makes the fan open outward from today's value.
     animation: true,
     animationDuration: 1100,
     animationEasing: 'cubicOut',
@@ -73,7 +60,7 @@ function fanOption(mc: MonteCarloPayload, currency: string): EChartsOption {
           ['p25', p25[index]],
           ['p5', p5[index]],
         ]
-        const header = `${formatDate(mc.dates[index])}  ·  day ${index}`
+        const header = `${formatDate(mc.dates[index])}  ·  den ${index}`
         const body = rows
           .map(([label, value]) => `${label.padEnd(4)} ${formatMoneyCompact(value)}`)
           .join('<br/>')
@@ -86,7 +73,6 @@ function fanOption(mc: MonteCarloPayload, currency: string): EChartsOption {
       boundaryGap: false,
       axisLine: { lineStyle: { color: theme.axis } },
       axisTick: { show: false },
-      // ~monthly ticks across a 252-day horizon.
       axisLabel: {
         ...axisLabelStyle(),
         interval: Math.floor(mc.dates.length / 6),
@@ -117,7 +103,7 @@ function fanOption(mc: MonteCarloPayload, currency: string): EChartsOption {
           silent: true,
           symbol: 'none',
           label: {
-            formatter: 'today',
+            formatter: 'dnes',
             color: theme.textTertiary,
             fontFamily: theme.fontMono,
             fontSize: 9,
@@ -128,21 +114,17 @@ function fanOption(mc: MonteCarloPayload, currency: string): EChartsOption {
         },
       },
     ],
-    // Referenced in the tooltip header only; keeps the currency out of axes.
-    aria: { enabled: true, label: { description: `Simulated portfolio value in ${currency}` } },
+    aria: { enabled: true, label: { description: `Simulovaná hodnota portfolia v ${currency}` } },
   }
 }
 
 function histogramOption(mc: MonteCarloPayload): EChartsOption {
   const theme = chartTheme()
   const labels = mc.histogram.map((bin) => bin.start)
-  // Index of the bin containing today's value, for the break-even marker.
   const breakEven = mc.histogram.findIndex(
     (bin) => mc.start_value >= bin.start && mc.start_value < bin.end,
   )
-
   return {
-    // Bars grow up from the axis, left to right across the distribution.
     animation: true,
     animationDuration: 520,
     animationEasing: 'cubicOut',
@@ -156,7 +138,7 @@ function histogramOption(mc: MonteCarloPayload): EChartsOption {
         const points = params as { dataIndex: number }[]
         if (!points?.length) return ''
         const bin = mc.histogram[points[0].dataIndex]
-        return `${formatMoneyCompact(bin.start)} – ${formatMoneyCompact(bin.end)}<br/>${formatPercent(bin.probability, 2)} of paths`
+        return `${formatMoneyCompact(bin.start)} – ${formatMoneyCompact(bin.end)}<br/>${formatPercent(bin.probability, 2)} scénářů`
       },
     },
     xAxis: {
@@ -196,89 +178,83 @@ function histogramOption(mc: MonteCarloPayload): EChartsOption {
   }
 }
 
-/** The percentile fan: the projection itself. */
 export function MonteCarloPanel({ montecarlo, currency }: MonteCarloPanelProps) {
   const fan = useMemo(() => fanOption(montecarlo, currency), [montecarlo, currency])
-  const subtitle = `${montecarlo.paths.toLocaleString('en-GB')} paths · ${montecarlo.horizon_days} trading days`
-
+  const subtitle = `${montecarlo.paths.toLocaleString('cs-CZ')} scénářů · ${montecarlo.horizon_days} obchodních dní`
   return (
     <Panel title="Monte Carlo" subtitle={subtitle} className="panel--fill">
       <div className="montecarlo">
         <div className="montecarlo__legend">
           <span className="montecarlo__legend-item">
             <span className="montecarlo__key montecarlo__key--outer" aria-hidden="true" />
-            5th – 95th percentile
+            5. – 95. percentil
           </span>
           <span className="montecarlo__legend-item">
             <span className="montecarlo__key montecarlo__key--inner" aria-hidden="true" />
-            25th – 75th percentile
+            25. – 75. percentil
           </span>
           <span className="montecarlo__legend-item">
             <span className="montecarlo__key montecarlo__key--median" aria-hidden="true" />
-            median
+            medián
           </span>
         </div>
         <EChart
           option={fan}
           fill
-          ariaLabel={`Simulated portfolio value over the next ${montecarlo.horizon_days} trading days, percentile bands`}
+          ariaLabel={`Simulovaná hodnota portfolia za příštích ${montecarlo.horizon_days} obchodních dní`}
         />
       </div>
     </Panel>
   )
 }
 
-/** Where those paths land after a year, and how likely each outcome is. */
 export function OutcomeDistributionPanel({ montecarlo, currency }: MonteCarloPanelProps) {
   const histogram = useMemo(() => histogramOption(montecarlo), [montecarlo])
   const lossProbability = montecarlo.probability_below_start_pct
-
   return (
-    <Panel title="Outcome" subtitle={`terminal value, ${currency}`}>
+    <Panel title="Výsledky" subtitle={`konečná hodnota, ${currency}`}>
       <div className="montecarlo__aside">
         <EChart
           option={histogram}
           height={132}
-          ariaLabel="Histogram of simulated portfolio values after one year"
+          ariaLabel="Histogram simulovaných hodnot portfolia po jednom roce"
         />
-
         <table className="readout montecarlo__summary">
           <tbody>
             <tr>
-              <td className="readout__label">Expected</td>
+              <td className="readout__label">Střední hodnota</td>
               <td className="readout__value num">{formatMoney(montecarlo.expected_value)}</td>
             </tr>
             <tr>
-              <td className="readout__label">Median (p50)</td>
+              <td className="readout__label">Medián (p50)</td>
               <td className="readout__value num">{formatMoney(montecarlo.median_value)}</td>
             </tr>
             <tr>
-              <td className="readout__label">Expected return</td>
+              <td className="readout__label">Očekávaný výnos</td>
               <td className={`readout__value num ${signClass(montecarlo.expected_return_pct)}`}>
                 {formatPercentSigned(montecarlo.expected_return_pct)}
               </td>
             </tr>
             <tr>
-              <td className="readout__label">P(loss)</td>
+              <td className="readout__label">P(ztráta)</td>
               <td className={`readout__value num ${lossProbability > 0.5 ? 'neg' : ''}`}>
                 {formatPercent(lossProbability, 1)}
               </td>
             </tr>
             <tr>
-              <td className="readout__label">Worst 5%</td>
+              <td className="readout__label">Nejhorších 5%</td>
               <td className="readout__value num neg">{formatMoney(montecarlo.final_values.p5)}</td>
             </tr>
             <tr>
-              <td className="readout__label">Best 5%</td>
+              <td className="readout__label">Nejlepších 5%</td>
               <td className="readout__value num pos">{formatMoney(montecarlo.final_values.p95)}</td>
             </tr>
           </tbody>
         </table>
-
         <p className="montecarlo__assumptions">
-          {montecarlo.assumptions.distribution}, {montecarlo.assumptions.correlation}, fitted on{' '}
-          {montecarlo.assumptions.lookback_days} trading days. Rebalancing:{' '}
-          {montecarlo.assumptions.rebalancing}. Past distributions do not bound future outcomes.
+          {montecarlo.assumptions.distribution}, {montecarlo.assumptions.correlation}, kalibrováno na{' '}
+          {montecarlo.assumptions.lookback_days} obchodních dnech. Rebalancování:{' '}
+          {montecarlo.assumptions.rebalancing}. Minulé rozložení nezaručuje budoucí výsledky.
         </p>
       </div>
     </Panel>
