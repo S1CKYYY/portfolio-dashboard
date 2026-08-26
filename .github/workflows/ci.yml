@@ -46,10 +46,7 @@ jobs:
       - name: Generate snapshot
         working-directory: backend
         run: |
-          python - << 'EOF'
-          import yfinance as yf
-          yf.set_tz_cache_location("/tmp/yf-cache")
-          EOF
+          rm -rf ~/.cache/py-yfinance /tmp/yf-cache
           python generate_snapshot.py --no-cache
       - name: Patch true portfolio history
         run: |
