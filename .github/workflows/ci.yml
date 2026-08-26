@@ -45,7 +45,12 @@ jobs:
 
       - name: Generate snapshot
         working-directory: backend
-        run: python generate_snapshot.py --no-cache
+        run: |
+          python - << 'EOF'
+          import yfinance as yf
+          yf.set_tz_cache_location("/tmp/yf-cache")
+          EOF
+          python generate_snapshot.py --no-cache
       - name: Patch true portfolio history
         run: |
           FILES=$(find . -maxdepth 1 -name "*.xlsx" 2>/dev/null | tr '\n' ' ')
