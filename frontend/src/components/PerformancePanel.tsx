@@ -1,15 +1,7 @@
 /**
- * Equity curve with range and view toggles, plus a hairline-divided readout of
- * period changes underneath.
- *
- * Three views answer three different questions from the same series:
- *   Value     - what is it worth, against the benchmark rebased to the same start
- *   Return    - how much has it grown since the start of the selected range
- *   Drawdown  - how far below its all-time peak is it, right now
+ * Equity curve with range and view toggles.
  */
-
 import { useMemo, useState } from 'react'
-
 import { toLineData } from '../charts/series'
 import { chartTheme } from '../charts/theme'
 import { TimeSeriesChart, type CrosshairState, type SeriesSpec } from '../charts/TimeSeriesChart'
@@ -31,31 +23,23 @@ type Range = '1w' | '1m' | 'ytd' | 'all'
 type View = 'value' | 'return'
 
 const RANGES = [
-  { value: '1w' as const, label: '1W' },
+  { value: '1w' as const, label: '1T' },
   { value: '1m' as const, label: '1M' },
   { value: 'ytd' as const, label: 'YTD' },
-  { value: 'all' as const, label: 'All' },
+  { value: 'all' as const, label: 'Vše' },
 ]
 
 const VIEWS = [
-  { value: 'value' as const, label: 'Value' },
-  { value: 'return' as const, label: 'Return' },
+  { value: 'value' as const, label: 'Hodnota' },
+  { value: 'return' as const, label: 'Výnos' },
 ]
 
 const READOUT_PERIODS: PeriodKey[] = ['day', 'week', 'month', 'ytd', 'all']
 
-/**
- * First index within the selected range.
- *
- * Dates are compared as ISO strings, which sort chronologically, so no Date
- * objects are constructed per comparison.
- */
 function rangeStartIndex(dates: string[], range: Range): number {
   if (range === 'all' || dates.length === 0) return 0
-
   const last = dates[dates.length - 1]
   let cutoff: string
-
   if (range === 'ytd') {
     cutoff = `${last.slice(0, 4)}-01-01`
   } else {
@@ -64,12 +48,10 @@ function rangeStartIndex(dates: string[], range: Range): number {
     else date.setUTCMonth(date.getUTCMonth() - 1)
     cutoff = date.toISOString().slice(0, 10)
   }
-
   const index = dates.findIndex((day) => day >= cutoff)
   return index === -1 ? 0 : index
 }
 
-/** Growth of a series relative to its first value in the window, as a fraction. */
 function rebaseToReturn(values: number[]): number[] {
   const base = values[0]
   if (!base) return values.map(() => 0)
@@ -94,7 +76,6 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
     const dates = history.dates.slice(start)
     const portfolio = history.portfolio.slice(start)
     const benchmark = history.benchmark_rebased.slice(start)
-
     if (view === 'return') {
       return [
         {
@@ -113,7 +94,6 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
         },
       ]
     }
-
     return [
       {
         id: 'portfolio',
@@ -138,19 +118,17 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
     [isPercentView],
   )
 
-  // The crosshair readout falls back to the latest point when not hovering, so
-  // the row always shows something rather than flickering empty.
   const latestDate = history.dates[history.dates.length - 1]
   const readoutDate = crosshair?.time ?? latestDate
 
   return (
     <Panel
-      title="Performance"
-      subtitle={view === 'value' ? currency : 'percent'}
+      title="Výkonnost"
+      subtitle={view === 'value' ? currency : 'procenta'}
       actions={
         <>
-          <Segmented options={VIEWS} value={view} onChange={setView} ariaLabel="Chart view" />
-          <Segmented options={RANGES} value={range} onChange={setRange} ariaLabel="Date range" />
+          <Segmented options={VIEWS} value={view} onChange={setView} ariaLabel="Pohled na graf" />
+          <Segmented options={RANGES} value={range} onChange={setRange} ariaLabel="Časové období" />
         </>
       }
     >
@@ -185,7 +163,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
           valueFormatter={valueFormatter}
           onCrosshair={setCrosshair}
           baselineValue={isPercentView ? 0 : undefined}
-          ariaLabel={`Portfolio ${view} over ${range === 'all' ? 'the full history' : range}`}
+          ariaLabel={`Portfolio ${view === 'value' ? 'hodnota' : 'výnos'} za ${range === 'all' ? 'celou historii' : range}`}
         />
 
         <div className="performance__readout">
@@ -207,20 +185,20 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
 
         <div className="performance__stats">
           <span>
-            <span className="performance__stat-label">Observations</span>
+            <span className="performance__stat-label">Počet dní</span>
             <span className="num">{returns.observations}</span>
           </span>
           <span>
-            <span className="performance__stat-label">Positive days</span>
+            <span className="performance__stat-label">Kladné dny</span>
             <span className="num">{formatPercent(returns.hit_rate_pct, 1)}</span>
           </span>
           <span>
-            <span className="performance__stat-label">Best day</span>
+            <span className="performance__stat-label">Nejlepší den</span>
             <span className="num pos">{formatPercentSigned(returns.best_day.pct)}</span>
             <span className="num muted">{formatDate(returns.best_day.date)}</span>
           </span>
           <span>
-            <span className="performance__stat-label">Worst day</span>
+            <span className="performance__stat-label">Nejhorší den</span>
             <span className="num neg">{formatPercentSigned(returns.worst_day.pct)}</span>
             <span className="num muted">{formatDate(returns.worst_day.date)}</span>
           </span>
