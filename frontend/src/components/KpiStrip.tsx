@@ -1,16 +1,6 @@
 /**
  * The headline metrics band, directly beneath the top bar.
- *
- * Eight figures that answer "how risky is this, and what is it likely to do
- * next" without scrolling. Hairline-divided cells over a `--line` background —
- * the same technique as every other grid here, so these read as one continuous
- * instrument panel rather than as eight floating stat cards.
- *
- * Each cell is label / value / one line of context, because a risk number
- * without its convention (annualised? against which rate? over what window?)
- * is not interpretable.
  */
-
 import {
   formatMoneyCompact,
   formatMonthYear,
@@ -31,7 +21,6 @@ interface KpiStripProps {
 
 interface Kpi {
   label: string
-  /** Raw figure, so the cell can count into place. */
   raw: number | null
   format: (value: number | null | undefined) => string
   context: string
@@ -41,11 +30,10 @@ interface Kpi {
 export function KpiStrip({ risk, montecarlo, summary, currency }: KpiStripProps) {
   const var95 = risk.value_at_risk['95']
   const drawdown = risk.max_drawdown
-
   const drawdownWindow =
     drawdown.peak_date && drawdown.trough_date
       ? `${formatMonthYear(drawdown.peak_date)} – ${formatMonthYear(drawdown.trough_date)}`
-      : 'no decline recorded'
+      : 'žádný pokles nezaznamenán'
 
   const withCurrency = (value: number | null | undefined) =>
     `${formatMoneyCompact(value)} ${currency}`
@@ -55,21 +43,21 @@ export function KpiStrip({ risk, montecarlo, summary, currency }: KpiStripProps)
       label: 'Volatility',
       raw: risk.volatility_annualized_pct,
       format: (value) => formatPercent(value),
-      context: `annualised · ${risk.lookback_days}d sample`,
+      context: `anualizovaná · vzorek ${risk.lookback_days}d`,
     },
     {
       label: 'Sharpe',
       raw: risk.sharpe_ratio,
       format: formatRatio,
       tone: signClass(risk.sharpe_ratio),
-      context: `excess return vs ${formatPercent(risk.risk_free_rate, 1)} rf`,
+      context: `přebytkový výnos vs ${formatPercent(risk.risk_free_rate, 1)} rf`,
     },
     {
       label: 'Sortino',
       raw: risk.sortino_ratio,
       format: formatRatio,
       tone: signClass(risk.sortino_ratio),
-      context: 'downside risk only',
+      context: 'pouze riziko poklesu',
     },
     {
       label: 'Max drawdown',
@@ -83,7 +71,7 @@ export function KpiStrip({ risk, montecarlo, summary, currency }: KpiStripProps)
       raw: var95?.historical_value ?? null,
       format: withCurrency,
       tone: 'neg',
-      context: `1-day historical · ${formatPercent(var95?.historical_pct)}`,
+      context: `1-denní historická · ${formatPercent(var95?.historical_pct)}`,
     },
     {
       label: `Beta vs ${risk.beta.benchmark_name}`,
@@ -91,34 +79,33 @@ export function KpiStrip({ risk, montecarlo, summary, currency }: KpiStripProps)
       format: formatRatio,
       context:
         risk.beta.value !== null && risk.beta.value < 1
-          ? 'less reactive than index'
-          : 'more reactive than index',
+          ? 'méně reaktivní než index'
+          : 'více reaktivní než index',
     },
     {
       label: 'P(loss) 1Y',
       raw: montecarlo.probability_below_start_pct,
       format: (value) => formatPercent(value, 1),
       tone: montecarlo.probability_below_start_pct > 0.5 ? 'neg' : undefined,
-      context: `${montecarlo.paths.toLocaleString('en-GB')} simulated paths`,
+      context: `${montecarlo.paths.toLocaleString('cs-CZ')} simulovaných scénářů`,
     },
     {
       label: 'Median 1Y',
       raw: montecarlo.median_value,
       format: withCurrency,
       tone: signClass(montecarlo.median_value - summary.total_value),
-      context: `${formatPercentSigned(montecarlo.median_value / summary.total_value - 1)} on today`,
+      context: `${formatPercentSigned(montecarlo.median_value / summary.total_value - 1)} oproti dnešku`,
     },
   ]
 
   return (
-    <section className="kpi" aria-label="Headline risk and outlook metrics">
+    <section className="kpi" aria-label="Klíčové metriky rizika a výhledu">
       {kpis.map((kpi, index) => (
         <div key={kpi.label} className="kpi__cell">
           <span className="kpi__label">{kpi.label}</span>
           <AnimatedNumber
             value={kpi.raw}
             format={kpi.format}
-            // Left-to-right cascade across the band.
             delay={120 + index * 45}
             className={`num kpi__value ${kpi.tone ?? ''}`}
           />
