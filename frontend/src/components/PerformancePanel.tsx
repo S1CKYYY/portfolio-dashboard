@@ -182,7 +182,7 @@ export function PerformancePanel({ history, summary, returns }: PerformancePanel
 
         <TimeSeriesChart
           series={series}
-          height={520}
+          height={560}
           revealOnMount
           revealDelay={MOTION.stagger * 2}
           valueFormatter={valueFormatter}
