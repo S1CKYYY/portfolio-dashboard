@@ -253,6 +253,75 @@ def compute_drawdown(values):
     return drawdown
 
 
+# Sektorové složení (přibližné váhy, k 2025)
+ETF_SECTOR_WEIGHTS = {
+    "VUAA.DE": {
+        "Technologie": 0.310, "Finance": 0.130, "Zdravotnictví": 0.115,
+        "Spotřební zboží": 0.095, "Průmysl": 0.085, "Komunikační služby": 0.090,
+        "Základní spotřeba": 0.060, "Energie": 0.040,
+        "Materiály": 0.025, "Utility": 0.025, "Reality": 0.020,
+    },
+    "ZPRV.DE": {
+        "Finance": 0.250, "Průmysl": 0.180, "Spotřební zboží": 0.120,
+        "Reality": 0.100, "Energie": 0.080, "Materiály": 0.060,
+        "Zdravotnictví": 0.070, "Technologie": 0.050,
+        "Utility": 0.050, "Základní spotřeba": 0.030, "Komunikační služby": 0.010,
+    },
+    "XNAS.DE": {
+        "Technologie": 0.570, "Komunikační služby": 0.160,
+        "Spotřební zboží": 0.130, "Zdravotnictví": 0.060,
+        "Průmysl": 0.040, "Finance": 0.020, "Ostatní": 0.020,
+    },
+    "VWCE.DE": {
+        "Technologie": 0.240, "Finance": 0.150, "Zdravotnictví": 0.100,
+        "Spotřební zboží": 0.090, "Průmysl": 0.080, "Komunikační služby": 0.080,
+        "Základní spotřeba": 0.055, "Energie": 0.050,
+        "Materiály": 0.040, "Utility": 0.030, "Reality": 0.025,
+    },
+    "4GLD.DE":  {"Komodity": 1.0},
+    "IS3N.DE": {
+        "Finance": 0.230, "Technologie": 0.220, "Spotřební zboží": 0.120,
+        "Komunikační služby": 0.100, "Materiály": 0.070, "Energie": 0.070,
+        "Průmysl": 0.050, "Zdravotnictví": 0.040,
+        "Základní spotřeba": 0.050, "Utility": 0.040, "Reality": 0.010,
+    },
+    "BRK-B":  {"Finance": 1.0},
+    "DUOL":   {"Technologie": 1.0},
+    "PYPL":   {"Technologie": 1.0},
+    "META":   {"Komunikační služby": 1.0},
+    "MSFT":   {"Technologie": 1.0},
+    "NFLX":   {"Komunikační služby": 1.0},
+}
+
+
+def compute_sector_allocation(holdings_data: list[dict]) -> list[dict]:
+    """Spočítá sektorové rozložení portfolia."""
+    sector_values: dict[str, float] = {}
+    for h in holdings_data:
+        ticker = h.get("ticker", "")
+        value = h.get("value_base", 0) or 0
+        weights = ETF_SECTOR_WEIGHTS.get(ticker, {"Ostatní": 1.0})
+        for sector, weight in weights.items():
+            sector_values[sector] = sector_values.get(sector, 0.0) + value * weight
+
+    total = sum(sector_values.values())
+    if total == 0:
+        return []
+
+    return sorted(
+        [
+            {
+                "key": sector,
+                "value": round(value, 2),
+                "allocation_pct": round(value / total, 6),
+                "holdings": 1,
+            }
+            for sector, value in sector_values.items()
+        ],
+        key=lambda x: -x["value"],
+    )
+
+
 def compute_region_allocation(holdings_data: list[dict]) -> list[dict]:
     """Spočítá geografické rozložení portfolia s ETF rozepsanými podle skutečného složení."""
     region_values: dict[str, float] = {}
@@ -373,6 +442,13 @@ def main():
         if region_alloc:
             summary["allocation_by_region"] = region_alloc
             print(f"  Geografická alokace: {', '.join(f'{r["key"]} {r["allocation_pct"]*100:.1f}%' for r in region_alloc[:5])}")
+
+    # Přidej sektorovou alokaci
+    if holdings_list:
+        sector_alloc = compute_sector_allocation(holdings_list)
+        if sector_alloc and summary:
+            summary["allocation_by_sector"] = sector_alloc
+            print(f"  Sektory: {', '.join(f'{s["key"]} {s["allocation_pct"]*100:.1f}%' for s in sector_alloc[:4])}")
 
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")))
     print(f"✅ Hotovo — {dates[0]} → {dates[-1]}")

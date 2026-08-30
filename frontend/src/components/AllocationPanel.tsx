@@ -13,6 +13,7 @@ import { Panel } from './Panel'
 interface AllocationPanelProps {
   byClass: AllocationBucket[]
   byRegion: AllocationBucket[]
+  bySector?: AllocationBucket[]
   currency: string
 }
 
@@ -95,13 +96,16 @@ function Breakdown({ title, buckets }: BreakdownProps) {
   )
 }
 
-export function AllocationPanel({ byClass, byRegion }: AllocationPanelProps) {
+export function AllocationPanel({ byClass, byRegion, bySector }: AllocationPanelProps) {
   const { displayCurrency } = useCurrency()
   return (
     <Panel title="Alokace" subtitle={displayCurrency}>
       <div className="allocation">
         <Breakdown title="Třída aktiv" buckets={byClass} currency={displayCurrency} />
         <Breakdown title="Region" buckets={byRegion} currency={displayCurrency} />
+        {bySector && bySector.length > 0 && (
+          <Breakdown title="Sektory" buckets={bySector} currency={displayCurrency} />
+        )}
       </div>
     </Panel>
   )
