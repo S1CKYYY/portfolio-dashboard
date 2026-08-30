@@ -13,6 +13,7 @@ import {
   CrosshairMode,
   LineSeries,
   LineStyle,
+  PriceScaleMode,
   type IChartApi,
   type ISeriesApi,
   type LineData,
@@ -65,6 +66,8 @@ interface TimeSeriesChartProps {
   ariaLabel: string
   /** Draws a horizontal reference line, e.g. zero on a returns view. */
   baselineValue?: number
+  /** Přepne osu Y na logaritmické měřítko — vhodné pro dlouhé historické řady. */
+  logScale?: boolean
 }
 
 export function TimeSeriesChart({
@@ -77,6 +80,7 @@ export function TimeSeriesChart({
   onCrosshair,
   ariaLabel,
   baselineValue,
+  logScale = false,
 }: TimeSeriesChartProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -125,6 +129,7 @@ export function TimeSeriesChart({
         borderColor: theme.axis,
         scaleMargins: { top: 0.12, bottom: 0.08 },
         entireTextOnly: true,
+        mode: logScale ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal,
       },
       timeScale: {
         borderColor: theme.axis,
