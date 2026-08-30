@@ -193,6 +193,7 @@ def parse_open_positions(xlsx_path: Path) -> list[dict]:
             "currency": currency,
             "quantity": round(total_qty, 6),
             "asset_class": asset_class,
+            "region": REGION_MAP.get(yahoo_ticker, "USA"),
         }
         if vwap is not None:
             holding["cost_basis_per_unit"] = round(vwap, 6)
