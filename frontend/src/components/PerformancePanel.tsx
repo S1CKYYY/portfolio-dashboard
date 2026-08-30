@@ -105,7 +105,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
         },
       ]
     }
-    return [
+    const baseSeries = [
       {
         id: 'portfolio',
         label: 'Portfolio',
@@ -116,11 +116,22 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
         id: 'benchmark',
         label: history.benchmark_name,
         color: theme.benchmark,
-        lineWidth: 1,
+        lineWidth: 1 as const,
         dashed: true,
         data: toLineData(dates, benchmark),
       },
     ]
+    if (invested) {
+      baseSeries.push({
+        id: 'invested',
+        label: 'Vloženo',
+        color: '#6f6f6f',
+        lineWidth: 1 as const,
+        dashed: true,
+        data: toLineData(dates, invested),
+      })
+    }
+    return baseSeries
   }, [history, range, view, theme])
 
   const isPercentView = view !== 'value'
