@@ -253,44 +253,86 @@ def compute_drawdown(values):
     return drawdown
 
 
-# Sektorové složení (přibližné váhy, k 2025)
+# Sektorové složení — přesná data z Yahoo Finance (2025)
 ETF_SECTOR_WEIGHTS = {
+    # VUAA.DE — S&P 500, zdroj: Yahoo Finance VUAA.L
     "VUAA.DE": {
-        "Technologie": 0.310, "Finance": 0.130, "Zdravotnictví": 0.115,
-        "Spotřební zboží": 0.095, "Průmysl": 0.085, "Komunikační služby": 0.090,
-        "Základní spotřeba": 0.060, "Energie": 0.040,
-        "Materiály": 0.025, "Utility": 0.025, "Reality": 0.020,
+        "Technologie":          0.3742,
+        "Finance":              0.1220,
+        "Komunikační služby":   0.0991,
+        "Spotřební zboží":      0.0958,
+        "Zdravotnictví":        0.0910,
+        "Průmysl":              0.0816,
+        "Základní spotřeba":    0.0462,
+        "Energie":              0.0336,
+        "Utility":              0.0215,
+        "Reality":              0.0188,
+        "Materiály":            0.0162,
     },
+    # ZPRV.DE — MSCI USA Small Cap Value, zdroj: Yahoo Finance ZPRV.DE
     "ZPRV.DE": {
-        "Finance": 0.250, "Průmysl": 0.180, "Spotřební zboží": 0.120,
-        "Reality": 0.100, "Energie": 0.080, "Materiály": 0.060,
-        "Zdravotnictví": 0.070, "Technologie": 0.050,
-        "Utility": 0.050, "Základní spotřeba": 0.030, "Komunikační služby": 0.010,
+        "Finance":              0.1960,
+        "Průmysl":              0.1470,
+        "Spotřební zboží":      0.1392,
+        "Technologie":          0.1060,
+        "Energie":              0.1038,
+        "Zdravotnictví":        0.0771,
+        "Reality":              0.0623,
+        "Materiály":            0.0603,
+        "Základní spotřeba":    0.0563,
+        "Komunikační služby":   0.0276,
+        "Utility":              0.0244,
     },
+    # XNAS.DE — NASDAQ 100, zdroj: Yahoo Finance XNAS.L
     "XNAS.DE": {
-        "Technologie": 0.570, "Komunikační služby": 0.160,
-        "Spotřební zboží": 0.130, "Zdravotnictví": 0.060,
-        "Průmysl": 0.040, "Finance": 0.020, "Ostatní": 0.020,
+        "Technologie":          0.5782,
+        "Komunikační služby":   0.1353,
+        "Spotřební zboží":      0.1118,
+        "Základní spotřeba":    0.0665,
+        "Průmysl":              0.0405,
+        "Zdravotnictví":        0.0380,
+        "Utility":              0.0119,
+        "Materiály":            0.0101,
+        "Energie":              0.0054,
+        "Finance":              0.0023,
     },
+    # VWCE.DE — FTSE All-World, zdroj: Yahoo Finance VWCE.DE
     "VWCE.DE": {
-        "Technologie": 0.240, "Finance": 0.150, "Zdravotnictví": 0.100,
-        "Spotřební zboží": 0.090, "Průmysl": 0.080, "Komunikační služby": 0.080,
-        "Základní spotřeba": 0.055, "Energie": 0.050,
-        "Materiály": 0.040, "Utility": 0.030, "Reality": 0.025,
+        "Technologie":          0.3251,
+        "Finance":              0.1585,
+        "Průmysl":              0.1082,
+        "Spotřební zboží":      0.0882,
+        "Zdravotnictví":        0.0813,
+        "Komunikační služby":   0.0794,
+        "Základní spotřeba":    0.0465,
+        "Energie":              0.0352,
+        "Materiály":            0.0350,
+        "Utility":              0.0248,
+        "Reality":              0.0177,
     },
-    "4GLD.DE":  {"Komodity": 1.0},
+    # 4GLD.DE — Xetra-Gold
+    "4GLD.DE": {"Komodity": 1.0},
+    # IS3N.DE — MSCI EM IMI, zdroj: Yahoo Finance IS3N.DE
     "IS3N.DE": {
-        "Finance": 0.230, "Technologie": 0.220, "Spotřební zboží": 0.120,
-        "Komunikační služby": 0.100, "Materiály": 0.070, "Energie": 0.070,
-        "Průmysl": 0.050, "Zdravotnictví": 0.040,
-        "Základní spotřeba": 0.050, "Utility": 0.040, "Reality": 0.010,
+        "Technologie":          0.4210,
+        "Finance":              0.1669,
+        "Spotřební zboží":      0.0855,
+        "Průmysl":              0.0799,
+        "Materiály":            0.0624,
+        "Komunikační služby":   0.0562,
+        "Energie":              0.0327,
+        "Zdravotnictví":        0.0326,
+        "Základní spotřeba":    0.0282,
+        "Utility":              0.0192,
+        "Reality":              0.0154,
     },
-    "BRK-B":  {"Finance": 1.0},
-    "DUOL":   {"Technologie": 1.0},
-    "PYPL":   {"Technologie": 1.0},
-    "META":   {"Komunikační služby": 1.0},
-    "MSFT":   {"Technologie": 1.0},
-    "NFLX":   {"Komunikační služby": 1.0},
+    # Jednotlivé akcie
+    "BRK-B":  {"Finance":              1.0},
+    "DUOL":   {"Technologie":          1.0},
+    "PYPL":   {"Finance":              1.0},
+    "META":   {"Komunikační služby":   1.0},
+    "MSFT":   {"Technologie":          1.0},
+    "NFLX":   {"Komunikační služby":   1.0},
 }
 
 
