@@ -30,7 +30,35 @@ TICKER_OVERRIDE = {
 }
 
 USD_TICKERS = {"BRKB.US", "DUOL.US", "PYPL.US", "META.US", "MSFT.US", "NFLX.US"}
-BENCHMARK = "^GSPC"
+BENCHMARK = "VUAA.DE"
+
+# Skutečné geografické složení ETF indexů (přibližné váhy)
+ETF_REGION_WEIGHTS = {
+    "VUAA.DE":  {"USA": 1.0},
+    "ZPRV.DE":  {"USA": 1.0},
+    "XNAS.DE":  {"USA": 1.0},
+    "VWCE.DE":  {
+        "USA":                  0.626,
+        "Evropa":               0.145,
+        "Japonsko":             0.058,
+        "Ostatní rozvinuté":    0.061,
+        "Rozvíjející se trhy":  0.110,
+    },
+    "4GLD.DE":  {"Komodity": 1.0},
+    "IS3N.DE":  {
+        "Čína":        0.293,
+        "Indie":       0.195,
+        "Tchaj-wan":   0.152,
+        "Jižní Korea": 0.129,
+        "Ostatní EM":  0.231,
+    },
+    "BRK-B": {"USA": 1.0},
+    "DUOL":  {"USA": 1.0},
+    "PYPL":  {"USA": 1.0},
+    "META":  {"USA": 1.0},
+    "MSFT":  {"USA": 1.0},
+    "NFLX":  {"USA": 1.0},
+}
 
 
 def parse_lots(xlsx_path):
@@ -233,6 +261,34 @@ def compute_drawdown(values):
     return drawdown
 
 
+def compute_region_allocation(holdings_data: list[dict]) -> list[dict]:
+    """Spočítá geografické rozložení portfolia s ETF rozepsanými podle skutečného složení."""
+    region_values: dict[str, float] = {}
+    for h in holdings_data:
+        ticker = h.get("ticker", "")
+        value = h.get("value_base", 0) or 0
+        weights = ETF_REGION_WEIGHTS.get(ticker, {"USA": 1.0})
+        for region, weight in weights.items():
+            region_values[region] = region_values.get(region, 0.0) + value * weight
+
+    total = sum(region_values.values())
+    if total == 0:
+        return []
+
+    return sorted(
+        [
+            {
+                "key": region,
+                "value": round(value, 2),
+                "allocation_pct": round(value / total, 6),
+                "holdings": 1,
+            }
+            for region, value in region_values.items()
+        ],
+        key=lambda x: -x["value"],
+    )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("files", nargs="+", type=Path)
@@ -316,6 +372,15 @@ def main():
             print("  ⚠️ EURCZK download selhal, přeskakuji")
     except Exception as e:
         print(f"  ⚠️ EURCZK chyba: {e}, přeskakuji")
+
+    # Přepiš allocation_by_region skutečným geografickým složením ETF
+    holdings_list = snapshot.get("endpoints", {}).get("/holdings", {}).get("holdings", [])
+    if holdings_list:
+        region_alloc = compute_region_allocation(holdings_list)
+        summary = snapshot.get("endpoints", {}).get("/portfolio/summary", {})
+        if region_alloc:
+            summary["allocation_by_region"] = region_alloc
+            print(f"  Geografická alokace: {', '.join(f'{r["key"]} {r["allocation_pct"]*100:.1f}%' for r in region_alloc[:5])}")
 
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")))
     print(f"✅ Hotovo — {dates[0]} → {dates[-1]}")
