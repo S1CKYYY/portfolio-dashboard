@@ -84,13 +84,16 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
     const dates = history.dates.slice(start)
     const portfolio = history.portfolio.slice(start)
     const benchmark = history.benchmark_rebased.slice(start)
+    const invested = history.cumulative_invested?.slice(start) ?? null
     if (view === 'return') {
+      const portfolioReturn = invested ? investedReturn(portfolio, invested) : rebaseToReturn(portfolio)
+      const benchmarkReturn = invested ? investedReturn(benchmark, invested) : rebaseToReturn(benchmark)
       return [
         {
           id: 'portfolio',
           label: 'Portfolio',
           color: theme.accent,
-          data: toLineData(dates, rebaseToReturn(portfolio)),
+          data: toLineData(dates, portfolioReturn),
         },
         {
           id: 'benchmark',
@@ -98,7 +101,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
           color: theme.benchmark,
           lineWidth: 1,
           dashed: true,
-          data: toLineData(dates, rebaseToReturn(benchmark)),
+          data: toLineData(dates, benchmarkReturn),
         },
       ]
     }
