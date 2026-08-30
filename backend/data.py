@@ -170,9 +170,7 @@ def _cache_file(cache_dir: Path, symbols: Sequence[str], years: int) -> Path:
 
 
 def _download_closes(symbols: Sequence[str], start: date, end: date) -> pd.DataFrame:
-    # Nastav unikátní cache složku aby se zabránilo "database is locked" v GitHub Actions
     yf.set_tz_cache_location("/tmp/yf-tz-fresh")
-
     logger.info("Downloading %d symbols from Yahoo Finance (%s .. %s)", len(symbols), start, end)
     raw = yf.download(
         list(symbols),

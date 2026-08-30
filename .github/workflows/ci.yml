@@ -47,14 +47,14 @@ jobs:
       - name: Generate snapshot
         working-directory: backend
         run: |
-          rm -rf ~/.cache/py-yfinance /tmp/yf-cache
+          rm -rf ~/.cache/py-yfinance /tmp/yf-cache /tmp/yf-tz-fresh
           python generate_snapshot.py --no-cache
 
       - name: Patch true portfolio history
         run: |
           FILES=$(find . -maxdepth 1 -name "*.xlsx" 2>/dev/null | tr '\n' ' ')
           if [ -n "$FILES" ]; then
-            python tools/patch_true_history.py $FILES --snapshot backend/snapshot.json
+            python tools/patch_true_history.py $FILES --snapshot snapshot.json
           else
             echo "Žádné XLSX soubory, přeskakuji"
           fi
@@ -70,7 +70,7 @@ jobs:
         run: npm ci
 
       - name: Copy snapshot to frontend
-        run: mkdir -p frontend/public && cp backend/snapshot.json frontend/public/snapshot.json
+        run: mkdir -p frontend/public && cp snapshot.json frontend/public/snapshot.json
 
       - name: Build frontend
         working-directory: frontend
@@ -84,7 +84,7 @@ jobs:
           git stash
           git rebase origin/main
           git stash pop
-          git add backend/snapshot.json backend/holdings.json
+          git add snapshot.json backend/holdings.json
           if ! git diff --staged --quiet; then
             git commit -m "chore: update snapshot $(date -u '+%Y-%m-%d %H:%M UTC')"
             git push
