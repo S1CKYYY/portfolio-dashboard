@@ -89,6 +89,7 @@ export function TimeSeriesChart({
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef(new Map<string, ISeriesApi<'Line'>>())
   const priceLinesRef = useRef(new Map<string, IPriceLine>())
+  const colorsRef = useRef(new Map<string, string>())
 
   // Reveal runs at most once per mounted chart.
   const revealDoneRef = useRef(!revealOnMount || prefersReducedMotion())
@@ -187,6 +188,7 @@ export function TimeSeriesChart({
           } else {
             const pl = api.createPriceLine({
               price: point.value,
+              color: colorsRef.current.get(id) ?? '#888',
               lineWidth: 1,
               lineStyle: LineStyle.Dotted,
               axisLabelVisible: true,
@@ -228,6 +230,7 @@ export function TimeSeriesChart({
         api = chart.addSeries(LineSeries, { priceLineVisible: false, lastValueVisible: false })
         seriesRef.current.set(spec.id, api)
       }
+      colorsRef.current.set(spec.id, spec.color)
       api.applyOptions({
         color: spec.color,
         lineWidth: spec.lineWidth ?? 2,
