@@ -364,6 +364,32 @@ def compute_sector_allocation(holdings_data: list[dict]) -> list[dict]:
     )
 
 
+def compute_currency_allocation(holdings_data: list[dict]) -> list[dict]:
+    """Spočítá alokaci podle měny pozice."""
+    currency_values: dict[str, float] = {}
+    for h in holdings_data:
+        currency = h.get("currency", "EUR")
+        value = h.get("value_base", 0) or 0
+        currency_values[currency] = currency_values.get(currency, 0.0) + value
+
+    total = sum(currency_values.values())
+    if total == 0:
+        return []
+
+    return sorted(
+        [
+            {
+                "key": currency,
+                "value": round(value, 2),
+                "allocation_pct": round(value / total, 6),
+                "holdings": 1,
+            }
+            for currency, value in currency_values.items()
+        ],
+        key=lambda x: -x["value"],
+    )
+
+
 def compute_region_allocation(holdings_data: list[dict]) -> list[dict]:
     """Spočítá geografické rozložení portfolia s ETF rozepsanými podle skutečného složení."""
     region_values: dict[str, float] = {}
@@ -484,6 +510,13 @@ def main():
         if region_alloc:
             summary["allocation_by_region"] = region_alloc
             print(f"  Geografická alokace: {', '.join(f'{r["key"]} {r["allocation_pct"]*100:.1f}%' for r in region_alloc[:5])}")
+
+    # Přidej alokaci podle měny
+    if holdings_list and summary:
+        currency_alloc = compute_currency_allocation(holdings_list)
+        if currency_alloc:
+            summary["allocation_by_currency"] = currency_alloc
+            print(f"  Měny: {', '.join(f'{c["key"]} {c["allocation_pct"]*100:.1f}%' for c in currency_alloc)}")
 
     # Přidej sektorovou alokaci
     if holdings_list:

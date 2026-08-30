@@ -1,80 +1,33 @@
 /**
- * Allocation by asset class and by region.
+ * Allocation breakdowns — třída, region, sektory, měna.
+ * Bez grafů, jen tabulky s procentuálními hodnotami.
  */
-import { useMemo } from 'react'
-import type { EChartsOption } from 'echarts'
-import { EChart } from '../charts/EChart'
-import { chartTheme, tooltipStyle } from '../charts/theme'
 import { formatMoneyCompact, formatPercent } from '../lib/format'
 import { useCurrency } from '../lib/currency'
 import type { AllocationBucket } from '../lib/types'
 import { Panel } from './Panel'
+import { chartTheme } from '../charts/theme'
 
 interface AllocationPanelProps {
   byClass: AllocationBucket[]
   byRegion: AllocationBucket[]
   bySector?: AllocationBucket[]
+  byCurrency?: AllocationBucket[]
   currency: string
 }
 
 interface BreakdownProps {
   title: string
   buckets: AllocationBucket[]
-  currency: string
-}
-
-function donutOption(buckets: AllocationBucket[], currency: string): EChartsOption {
-  const theme = chartTheme()
-  return {
-    animationDuration: 850,
-    animationEasing: 'cubicOut',
-    animationDelay: (index: number) => 140 + index * 70,
-    tooltip: {
-      ...tooltipStyle(),
-      trigger: 'item',
-      formatter: (params: unknown) => {
-        const point = params as { name: string; value: number; percent: number }
-        return `${point.name}<br/>${formatMoneyCompact(point.value)} ${currency} · ${point.percent.toFixed(1)}%`
-      },
-    },
-    series: [
-      {
-        type: 'pie',
-        radius: ['62%', '88%'],
-        center: ['50%', '50%'],
-        animationType: 'expansion',
-        avoidLabelOverlap: false,
-        label: { show: false },
-        labelLine: { show: false },
-        itemStyle: { borderColor: theme.surface, borderWidth: 1, borderRadius: 0 },
-        emphasis: {
-          scale: false,
-          itemStyle: { color: theme.accent },
-        },
-        data: buckets.map((bucket, index) => ({
-          name: bucket.key,
-          value: bucket.value,
-          itemStyle: { color: theme.categorical[index % theme.categorical.length] },
-        })),
-      },
-    ],
-  }
 }
 
 function Breakdown({ title, buckets }: BreakdownProps) {
-  const { displayCurrency, multiplier } = useCurrency()
-  const displayBuckets = buckets.map(b => ({ ...b, value: b.value * multiplier }))
+  const { multiplier } = useCurrency()
   const theme = chartTheme()
-  const option = useMemo(() => donutOption(displayBuckets, displayCurrency), [displayBuckets, displayCurrency])
+  const displayBuckets = buckets.map(b => ({ ...b, value: b.value * multiplier }))
   return (
     <div className="allocation__group">
       <div className="allocation__caption label">{title}</div>
-      <EChart
-        option={option}
-        height={104}
-        ariaLabel={`Alokace dle ${title.toLowerCase()}`}
-        className="allocation__chart"
-      />
       <table className="allocation__legend">
         <tbody>
           {displayBuckets.map((bucket, index) => (
@@ -96,15 +49,18 @@ function Breakdown({ title, buckets }: BreakdownProps) {
   )
 }
 
-export function AllocationPanel({ byClass, byRegion, bySector }: AllocationPanelProps) {
+export function AllocationPanel({ byClass, byRegion, bySector, byCurrency }: AllocationPanelProps) {
   const { displayCurrency } = useCurrency()
   return (
     <Panel title="Alokace" subtitle={displayCurrency}>
       <div className="allocation">
-        <Breakdown title="Třída aktiv" buckets={byClass} currency={displayCurrency} />
-        <Breakdown title="Region" buckets={byRegion} currency={displayCurrency} />
+        <Breakdown title="Třída aktiv" buckets={byClass} />
+        <Breakdown title="Region" buckets={byRegion} />
         {bySector && bySector.length > 0 && (
-          <Breakdown title="Sektory" buckets={bySector} currency={displayCurrency} />
+          <Breakdown title="Sektory" buckets={bySector} />
+        )}
+        {byCurrency && byCurrency.length > 0 && (
+          <Breakdown title="Měna" buckets={byCurrency} />
         )}
       </div>
     </Panel>

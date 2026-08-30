@@ -65,6 +65,7 @@ export default function App() {
             byClass={summary.allocation_by_class}
             byRegion={summary.allocation_by_region}
             bySector={summary.allocation_by_sector}
+            byCurrency={summary.allocation_by_currency}
             currency={currency}
           />
         </div>
