@@ -15,6 +15,7 @@ import {
 } from '../lib/format'
 import type { MonteCarloPayload } from '../lib/types'
 import { Panel } from './Panel'
+import { useCurrency } from '../lib/currency'
 
 interface MonteCarloPanelProps {
   montecarlo: MonteCarloPayload
@@ -178,8 +179,20 @@ function histogramOption(mc: MonteCarloPayload): EChartsOption {
   }
 }
 
-export function MonteCarloPanel({ montecarlo, currency }: MonteCarloPanelProps) {
-  const fan = useMemo(() => fanOption(montecarlo, currency), [montecarlo, currency])
+export function MonteCarloPanel({ montecarlo }: MonteCarloPanelProps) {
+  const { displayCurrency, multiplier } = useCurrency()
+  const mc = useMemo(() => ({
+    ...montecarlo,
+    start_value: montecarlo.start_value * multiplier,
+    percentile_bands: {
+      p5: montecarlo.percentile_bands.p5.map((v: number) => v * multiplier),
+      p25: montecarlo.percentile_bands.p25.map((v: number) => v * multiplier),
+      p50: montecarlo.percentile_bands.p50.map((v: number) => v * multiplier),
+      p75: montecarlo.percentile_bands.p75.map((v: number) => v * multiplier),
+      p95: montecarlo.percentile_bands.p95.map((v: number) => v * multiplier),
+    },
+  }), [montecarlo, multiplier])
+  const fan = useMemo(() => fanOption(mc, displayCurrency), [mc, displayCurrency])
   const subtitle = `${montecarlo.paths.toLocaleString('cs-CZ')} scénářů · ${montecarlo.horizon_days} obchodních dní`
   return (
     <Panel title="Monte Carlo" subtitle={subtitle} className="panel--fill">
@@ -208,11 +221,12 @@ export function MonteCarloPanel({ montecarlo, currency }: MonteCarloPanelProps) 
   )
 }
 
-export function OutcomeDistributionPanel({ montecarlo, currency }: MonteCarloPanelProps) {
+export function OutcomeDistributionPanel({ montecarlo }: MonteCarloPanelProps) {
+  const { displayCurrency, multiplier } = useCurrency()
   const histogram = useMemo(() => histogramOption(montecarlo), [montecarlo])
   const lossProbability = montecarlo.probability_below_start_pct
   return (
-    <Panel title="Výsledky" subtitle={`konečná hodnota, ${currency}`}>
+    <Panel title="Výsledky" subtitle={`konečná hodnota, ${displayCurrency}`}>
       <div className="montecarlo__aside">
         <EChart
           option={histogram}
@@ -223,11 +237,11 @@ export function OutcomeDistributionPanel({ montecarlo, currency }: MonteCarloPan
           <tbody>
             <tr>
               <td className="readout__label">Střední hodnota</td>
-              <td className="readout__value num">{formatMoney(montecarlo.expected_value)}</td>
+              <td className="readout__value num">{formatMoney(montecarlo.expected_value * multiplier)} {displayCurrency}</td>
             </tr>
             <tr>
               <td className="readout__label">Medián (p50)</td>
-              <td className="readout__value num">{formatMoney(montecarlo.median_value)}</td>
+              <td className="readout__value num">{formatMoney(montecarlo.median_value * multiplier)} {displayCurrency}</td>
             </tr>
             <tr>
               <td className="readout__label">Očekávaný výnos</td>
@@ -243,11 +257,11 @@ export function OutcomeDistributionPanel({ montecarlo, currency }: MonteCarloPan
             </tr>
             <tr>
               <td className="readout__label">Nejhorších 5%</td>
-              <td className="readout__value num neg">{formatMoney(montecarlo.final_values.p5)}</td>
+              <td className="readout__value num neg">{formatMoney(montecarlo.final_values.p5 * multiplier)} {displayCurrency}</td>
             </tr>
             <tr>
               <td className="readout__label">Nejlepších 5%</td>
-              <td className="readout__value num pos">{formatMoney(montecarlo.final_values.p95)}</td>
+              <td className="readout__value num pos">{formatMoney(montecarlo.final_values.p95 * multiplier)} {displayCurrency}</td>
             </tr>
           </tbody>
         </table>

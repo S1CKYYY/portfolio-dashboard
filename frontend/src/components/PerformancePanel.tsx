@@ -138,7 +138,7 @@ export function PerformancePanel({ history, summary, returns }: PerformancePanel
 
   const isPercentView = view !== 'value'
   const valueFormatter = useMemo(
-    () => (value: number) => (isPercentView ? formatPercent(value, 1) : formatMoneyCompact(value)),
+    () => (value: number) => (isPercentView ? formatPercent(value, 1) : `${formatMoneyCompact(value)} ${displayCurrency}`),
     [isPercentView],
   )
 
@@ -221,7 +221,7 @@ export function PerformancePanel({ history, summary, returns }: PerformancePanel
                   {formatPercentSigned(change.pct)}
                 </span>
                 <span className={`num performance__cell-sub ${signClass(change.absolute)}`}>
-                  {formatMoneySigned(change.absolute)}
+                  {formatMoneySigned(change.absolute * multiplier)}
                 </span>
               </div>
             )

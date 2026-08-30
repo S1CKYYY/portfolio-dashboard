@@ -11,6 +11,7 @@ import {
 } from '../lib/format'
 import type { RiskPayload } from '../lib/types'
 import { Panel } from './Panel'
+import { useCurrency } from '../lib/currency'
 
 interface RiskPanelProps {
   risk: RiskPayload
@@ -24,12 +25,12 @@ interface Row {
   tone?: string
 }
 
-function buildRows(risk: RiskPayload, currency: string): Row[] {
+function buildRows(risk: RiskPayload, currency: string, multiplier: number = 1): Row[] {
   const var95 = risk.value_at_risk['95']
   const var99 = risk.value_at_risk['99']
   const drawdown = risk.max_drawdown
   const beta = risk.beta.value
-  const money = (value: number | null) => `${formatMoney(value)} ${currency}`
+  const money = (value: number | null) => `${formatMoney((value ?? 0) * multiplier)} ${currency}`
 
   const drawdownMeaning = drawdown.peak_date
     ? `Největší pokles od vrcholu ke dnu, ${formatDate(drawdown.peak_date)} – ${formatDate(drawdown.trough_date)}. ` +
@@ -105,8 +106,9 @@ function buildRows(risk: RiskPayload, currency: string): Row[] {
   ]
 }
 
-export function RiskPanel({ risk, currency }: RiskPanelProps) {
-  const rows = buildRows(risk, currency)
+export function RiskPanel({ risk }: RiskPanelProps) {
+  const { displayCurrency, multiplier } = useCurrency()
+  const rows = buildRows(risk, displayCurrency, multiplier)
   return (
     <Panel
       title="Riziko"

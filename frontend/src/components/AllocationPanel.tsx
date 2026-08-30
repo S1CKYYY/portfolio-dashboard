@@ -6,6 +6,7 @@ import type { EChartsOption } from 'echarts'
 import { EChart } from '../charts/EChart'
 import { chartTheme, tooltipStyle } from '../charts/theme'
 import { formatMoneyCompact, formatPercent } from '../lib/format'
+import { useCurrency } from '../lib/currency'
 import type { AllocationBucket } from '../lib/types'
 import { Panel } from './Panel'
 
@@ -59,9 +60,11 @@ function donutOption(buckets: AllocationBucket[], currency: string): EChartsOpti
   }
 }
 
-function Breakdown({ title, buckets, currency }: BreakdownProps) {
+function Breakdown({ title, buckets }: BreakdownProps) {
+  const { displayCurrency, multiplier } = useCurrency()
+  const displayBuckets = buckets.map(b => ({ ...b, value: b.value * multiplier }))
   const theme = chartTheme()
-  const option = useMemo(() => donutOption(buckets, currency), [buckets, currency])
+  const option = useMemo(() => donutOption(displayBuckets, displayCurrency), [displayBuckets, displayCurrency])
   return (
     <div className="allocation__group">
       <div className="allocation__caption label">{title}</div>
@@ -73,7 +76,7 @@ function Breakdown({ title, buckets, currency }: BreakdownProps) {
       />
       <table className="allocation__legend">
         <tbody>
-          {buckets.map((bucket, index) => (
+          {displayBuckets.map((bucket, index) => (
             <tr key={bucket.key}>
               <td className="allocation__swatch-cell">
                 <span
@@ -92,12 +95,13 @@ function Breakdown({ title, buckets, currency }: BreakdownProps) {
   )
 }
 
-export function AllocationPanel({ byClass, byRegion, currency }: AllocationPanelProps) {
+export function AllocationPanel({ byClass, byRegion }: AllocationPanelProps) {
+  const { displayCurrency } = useCurrency()
   return (
-    <Panel title="Alokace" subtitle={currency}>
+    <Panel title="Alokace" subtitle={displayCurrency}>
       <div className="allocation">
-        <Breakdown title="Třída aktiv" buckets={byClass} currency={currency} />
-        <Breakdown title="Region" buckets={byRegion} currency={currency} />
+        <Breakdown title="Třída aktiv" buckets={byClass} currency={displayCurrency} />
+        <Breakdown title="Region" buckets={byRegion} currency={displayCurrency} />
       </div>
     </Panel>
   )

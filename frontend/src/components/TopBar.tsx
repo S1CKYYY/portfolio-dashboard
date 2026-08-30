@@ -60,9 +60,15 @@ export function TopBar({ summary, health, config }: TopBarProps) {
             format={formatMoneyCompact}
             className="num topbar__amount"
           />
-          <span className="topbar__currency" style={{ cursor: 'pointer' }} onClick={toggle} title="Přepnout měnu">
-            {displayCurrency}
-          </span>
+          <button
+            type="button"
+            className="segmented__option"
+            onClick={toggle}
+            style={{ fontFamily: 'inherit', fontSize: '0.75rem', letterSpacing: '0.1em', marginLeft: '6px' }}
+            title="Přepnout měnu"
+          >
+            {displayCurrency === 'CZK' ? 'CZK → EUR' : 'EUR → CZK'}
+          </button>
         </div>
         <div className="topbar__deltas">
           <Delta label="Dnes" absolute={today.absolute * multiplier} percent={today.pct} delay={90} />
