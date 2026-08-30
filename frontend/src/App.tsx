@@ -64,6 +64,7 @@ export default function App() {
           <AllocationPanel
             byClass={summary.allocation_by_class}
             byRegion={summary.allocation_by_region}
+            bySector={summary.allocation_by_sector}
             currency={currency}
           />
         </div>
