@@ -42,7 +42,6 @@ function Delta({ label, absolute, percent, delay }: DeltaProps) {
 
 export function TopBar({ summary, health, config }: TopBarProps) {
   const { displayCurrency, multiplier, toggle } = useCurrency()
-  const allTime = summary.changes.all
   const today = summary.changes.day
   const live = config.source === 'api'
   return (
@@ -72,9 +71,8 @@ export function TopBar({ summary, health, config }: TopBarProps) {
         </div>
         <div className="topbar__deltas">
           <Delta label="Dnes" absolute={today.absolute * multiplier} percent={today.pct} delay={90} />
-          <Delta label="Celkem" absolute={allTime.absolute * multiplier} percent={allTime.pct} delay={150} />
           <Delta
-            label="Nerealizovaný P&L"
+            label="Zhodnocení"
             absolute={summary.total_unrealized_pnl * multiplier}
             percent={summary.total_unrealized_pnl_pct}
             delay={210}
