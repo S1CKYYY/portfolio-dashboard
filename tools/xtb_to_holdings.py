@@ -30,6 +30,26 @@ CATEGORY_MAP = {
 # ── Mapování XTB tickerů na Yahoo Finance symboly ────────────────────────────
 # XTB používá např. VUAA.DE, Yahoo Finance totéž — většinou funguje přímo.
 # Pokud by nefungovalo, přidat sem výjimku.
+REGION_MAP = {
+    # ETF – USA akciové indexy
+    "VUAA.DE": "USA",
+    "ZPRV.DE": "USA",
+    "XNAS.DE": "USA",
+    # ETF – globální
+    "VWCE.DE": "Svět",
+    # ETF – rozvíjející se trhy
+    "IS3N.DE": "Rozvíjející se trhy",
+    # ETC – komodity
+    "4GLD.DE": "Komodity",
+    # US akcie
+    "BRK-B": "USA",
+    "DUOL": "USA",
+    "PYPL": "USA",
+    "META": "USA",
+    "MSFT": "USA",
+    "NFLX": "USA",
+}
+
 TICKER_OVERRIDE = {
     "BRKB.US": "BRK-B",
     "DUOL.US": "DUOL",
