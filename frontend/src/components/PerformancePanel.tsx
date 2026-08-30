@@ -192,25 +192,6 @@ export function PerformancePanel({ history, summary, returns }: PerformancePanel
           ariaLabel={`Portfolio ${view === 'value' ? 'hodnota' : 'výnos'} za ${range === 'all' ? 'celou historii' : range}`}
         />
 
-        <div style={{ display: 'flex', gap: '1px', background: 'var(--line-faint)', borderTop: '1px solid var(--line-faint)' }}>
-          {series.map((spec) => {
-            const value = crosshair?.values[spec.id]
-            const latest = spec.data[spec.data.length - 1]?.value
-            const shown = value ?? latest
-            return (
-              <div key={spec.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', padding: '10px 14px', background: 'var(--surface-panel)' }}>
-                <span style={{ fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: spec.color }}>
-                  {spec.label}
-                </span>
-                <span className="num" style={{ fontSize: '1rem' }}>
-                  {isPercentView ? formatPercentSigned(shown) : formatMoney(shown)}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-
-
         <div className="performance__readout">
           {READOUT_PERIODS.map((period) => {
             const change = summary.changes[period]
