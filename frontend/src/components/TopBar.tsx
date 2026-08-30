@@ -85,7 +85,7 @@ export function TopBar({ summary, health, config }: TopBarProps) {
                 const sign = diff >= 0 ? '+' : ''
                 return (
                   <span className={`num ${diff >= 0 ? 'pos' : 'neg'}`}>
-                    {sign}{(diff * 100).toFixed(2)} pp
+                    {sign}{(diff * 100).toFixed(2)} %
                   </span>
                 )
               })()}
