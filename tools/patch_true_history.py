@@ -283,6 +283,13 @@ def main():
         snapshot["history"] = {}
         target = snapshot["history"]
 
+    # Spočítej výnos benchmarku stejnou metodou jako portfolio
+    if invested and invested[-1] > 0 and benchmark:
+        benchmark_return = (benchmark[-1] - invested[-1]) / invested[-1]
+        summary = snapshot.get('endpoints', {}).get('/portfolio/summary', snapshot.get('summary', {}))
+        summary['benchmark_return_pct'] = round(benchmark_return, 6)
+        print(f'  Výnos benchmarku: {benchmark_return*100:.2f}%')
+
     target["dates"] = dates
     target["portfolio"] = [round(v, 2) for v in portfolio]
     target["benchmark_rebased"] = [round(v, 2) for v in benchmark]

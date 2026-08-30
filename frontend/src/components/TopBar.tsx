@@ -77,6 +77,20 @@ export function TopBar({ summary, health, config }: TopBarProps) {
             percent={summary.total_unrealized_pnl_pct}
             delay={210}
           />
+          {summary.benchmark_return_pct !== undefined && (
+            <div className="topbar__delta">
+              <span className="topbar__delta-label">vs VUAA.DE</span>
+              {(() => {
+                const diff = (summary.total_unrealized_pnl_pct ?? 0) - summary.benchmark_return_pct!
+                const sign = diff >= 0 ? '+' : ''
+                return (
+                  <span className={`num ${diff >= 0 ? 'pos' : 'neg'}`}>
+                    {sign}{(diff * 100).toFixed(2)} pp
+                  </span>
+                )
+              })()}
+            </div>
+          )}
         </div>
       </div>
       <div className="topbar__aside">

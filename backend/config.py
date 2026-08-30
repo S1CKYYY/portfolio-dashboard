@@ -37,8 +37,8 @@ class Settings:
     """
 
     base_currency: str = "EUR"
-    benchmark: str = "^GSPC"
-    benchmark_name: str = "S&P 500"
+    benchmark: str = "VUAA.DE"
+    benchmark_name: str = "VUAA.DE"
 
     history_years: int = 2
     trading_days_per_year: int = 252
