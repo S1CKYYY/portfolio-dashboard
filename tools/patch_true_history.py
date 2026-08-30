@@ -364,11 +364,23 @@ def compute_sector_allocation(holdings_data: list[dict]) -> list[dict]:
     )
 
 
-def compute_currency_allocation(holdings_data: list[dict]) -> list[dict]:
-    """Spočítá alokaci podle měny pozice."""
+def compute_currency_allocation(holdings_data: list[dict], holdings_json_path: str = "backend/holdings.json") -> list[dict]:
+    """Spočítá alokaci podle měny pozice (čte původní měnu z holdings.json)."""
+    # Načti původní měny z holdings.json
+    ticker_currency: dict[str, str] = {}
+    try:
+        import json as _json
+        with open(holdings_json_path) as f:
+            orig = _json.load(f)
+        for h in orig.get("holdings", []):
+            ticker_currency[h["ticker"]] = h.get("currency", "EUR")
+    except Exception:
+        pass
+
     currency_values: dict[str, float] = {}
     for h in holdings_data:
-        currency = h.get("currency", "EUR")
+        ticker = h.get("ticker", "")
+        currency = ticker_currency.get(ticker, h.get("currency", "EUR"))
         value = h.get("value_base", 0) or 0
         currency_values[currency] = currency_values.get(currency, 0.0) + value
 
