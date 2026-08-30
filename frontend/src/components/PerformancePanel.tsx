@@ -58,6 +58,14 @@ function rebaseToReturn(values: number[]): number[] {
   return values.map((value) => value / base - 1)
 }
 
+/** Výnos vzhledem k vloženým penězům: (hodnota - vloženo) / vloženo */
+function investedReturn(values: number[], invested: number[]): number[] {
+  return values.map((v, i) => {
+    const cost = invested[i]
+    return cost > 0 ? v / cost - 1 : 0
+  })
+}
+
 interface PerformancePanelProps {
   history: HistoryPayload
   summary: SummaryPayload

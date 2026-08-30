@@ -102,6 +102,8 @@ export interface HistoryPayload extends Envelope {
   benchmark_rebased: number[]
   drawdown_pct: number[]
   per_holding: Record<string, number[]>
+  /** Kumulativně vloženo v EUR k danému dni — pro výpočet skutečného výnosu. */
+  cumulative_invested?: number[]
 }
 
 export interface MonthlyReturn {

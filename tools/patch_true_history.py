@@ -2,7 +2,10 @@
 tools/patch_true_history.py
 
 Nahradí syntetickou equity křivku v snapshot.json skutečnou historií
-portfolia rekonstruovanou z individuálních lotů v XTB XLSX exportu.
+portfolia. Navíc vypočítá:
+- cash-flow matched benchmark (stejné investice ve stejných datech do S&P 500)
+- cumulative_invested (kolik EUR bylo celkem vloženo k danému dni)
+Tyto hodnoty umožňují správně zobrazit "Výnos" jako (hodnota - vloženo) / vloženo.
 """
 
 import argparse
@@ -27,6 +30,7 @@ TICKER_OVERRIDE = {
 }
 
 USD_TICKERS = {"BRKB.US", "DUOL.US", "PYPL.US", "META.US", "MSFT.US", "NFLX.US"}
+BENCHMARK = "^GSPC"
 
 
 def parse_lots(xlsx_path):
@@ -38,7 +42,6 @@ def parse_lots(xlsx_path):
             header_row = i
             break
     if header_row is None:
-        print(f"  ⚠️ {xlsx_path.name}: hlavička nenalezena", file=sys.stderr)
         return []
     df.columns = df.iloc[header_row]
     df = df.iloc[header_row + 1:].reset_index(drop=True)
@@ -49,10 +52,11 @@ def parse_lots(xlsx_path):
         typ = row.get("Type")
         volume = row.get("Volume")
         open_time = row.get("Open time (UTC)")
+        open_price = row.get("Open price")
         if pd.isna(typ) and pd.notna(ticker):
             current_ticker = str(ticker).strip()
         elif str(typ).strip().upper() == "BUY" and current_ticker:
-            if pd.isna(volume) or pd.isna(open_time):
+            if pd.isna(volume) or pd.isna(open_time) or pd.isna(open_price):
                 continue
             if isinstance(open_time, datetime):
                 date_str = open_time.strftime("%Y-%m-%d")
@@ -66,44 +70,103 @@ def parse_lots(xlsx_path):
                 "xtb_ticker": current_ticker,
                 "yahoo_ticker": yahoo_ticker,
                 "quantity": float(volume),
+                "open_price": float(open_price),
                 "open_date": date_str,
                 "is_usd": current_ticker in USD_TICKERS,
             })
     return lots
 
 
-def build_true_history(lots, end_date):
+def build_history(lots, end_date):
     if not lots:
-        return [], []
+        return [], [], [], []
+
     start_date = min(lot["open_date"] for lot in lots)
     print(f"  Rozsah dat: {start_date} → {end_date}")
+
     yahoo_tickers = list(set(lot["yahoo_ticker"] for lot in lots))
-    has_usd = any(lot["is_usd"] for lot in lots)
-    all_tickers = yahoo_tickers + (["EURUSD=X"] if has_usd else [])
-    print(f"  Stahuji historické ceny: {', '.join(all_tickers)}")
+    all_tickers = yahoo_tickers + ["EURUSD=X", BENCHMARK]
+    print(f"  Stahuji ceny: {', '.join(all_tickers)}")
+
     end_plus = (pd.Timestamp(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     raw = yf.download(all_tickers, start=start_date, end=end_plus, auto_adjust=True, progress=False)
     if raw.empty:
-        print("  ❌ Žádná data z Yahoo Finance", file=sys.stderr)
-        return [], []
+        return [], [], [], []
+
     if isinstance(raw.columns, pd.MultiIndex):
         closes = raw["Close"].copy()
     else:
         closes = raw[["Close"]].rename(columns={"Close": all_tickers[0]}).copy()
     closes = closes.ffill()
     dates = [d.strftime("%Y-%m-%d") for d in closes.index]
+
     portfolio_values = []
+    benchmark_values = []
+    cumulative_invested = []
+
+    # Předvýpočet benchmark lotů (kolik jednotek S&P 500 jsme koupili)
+    # Na každý nákup simulujeme stejnou EUR částku do S&P 500
+    benchmark_units = []  # list of (date, units)
+
+    for lot in lots:
+        d = lot["open_date"]
+        try:
+            eurusd = float(closes.loc[d, "EURUSD=X"]) if "EURUSD=X" in closes.columns and not pd.isna(closes.loc[d, "EURUSD=X"]) else 1.0
+        except KeyError:
+            eurusd = 1.0
+        if eurusd <= 0:
+            eurusd = 1.0
+
+        # EUR náklad tohoto lotu
+        cost_native = lot["quantity"] * lot["open_price"]
+        cost_eur = cost_native / eurusd if lot["is_usd"] else cost_native
+
+        # Cena S&P 500 v EUR v den nákupu
+        try:
+            gspc_price_usd = float(closes.loc[d, BENCHMARK])
+        except KeyError:
+            gspc_price_usd = None
+        if gspc_price_usd and not pd.isna(gspc_price_usd) and eurusd > 0:
+            gspc_price_eur = gspc_price_usd / eurusd
+            units = cost_eur / gspc_price_eur
+            benchmark_units.append((d, units))
+
+    # Pro každý obchodní den vypočítej hodnoty
+    total_invested = 0.0
+    invested_by_date = {}
+
+    for lot in lots:
+        d = lot["open_date"]
+        try:
+            eurusd = float(closes.loc[d, "EURUSD=X"]) if not pd.isna(closes.loc[d, "EURUSD=X"]) else 1.0
+        except Exception:
+            eurusd = 1.0
+        cost_native = lot["quantity"] * lot["open_price"]
+        cost_eur = cost_native / eurusd if lot["is_usd"] else cost_native
+        invested_by_date[d] = invested_by_date.get(d, 0.0) + cost_eur
+
+    running_invested = 0.0
+    invested_cumulative = {}
+    for d in sorted(invested_by_date.keys()):
+        running_invested += invested_by_date[d]
+        invested_cumulative[d] = running_invested
+
     for date_str in dates:
         try:
             day_prices = closes.loc[date_str]
         except KeyError:
             portfolio_values.append(None)
+            benchmark_values.append(None)
+            cumulative_invested.append(None)
             continue
+
         eurusd = 1.0
-        if has_usd:
+        if "EURUSD=X" in closes.columns:
             raw_fx = day_prices.get("EURUSD=X")
             if raw_fx is not None and not pd.isna(raw_fx) and float(raw_fx) > 0:
                 eurusd = float(raw_fx)
+
+        # Portfolio hodnota
         total = 0.0
         for lot in lots:
             if lot["open_date"] > date_str:
@@ -116,18 +179,48 @@ def build_true_history(lots, end_date):
                 value /= eurusd
             total += value
         portfolio_values.append(total if total > 0 else None)
+
+        # Benchmark hodnota (cash-flow matched)
+        gspc_today = day_prices.get(BENCHMARK)
+        if gspc_today is not None and not pd.isna(gspc_today):
+            gspc_eur = float(gspc_today) / eurusd
+            bench_val = sum(
+                units * gspc_eur
+                for d, units in benchmark_units
+                if d <= date_str
+            )
+            benchmark_values.append(bench_val if bench_val > 0 else None)
+        else:
+            benchmark_values.append(None)
+
+        # Kumulativně vloženo
+        inv = 0.0
+        for d, amt in invested_cumulative.items():
+            if d <= date_str:
+                inv = amt
+        cumulative_invested.append(inv if inv > 0 else None)
+
+    # Ořízni prázdný začátek
     first_valid = next((i for i, v in enumerate(portfolio_values) if v is not None), None)
     if first_valid is None:
-        return [], []
+        return [], [], [], []
+
     dates = dates[first_valid:]
     portfolio_values = portfolio_values[first_valid:]
-    last = None
-    result = []
-    for v in portfolio_values:
-        if v is not None:
-            last = v
-        result.append(last or 0.0)
-    return dates, result
+    benchmark_values = benchmark_values[first_valid:]
+    cumulative_invested = cumulative_invested[first_valid:]
+
+    # Forward-fill
+    def ffill(lst):
+        last = None
+        result = []
+        for v in lst:
+            if v is not None:
+                last = v
+            result.append(last or 0.0)
+        return result
+
+    return dates, ffill(portfolio_values), ffill(benchmark_values), ffill(cumulative_invested)
 
 
 def compute_drawdown(values):
@@ -140,42 +233,10 @@ def compute_drawdown(values):
     return drawdown
 
 
-def rebase_benchmark(ticker, dates, start_value):
-    if not dates:
-        return []
-    print(f"  Stahuji benchmark {ticker}...")
-    end_plus = (pd.Timestamp(dates[-1]) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-    raw = yf.download(ticker, start=dates[0], end=end_plus, auto_adjust=True, progress=False)
-    if raw.empty:
-        return [start_value] * len(dates)
-    if isinstance(raw.columns, pd.MultiIndex):
-        closes = raw["Close"].iloc[:, 0].ffill()
-    else:
-        closes = raw["Close"].ffill()
-    base = None
-    rebased = []
-    for date_str in dates:
-        try:
-            price = float(closes.loc[date_str])
-        except KeyError:
-            try:
-                price = float(closes.asof(pd.Timestamp(date_str)))
-            except Exception:
-                price = None
-        if price is not None and not pd.isna(price):
-            if base is None:
-                base = price
-            rebased.append(start_value * price / base)
-        else:
-            rebased.append(rebased[-1] if rebased else start_value)
-    return rebased
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("files", nargs="+", type=Path)
     parser.add_argument("--snapshot", type=Path, default=Path("snapshot.json"))
-    parser.add_argument("--benchmark", default="^GSPC")
     args = parser.parse_args()
 
     if not args.snapshot.exists():
@@ -188,54 +249,48 @@ def main():
     all_lots = []
     for path in args.files:
         if not path.exists():
-            print(f"  ⚠️ {path} nenalezen, přeskakuji", file=sys.stderr)
             continue
         lots = parse_lots(path)
         print(f"  {path.name}: {len(lots)} lotů")
         all_lots.extend(lots)
 
     if not all_lots:
-        print("❌ Žádné loty nenalezeny", file=sys.stderr)
+        print("❌ Žádné loty", file=sys.stderr)
         sys.exit(1)
 
     end_date = snapshot.get("as_of", datetime.today().strftime("%Y-%m-%d"))
 
-    print("\n📈 Rekonstruuji skutečnou historii portfolia...")
-    dates, values = build_true_history(all_lots, end_date)
+    print("\n📈 Rekonstruuji historii portfolia + benchmark...")
+    dates, portfolio, benchmark, invested = build_history(all_lots, end_date)
 
     if not dates:
         print("❌ Nepodařilo se vygenerovat historii", file=sys.stderr)
         sys.exit(1)
 
     print(f"  ✅ {len(dates)} obchodních dní")
-    print(f"  Start: {values[0]:,.0f} EUR  →  Konec: {values[-1]:,.0f} EUR")
+    print(f"  Portfolio: {portfolio[0]:,.0f} EUR → {portfolio[-1]:,.0f} EUR")
+    print(f"  Benchmark: {benchmark[0]:,.0f} EUR → {benchmark[-1]:,.0f} EUR")
+    print(f"  Vloženo celkem: {invested[-1]:,.0f} EUR")
 
-    drawdown = compute_drawdown(values)
-
-    print("\n📊 Přebazuji benchmark...")
-    benchmark_rebased = rebase_benchmark(args.benchmark, dates, values[0])
+    drawdown = compute_drawdown(portfolio)
 
     print("\n💾 Aktualizuji snapshot.json...")
-
-    # Najdi správný cíl v snapshot struktuře
     if "endpoints" in snapshot and "/portfolio/history" in snapshot["endpoints"]:
         target = snapshot["endpoints"]["/portfolio/history"]
-        print("  Cíl: endpoints['/portfolio/history']")
     elif "history" in snapshot:
         target = snapshot["history"]
-        print("  Cíl: history")
     else:
         snapshot["history"] = {}
         target = snapshot["history"]
-        print("  Cíl: nový history klíč")
 
     target["dates"] = dates
-    target["portfolio"] = [round(v, 2) for v in values]
+    target["portfolio"] = [round(v, 2) for v in portfolio]
+    target["benchmark_rebased"] = [round(v, 2) for v in benchmark]
     target["drawdown_pct"] = [round(v, 6) for v in drawdown]
-    target["benchmark_rebased"] = [round(v, 2) for v in benchmark_rebased]
+    target["cumulative_invested"] = [round(v, 2) for v in invested]
 
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")))
-    print(f"✅ Hotovo — skutečná historie {dates[0]} → {dates[-1]} zapsána")
+    print(f"✅ Hotovo — {dates[0]} → {dates[-1]}")
 
 
 if __name__ == "__main__":
