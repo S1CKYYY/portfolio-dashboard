@@ -191,6 +191,24 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
         />
 
         <div className="performance__readout">
+          {series.map((spec) => {
+            const value = crosshair?.values[spec.id]
+            const latest = spec.data[spec.data.length - 1]?.value
+            const shown = value ?? latest
+            return (
+              <div key={spec.id} className="performance__cell">
+                <span className="performance__cell-label" style={{ color: spec.color }}>
+                  {spec.label}
+                </span>
+                <span className="num performance__cell-value">
+                  {isPercentView ? formatPercentSigned(shown) : formatMoney(shown)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="performance__readout">
           {READOUT_PERIODS.map((period) => {
             const change = summary.changes[period]
             return (
