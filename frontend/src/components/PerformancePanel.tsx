@@ -76,7 +76,6 @@ interface PerformancePanelProps {
 export function PerformancePanel({ history, summary, returns, currency }: PerformancePanelProps) {
   const [range, setRange] = useState<Range>('all')
   const [view, setView] = useState<View>('value')
-  const [logScale, setLogScale] = useState(false)
   const [crosshair, setCrosshair] = useState<CrosshairState | null>(null)
   const theme = chartTheme()
 
@@ -141,15 +140,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
         <>
           <Segmented options={VIEWS} value={view} onChange={setView} ariaLabel="Pohled na graf" />
           <Segmented options={RANGES} value={range} onChange={setRange} ariaLabel="Časové období" />
-          <button
-            type="button"
-            className="segmented__option"
-            aria-pressed={logScale}
-            onClick={() => setLogScale((v) => !v)}
-            title="Přepnout logaritmické / lineární měřítko"
-          >
-            LOG
-          </button>
+
         </>
       }
     >
@@ -184,7 +175,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
           valueFormatter={valueFormatter}
           onCrosshair={setCrosshair}
           baselineValue={isPercentView ? 0 : undefined}
-          logScale={!isPercentView && logScale}
+          tickInterval={isPercentView ? undefined : 5000}
           ariaLabel={`Portfolio ${view === 'value' ? 'hodnota' : 'výnos'} za ${range === 'all' ? 'celou historii' : range}`}
         />
 

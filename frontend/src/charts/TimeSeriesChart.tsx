@@ -66,8 +66,8 @@ interface TimeSeriesChartProps {
   ariaLabel: string
   /** Draws a horizontal reference line, e.g. zero on a returns view. */
   baselineValue?: number
-  /** Přepne osu Y na logaritmické měřítko — vhodné pro dlouhé historické řady. */
-  logScale?: boolean
+  /** Minimální krok na ose Y — zarovná tickmarky na násobky této hodnoty (např. 5000 = každých 5 000 EUR). */
+  tickInterval?: number
 }
 
 export function TimeSeriesChart({
@@ -80,7 +80,7 @@ export function TimeSeriesChart({
   onCrosshair,
   ariaLabel,
   baselineValue,
-  logScale = false,
+  tickInterval,
 }: TimeSeriesChartProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -129,7 +129,7 @@ export function TimeSeriesChart({
         borderColor: theme.axis,
         scaleMargins: { top: 0.12, bottom: 0.08 },
         entireTextOnly: true,
-        mode: logScale ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal,
+        mode: PriceScaleMode.Normal,
       },
       timeScale: {
         borderColor: theme.axis,
@@ -211,6 +211,7 @@ export function TimeSeriesChart({
         crosshairMarkerRadius: 3,
         crosshairMarkerBorderColor: theme.surface,
         crosshairMarkerBackgroundColor: spec.color,
+        ...(tickInterval ? { priceFormat: { type: 'price', minMove: tickInterval, precision: 0 } } : {}),
         // During the reveal, report the finished range so the price scale is
         // stable; afterwards defer to the library's own autoscaling.
         autoscaleInfoProvider: (base: () => AutoscaleInfo | null) =>
