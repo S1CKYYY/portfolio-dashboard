@@ -83,6 +83,7 @@ export interface SummaryPayload extends Envelope {
   changes: Record<PeriodKey, PeriodChange>
   allocation_by_class: AllocationBucket[]
   allocation_by_region: AllocationBucket[]
+  czk_rate?: number
   sparkline: {
     dates: string[]
     values: number[]

@@ -289,6 +289,15 @@ def main():
     target["drawdown_pct"] = [round(v, 6) for v in drawdown]
     target["cumulative_invested"] = [round(v, 2) for v in invested]
 
+    # Přidej aktuální kurz EUR/CZK do snapshotu
+    print("\n💱 Stahuji kurz EUR/CZK...")
+    czk_raw = yf.download("EURCZK=X", period="5d", auto_adjust=True, progress=False)
+    if not czk_raw.empty:
+        czk_rate = round(float(czk_raw["Close"].iloc[-1]), 4)
+        print(f"  EUR/CZK = {czk_rate}")
+        summary = snapshot.get("endpoints", {}).get("/portfolio/summary", snapshot.get("summary", {}))
+        summary["czk_rate"] = czk_rate
+
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")))
     print(f"✅ Hotovo — {dates[0]} → {dates[-1]}")
 

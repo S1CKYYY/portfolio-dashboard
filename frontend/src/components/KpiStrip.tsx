@@ -10,6 +10,7 @@ import {
   signClass,
 } from '../lib/format'
 import type { MonteCarloPayload, RiskPayload, SummaryPayload } from '../lib/types'
+import { useCurrency } from '../lib/currency'
 import { AnimatedNumber } from './AnimatedNumber'
 
 interface KpiStripProps {
@@ -27,7 +28,8 @@ interface Kpi {
   tone?: string
 }
 
-export function KpiStrip({ risk, montecarlo, summary, currency }: KpiStripProps) {
+export function KpiStrip({ risk, montecarlo, summary }: KpiStripProps) {
+  const { displayCurrency, multiplier } = useCurrency()
   const var95 = risk.value_at_risk['95']
   const drawdown = risk.max_drawdown
   const drawdownWindow =
@@ -36,7 +38,7 @@ export function KpiStrip({ risk, montecarlo, summary, currency }: KpiStripProps)
       : 'žádný pokles nezaznamenán'
 
   const withCurrency = (value: number | null | undefined) =>
-    `${formatMoneyCompact(value)} ${currency}`
+    `${formatMoneyCompact((value ?? 0) * multiplier)} ${displayCurrency}`
 
   const kpis: Kpi[] = [
     {

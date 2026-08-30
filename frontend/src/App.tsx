@@ -12,6 +12,7 @@ import { PerformancePanel } from './components/PerformancePanel'
 import { RiskPanel } from './components/RiskPanel'
 import { TopBar } from './components/TopBar'
 import { formatTimestamp } from './lib/format'
+import { CurrencyProvider } from './lib/currency'
 import { useAnalytics } from './lib/useAnalytics'
 
 function LoadingState() {
@@ -45,7 +46,10 @@ export default function App() {
   if (!data) return null
   const { health, holdings, summary, history, returns, risk, montecarlo } = data
   const currency = summary.base_currency
+  const czkRate = summary.czk_rate ?? 25.3
+
   return (
+    <CurrencyProvider czkRate={czkRate}>
     <div className="app">
       <TopBar summary={summary} health={health} config={config} />
       <main className="app__main">
@@ -88,5 +92,6 @@ export default function App() {
         </span>
       </footer>
     </div>
+    </CurrencyProvider>
   )
 }

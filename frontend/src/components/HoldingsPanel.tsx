@@ -23,6 +23,7 @@ import {
 } from '../lib/format'
 import type { Holding } from '../lib/types'
 import { Panel } from './Panel'
+import { useCurrency } from '../lib/currency'
 import { Sparkline } from './Sparkline'
 
 const features = tableFeatures({
@@ -157,21 +158,32 @@ interface HoldingsPanelProps {
   currency: string
 }
 
-export function HoldingsPanel({ holdings, totalValue, currency }: HoldingsPanelProps) {
+export function HoldingsPanel({ holdings, totalValue }: HoldingsPanelProps) {
+  const { displayCurrency, multiplier } = useCurrency()
+  // Transformuj hodnoty do zobrazovací měny
+  const displayHoldings = holdings.map(h => ({
+    ...h,
+    price_base: h.price_base * multiplier,
+    value_base: h.value_base * multiplier,
+    cost_basis_base: h.cost_basis_base * multiplier,
+    cost_total_base: h.cost_total_base * multiplier,
+    unrealized_pnl: h.unrealized_pnl * multiplier,
+  }))
+  const displayTotal = totalValue * multiplier
   const table = useTable({
     features,
     columns,
-    data: holdings,
+    data: displayHoldings,
     initialState: { sorting: [{ id: 'value_base', desc: true }] },
   })
 
   const totalPnl = useMemo(
-    () => holdings.reduce((sum, holding) => sum + holding.unrealized_pnl, 0),
-    [holdings],
+    () => displayHoldings.reduce((sum, holding) => sum + holding.unrealized_pnl, 0),
+    [displayHoldings],
   )
 
   return (
-    <Panel title="Pozice" subtitle={`${holdings.length} pozic · hodnoty v ${currency}`}>
+    <Panel title="Pozice" subtitle={`${holdings.length} pozic · hodnoty v ${displayCurrency}`}>
       <div className="grid__scroll">
         <table className="grid">
           <thead>
@@ -230,7 +242,7 @@ export function HoldingsPanel({ holdings, totalValue, currency }: HoldingsPanelP
                 Celkem
               </td>
               <td className="grid__td grid__td--right">
-                <Num tone="grid__strong">{formatMoney(totalValue)}</Num>
+                <Num tone="grid__strong">{formatMoney(displayTotal)}</Num>
               </td>
               <td className="grid__td grid__td--right">
                 <Num>{formatPercent(1, 1)}</Num>

@@ -18,6 +18,7 @@ import {
 import { MOTION } from '../lib/motion'
 import type { HistoryPayload, PeriodKey, ReturnsPayload, SummaryPayload } from '../lib/types'
 import { Panel, Segmented } from './Panel'
+import { useCurrency } from '../lib/currency'
 
 type Range = '1w' | '1m' | 'ytd' | 'all'
 type View = 'value' | 'return'
@@ -73,7 +74,8 @@ interface PerformancePanelProps {
   currency: string
 }
 
-export function PerformancePanel({ history, summary, returns, currency }: PerformancePanelProps) {
+export function PerformancePanel({ history, summary, returns }: PerformancePanelProps) {
+  const { displayCurrency, multiplier } = useCurrency()
   const [range, setRange] = useState<Range>('all')
   const [view, setView] = useState<View>('value')
   const [crosshair, setCrosshair] = useState<CrosshairState | null>(null)
@@ -82,9 +84,9 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
   const series = useMemo<SeriesSpec[]>(() => {
     const start = rangeStartIndex(history.dates, range)
     const dates = history.dates.slice(start)
-    const portfolio = history.portfolio.slice(start)
-    const benchmark = history.benchmark_rebased.slice(start)
-    const invested = history.cumulative_invested?.slice(start) ?? null
+    const portfolio = history.portfolio.slice(start).map(v => v * multiplier)
+    const benchmark = history.benchmark_rebased.slice(start).map(v => v * multiplier)
+    const invested = history.cumulative_invested?.slice(start).map(v => v * multiplier) ?? null
     if (view === 'return') {
       const portfolioReturn = invested ? investedReturn(portfolio, invested) : rebaseToReturn(portfolio)
       const benchmarkReturn = invested ? investedReturn(benchmark, invested) : rebaseToReturn(benchmark)
@@ -146,7 +148,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
   return (
     <Panel
       title="Výkonnost"
-      subtitle={view === 'value' ? currency : 'procenta'}
+      subtitle={view === 'value' ? displayCurrency : 'procenta'}
       actions={
         <>
           <Segmented options={VIEWS} value={view} onChange={setView} ariaLabel="Pohled na graf" />

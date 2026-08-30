@@ -5,6 +5,7 @@ import { formatDate, formatMoneyCompact, formatMoneySigned, formatPercentSigned,
 import type { DataConfig } from '../lib/api'
 import type { Health, SummaryPayload } from '../lib/types'
 import { AnimatedNumber } from './AnimatedNumber'
+import { useCurrency } from '../lib/currency'
 import { Sparkline } from './Sparkline'
 
 interface TopBarProps {
@@ -40,6 +41,7 @@ function Delta({ label, absolute, percent, delay }: DeltaProps) {
 }
 
 export function TopBar({ summary, health, config }: TopBarProps) {
+  const { displayCurrency, multiplier, toggle } = useCurrency()
   const allTime = summary.changes.all
   const today = summary.changes.day
   const live = config.source === 'api'
@@ -54,18 +56,20 @@ export function TopBar({ summary, health, config }: TopBarProps) {
         </div>
         <div className="topbar__value">
           <AnimatedNumber
-            value={summary.total_value}
+            value={summary.total_value * multiplier}
             format={formatMoneyCompact}
             className="num topbar__amount"
           />
-          <span className="topbar__currency">{summary.base_currency}</span>
+          <span className="topbar__currency" style={{ cursor: 'pointer' }} onClick={toggle} title="Přepnout měnu">
+            {displayCurrency}
+          </span>
         </div>
         <div className="topbar__deltas">
-          <Delta label="Dnes" absolute={today.absolute} percent={today.pct} delay={90} />
-          <Delta label="Celkem" absolute={allTime.absolute} percent={allTime.pct} delay={150} />
+          <Delta label="Dnes" absolute={today.absolute * multiplier} percent={today.pct} delay={90} />
+          <Delta label="Celkem" absolute={allTime.absolute * multiplier} percent={allTime.pct} delay={150} />
           <Delta
             label="Nerealizovaný P&L"
-            absolute={summary.total_unrealized_pnl}
+            absolute={summary.total_unrealized_pnl * multiplier}
             percent={summary.total_unrealized_pnl_pct}
             delay={210}
           />
@@ -81,7 +85,7 @@ export function TopBar({ summary, health, config }: TopBarProps) {
         />
         <div className="topbar__meta">
           <span>
-            Měna <span className="topbar__meta-value num">{summary.base_currency}</span>
+            Měna <span className="topbar__meta-value num">{displayCurrency}</span>
           </span>
           <span>
             Ke dni <span className="topbar__meta-value num">{formatDate(summary.as_of)}</span>
