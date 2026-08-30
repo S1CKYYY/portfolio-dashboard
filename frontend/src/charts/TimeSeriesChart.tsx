@@ -15,6 +15,7 @@ import {
   LineStyle,
   PriceScaleMode,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
   type LineData,
   type AutoscaleInfo,
@@ -87,6 +88,7 @@ export function TimeSeriesChart({
   const hostRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef(new Map<string, ISeriesApi<'Line'>>())
+  const priceLinesRef = useRef(new Map<string, IPriceLine>())
 
   // Reveal runs at most once per mounted chart.
   const revealDoneRef = useRef(!revealOnMount || prefersReducedMotion())
@@ -165,13 +167,34 @@ export function TimeSeriesChart({
 
       if (!params.time || !params.point) {
         report(null)
+        // Odstraň price lines když kurzor opustí graf
+        priceLinesRef.current.forEach((pl, id) => {
+          seriesMap.get(id)?.removePriceLine(pl)
+        })
+        priceLinesRef.current.clear()
         return
       }
 
       const values: Record<string, number> = {}
       for (const [id, api] of seriesMap) {
         const point = params.seriesData.get(api) as LineData<Time> | undefined
-        if (point && typeof point.value === 'number') values[id] = point.value
+        if (point && typeof point.value === 'number') {
+          values[id] = point.value
+          // Aktualizuj nebo vytvoř dynamický price line pro Y-osa obdélník
+          const existing = priceLinesRef.current.get(id)
+          if (existing) {
+            existing.applyOptions({ price: point.value })
+          } else {
+            const pl = api.createPriceLine({
+              price: point.value,
+              lineWidth: 1,
+              lineStyle: LineStyle.Dotted,
+              axisLabelVisible: true,
+              title: '',
+            })
+            priceLinesRef.current.set(id, pl)
+          }
+        }
       }
       report({ time: fromTime(params.time), values })
     })
@@ -202,7 +225,7 @@ export function TimeSeriesChart({
     series.forEach((spec) => {
       let api = seriesRef.current.get(spec.id)
       if (!api) {
-        api = chart.addSeries(LineSeries, { priceLineVisible: false, lastValueVisible: true })
+        api = chart.addSeries(LineSeries, { priceLineVisible: false, lastValueVisible: false })
         seriesRef.current.set(spec.id, api)
       }
       api.applyOptions({
