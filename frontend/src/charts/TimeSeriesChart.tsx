@@ -139,7 +139,7 @@ export function TimeSeriesChart({
         fixRightEdge: true,
       },
       crosshair: {
-        mode: CrosshairMode.Magnet,
+        mode: CrosshairMode.Normal,
         vertLine: {
           color: theme.crosshair,
           width: 1,
@@ -202,7 +202,7 @@ export function TimeSeriesChart({
     series.forEach((spec) => {
       let api = seriesRef.current.get(spec.id)
       if (!api) {
-        api = chart.addSeries(LineSeries, { priceLineVisible: false, lastValueVisible: false })
+        api = chart.addSeries(LineSeries, { priceLineVisible: false, lastValueVisible: true })
         seriesRef.current.set(spec.id, api)
       }
       api.applyOptions({
