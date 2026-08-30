@@ -105,7 +105,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
         },
       ]
     }
-    const baseSeries = [
+    const baseSeries: SeriesSpec[] = [
       {
         id: 'portfolio',
         label: 'Portfolio',
@@ -125,9 +125,9 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
       baseSeries.push({
         id: 'invested',
         label: 'Vloženo',
-        color: '#6f6f6f',
+        color: '#f1c21b',
         lineWidth: 1 as const,
-        dashed: true,
+        dotted: true,
         data: toLineData(dates, invested),
       })
     }

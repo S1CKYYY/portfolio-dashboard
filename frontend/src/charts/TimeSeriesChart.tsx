@@ -36,6 +36,8 @@ export interface SeriesSpec {
   lineWidth?: 1 | 2
   /** Dashed rendering marks a reference series (e.g. the benchmark). */
   dashed?: boolean
+  /** Dotted rendering — odlišuje se od dashed, vhodné pro třetí sérii. */
+  dotted?: boolean
 }
 
 /** Values under the crosshair, or `null` when the pointer leaves the chart. */
@@ -206,7 +208,7 @@ export function TimeSeriesChart({
       api.applyOptions({
         color: spec.color,
         lineWidth: spec.lineWidth ?? 2,
-        lineStyle: spec.dashed ? LineStyle.Dashed : LineStyle.Solid,
+        lineStyle: spec.dashed ? LineStyle.Dashed : spec.dotted ? LineStyle.Dotted : LineStyle.Solid,
         crosshairMarkerVisible: true,
         crosshairMarkerRadius: 3,
         crosshairMarkerBorderColor: theme.surface,
