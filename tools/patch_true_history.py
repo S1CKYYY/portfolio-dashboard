@@ -39,9 +39,7 @@ ETF_REGION_WEIGHTS = {
     "XNAS.DE":  {"USA": 1.0},
     "VWCE.DE":  {
         "USA":                    0.626,
-        "Evropa":                 0.145,
-        "Japonsko":               0.058,
-        "Ostatní rozvinuté":      0.061,
+        "Evropa":                 0.264,
         "Rozvíjející se trhy":    0.110,
     },
     "4GLD.DE":  {"Komodity": 1.0},
