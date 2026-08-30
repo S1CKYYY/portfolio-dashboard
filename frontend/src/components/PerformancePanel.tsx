@@ -98,7 +98,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
         {
           id: 'benchmark',
           label: history.benchmark_name,
-          color: theme.benchmark,
+          color: '#6f6f6f',
           lineWidth: 1,
           dashed: true,
           data: toLineData(dates, benchmarkReturn),
@@ -115,7 +115,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
       {
         id: 'benchmark',
         label: history.benchmark_name,
-        color: theme.benchmark,
+        color: '#f1c21b',
         lineWidth: 1 as const,
         dashed: true,
         data: toLineData(dates, benchmark),
@@ -125,7 +125,7 @@ export function PerformancePanel({ history, summary, returns, currency }: Perfor
       baseSeries.push({
         id: 'invested',
         label: 'Vloženo',
-        color: '#f1c21b',
+        color: '#6f6f6f',
         lineWidth: 1 as const,
         dotted: true,
         data: toLineData(dates, invested),
