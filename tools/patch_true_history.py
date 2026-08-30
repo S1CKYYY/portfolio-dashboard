@@ -291,12 +291,24 @@ def main():
 
     # Přidej aktuální kurz EUR/CZK do snapshotu
     print("\n💱 Stahuji kurz EUR/CZK...")
-    czk_raw = yf.download("EURCZK=X", period="5d", auto_adjust=True, progress=False)
-    if not czk_raw.empty:
-        czk_rate = round(float(czk_raw["Close"].iloc[-1]), 4)
-        print(f"  EUR/CZK = {czk_rate}")
-        summary = snapshot.get("endpoints", {}).get("/portfolio/summary", snapshot.get("summary", {}))
-        summary["czk_rate"] = czk_rate
+    try:
+        czk_raw = yf.download("EURCZK=X", period="5d", auto_adjust=True, progress=False)
+        if not czk_raw.empty:
+            if isinstance(czk_raw.columns, pd.MultiIndex):
+                czk_val = czk_raw["Close"].iloc[:, 0].dropna()
+            else:
+                czk_val = czk_raw["Close"].dropna()
+            if not czk_val.empty:
+                czk_rate = round(float(czk_val.iloc[-1]), 4)
+                print(f"  EUR/CZK = {czk_rate}")
+                summary = snapshot.get("endpoints", {}).get("/portfolio/summary", snapshot.get("summary", {}))
+                summary["czk_rate"] = czk_rate
+            else:
+                print("  ⚠️ EURCZK data prázdná, přeskakuji")
+        else:
+            print("  ⚠️ EURCZK download selhal, přeskakuji")
+    except Exception as e:
+        print(f"  ⚠️ EURCZK chyba: {e}, přeskakuji")
 
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")))
     print(f"✅ Hotovo — {dates[0]} → {dates[-1]}")
