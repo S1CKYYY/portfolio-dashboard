@@ -59,47 +59,24 @@ logger = logging.getLogger(__name__)
 
 CACHE_FORMAT_VERSION = 4
 
-# Venues that quote in a minor unit, mapped to their major unit and the factor
-# that converts to it. Yahoo reports these codes verbatim in its metadata.
 MINOR_UNITS: dict[str, tuple[str, float]] = {
-    "GBp": ("GBP", 0.01),  # London: pence
-    "ZAc": ("ZAR", 0.01),  # Johannesburg: cents
-    "ILA": ("ILS", 0.01),  # Tel Aviv: agorot
+    "GBp": ("GBP", 0.01),
+    "ZAc": ("ZAR", 0.01),
+    "ILA": ("ILS", 0.01),
 }
 
 
 def normalise_currency(code: str) -> tuple[str, float]:
-    """Resolve a quote currency to its major unit and a scaling factor.
-
-    Returns:
-        ``(major_code, factor)`` such that ``price_major = price_quoted *
-        factor``. Unrecognised codes pass through unchanged with a factor of 1.
-    """
     major, factor = MINOR_UNITS.get(code, (code, 1.0))
     return major, factor
 
 
 def fx_symbol(from_currency: str, to_currency: str) -> str:
-    """Yahoo Finance symbol for a currency pair, quoted as *to* per 1 *from*."""
     return f"{from_currency}{to_currency}=X"
 
 
 @dataclass(frozen=True)
 class Holding:
-    """One position in the portfolio.
-
-    Attributes:
-        ticker: yfinance symbol.
-        name: Human-readable instrument name.
-        asset_class: ``ETF`` | ``Stock`` | ``Crypto``.
-        region: Geographic bucket, or ``None`` for region-less assets (crypto).
-        currency: Currency the instrument is quoted in (``EUR`` or ``USD``).
-        quantity: Units held. Frozen in ``holdings.json``; fractional allowed.
-        cost_basis_per_unit: Entry price per unit, in ``currency``.
-        acquired: ISO date of the (notional) purchase, used to pick the FX rate
-            applied to the cost basis.
-    """
-
     ticker: str
     name: str
     asset_class: str
@@ -111,14 +88,11 @@ class Holding:
 
     @property
     def region_label(self) -> str:
-        """Region for grouping; crypto has no meaningful geography."""
         return self.region or "Crypto"
 
 
 @dataclass(frozen=True)
 class Portfolio:
-    """The portfolio definition as loaded from ``holdings.json``."""
-
     base_currency: str
     holdings: tuple[Holding, ...]
 
@@ -135,21 +109,6 @@ class Portfolio:
 
 @dataclass(frozen=True)
 class MarketData:
-    """Aligned market data in both native and base currency.
-
-    Attributes:
-        prices_native: Daily closes as quoted by the exchange, one column per
-            holding ticker, indexed by trading day.
-        prices_base: The same closes converted to the base currency.
-        fx: Per-currency conversion series, keyed by the instrument's quote
-            currency and giving *base units per 1 unit of that currency*. The
-            base currency itself maps to a constant 1.0.
-        benchmark: Benchmark daily close (only returns are ever used, so its
-            own currency does not matter).
-        base_currency: Reporting currency these frames are denominated in.
-        fetched_at: UTC timestamp of the underlying download.
-    """
-
     prices_native: pd.DataFrame
     prices_base: pd.DataFrame
     fx: dict[str, pd.Series]
@@ -159,15 +118,9 @@ class MarketData:
 
     @property
     def as_of(self) -> date:
-        """Date of the most recent observation."""
         return self.prices_base.index[-1].date()
 
     def rate_series(self, currency: str) -> pd.Series:
-        """Conversion series for ``currency``, in base units per unit.
-
-        Raises:
-            KeyError: if the currency was not part of the loaded portfolio.
-        """
         major, _ = normalise_currency(currency)
         if major == self.base_currency:
             return pd.Series(1.0, index=self.prices_base.index)
@@ -175,11 +128,6 @@ class MarketData:
 
 
 def load_portfolio(path: Path | None = None) -> Portfolio:
-    """Read and validate ``holdings.json``.
-
-    Raises:
-        ValueError: if the file is malformed or a holding is missing a field.
-    """
     path = path or SETTINGS.holdings_path
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -216,21 +164,15 @@ def load_portfolio(path: Path | None = None) -> Portfolio:
 
 
 def _cache_file(cache_dir: Path, symbols: Sequence[str], years: int) -> Path:
-    """Deterministic cache path for a given symbol set and lookback."""
     key = f"v{CACHE_FORMAT_VERSION}-{years}y-{'_'.join(sorted(symbols))}"
     digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
     return cache_dir / f"prices-{years}y-{digest}.pkl"
 
 
 def _download_closes(symbols: Sequence[str], start: date, end: date) -> pd.DataFrame:
-    """Download adjusted daily closes for ``symbols`` from Yahoo Finance.
+    # Nastav unikátní cache složku aby se zabránilo "database is locked" v GitHub Actions
+    yf.set_tz_cache_location("/tmp/yf-tz-fresh")
 
-    Returns:
-        DataFrame of closes indexed by date with one column per symbol.
-
-    Raises:
-        RuntimeError: if the download returns nothing usable.
-    """
     logger.info("Downloading %d symbols from Yahoo Finance (%s .. %s)", len(symbols), start, end)
     raw = yf.download(
         list(symbols),
@@ -245,7 +187,7 @@ def _download_closes(symbols: Sequence[str], start: date, end: date) -> pd.DataF
         raise RuntimeError("Yahoo Finance returned no data; check connectivity or symbols")
 
     closes = raw["Close"] if isinstance(raw.columns, pd.MultiIndex) else raw[["Close"]]
-    if isinstance(closes, pd.Series):  # single-symbol edge case
+    if isinstance(closes, pd.Series):
         closes = closes.to_frame(symbols[0])
 
     missing = [s for s in symbols if s not in closes.columns or closes[s].dropna().empty]
@@ -259,7 +201,6 @@ def _download_closes(symbols: Sequence[str], start: date, end: date) -> pd.DataF
 
 
 def _load_cached(path: Path, ttl_hours: float) -> tuple[pd.DataFrame, datetime] | None:
-    """Return cached closes if the cache exists and is fresh, else ``None``."""
     if not path.exists():
         return None
     age_hours = (time.time() - path.stat().st_mtime) / 3600.0
@@ -270,7 +211,7 @@ def _load_cached(path: Path, ttl_hours: float) -> tuple[pd.DataFrame, datetime] 
         with path.open("rb") as handle:
             payload = pickle.load(handle)
         return payload["closes"], payload["fetched_at"]
-    except Exception as exc:  # noqa: BLE001 - a corrupt cache must never be fatal
+    except Exception as exc:
         logger.warning("Ignoring unreadable price cache %s: %s", path, exc)
         return None
 
@@ -282,13 +223,6 @@ def _store_cache(path: Path, closes: pd.DataFrame, fetched_at: datetime) -> None
 
 
 def _align_to_trading_calendar(closes: pd.DataFrame, benchmark_symbol: str) -> pd.DataFrame:
-    """Project every series onto the benchmark's trading calendar.
-
-    Crypto rows falling on non-trading days are dropped; instrument-specific
-    gaps (foreign exchange holidays) are forward-filled from the last close.
-    Leading rows that are still incomplete after the fill are removed so that
-    no metric is computed against a partially-populated portfolio.
-    """
     calendar = closes[benchmark_symbol].dropna().index
     aligned = closes.reindex(calendar).ffill()
     return aligned.dropna(how="any")
@@ -300,19 +234,8 @@ def load_market_data(
     *,
     use_cache: bool = True,
 ) -> MarketData:
-    """Fetch, cache, align and FX-convert all price history the app needs.
-
-    Args:
-        portfolio: Portfolio whose tickers should be fetched.
-        settings: Runtime settings (lookback, benchmark, FX pair, cache).
-        use_cache: When ``False``, always hit the network.
-
-    Returns:
-        A :class:`MarketData` with native and base-currency price frames.
-    """
     base = portfolio.base_currency
 
-    # One FX series per foreign quote currency in the portfolio.
     foreign = sorted(
         {
             normalise_currency(holding.currency)[0]
@@ -323,7 +246,7 @@ def load_market_data(
     pairs = {currency: fx_symbol(currency, base) for currency in foreign}
 
     symbols = list(dict.fromkeys([*portfolio.tickers, settings.benchmark, *pairs.values()]))
-    end = date.today() + timedelta(days=1)  # yfinance `end` is exclusive
+    end = date.today() + timedelta(days=1)
     start = end - timedelta(days=int(365.25 * settings.history_years) + 10)
 
     cache_path = _cache_file(settings.cache_dir, symbols, settings.history_years)
@@ -347,7 +270,6 @@ def load_market_data(
     for holding in portfolio.holdings:
         currency, unit = normalise_currency(holding.currency)
         if currency == base:
-            # Still applies the minor-unit factor: GBp priced against a GBP base.
             prices_base[holding.ticker] = prices_native[holding.ticker] * unit
         else:
             prices_base[holding.ticker] = prices_native[holding.ticker] * unit * fx[currency]
@@ -363,11 +285,6 @@ def load_market_data(
 
 
 def fx_rate_on(fx: pd.Series, day: str | date) -> float:
-    """FX rate on ``day``, or the most recent rate before it.
-
-    Used to convert a cost basis at its acquisition-date rate rather than
-    today's, so unrealised P&L correctly includes the currency effect.
-    """
     stamp = pd.Timestamp(day).normalize()
     window = fx.loc[:stamp]
     if window.empty:
@@ -376,5 +293,4 @@ def fx_rate_on(fx: pd.Series, day: str | date) -> float:
 
 
 def to_iso_dates(index: Iterable[pd.Timestamp]) -> list[str]:
-    """Format a datetime index as ``YYYY-MM-DD`` strings for JSON output."""
     return [pd.Timestamp(ts).strftime("%Y-%m-%d") for ts in index]
