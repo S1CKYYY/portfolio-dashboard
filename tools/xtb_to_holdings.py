@@ -186,7 +186,7 @@ def parse_open_positions(xlsx_path: Path) -> list[dict]:
         yahoo_ticker = TICKER_OVERRIDE.get(ticker, ticker)
         asset_class = CATEGORY_MAP.get(data["category"].upper(), data["category"])
 
-        currency = "USD" if current_ticker in USD_TICKERS else "EUR"
+        currency = "USD" if current_ticker.endswith(".US") else "EUR"
         holding = {
             "ticker": yahoo_ticker,
             "name": NAMES.get(yahoo_ticker, yahoo_ticker),
