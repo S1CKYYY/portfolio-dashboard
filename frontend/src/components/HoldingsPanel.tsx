@@ -126,11 +126,17 @@ const columns = column.columns([
     meta: { align: 'right' },
     cell: (info) => <Num tone={signClass(info.getValue())}>{formatMoneySigned(info.getValue())}</Num>,
   }),
-  column.accessor('unrealized_pnl_pct', {
+  column.display({
+    id: 'native_pnl_pct',
     header: 'P&L %',
-    sortFn: 'basic',
     meta: { align: 'right' },
-    cell: (info) => <Num tone={signClass(info.getValue())}>{formatPercentSigned(info.getValue())}</Num>,
+    cell: (info) => {
+      const h = info.row.original
+      const pct = h.cost_basis_native > 0
+        ? (h.price_native - h.cost_basis_native) / h.cost_basis_native
+        : h.unrealized_pnl_pct
+      return <Num tone={signClass(pct)}>{formatPercentSigned(pct)}</Num>
+    },
   }),
   column.accessor('day_change_pct', {
     header: 'Den',
