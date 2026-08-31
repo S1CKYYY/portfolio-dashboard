@@ -601,7 +601,7 @@ def main():
     # Přidej historii cen + loty (try-except aby nebyly fatální)
     try:
         if not closes.empty:
-            for h in holdings_in_snap:
+            for h in holdings_list:
                 ticker = h.get('ticker', '')
                 col = closes[ticker] if ticker in closes.columns else None
                 if col is not None:
@@ -613,7 +613,7 @@ def main():
                             pass
                     if prices:
                         h['price_history'] = prices
-            n_ph = sum(1 for h in holdings_in_snap if h.get('price_history'))
+            n_ph = sum(1 for h in holdings_list if h.get('price_history'))
             print(f'  Price history přidána pro {n_ph} tickerů')
     except Exception as e:
         print(f'  ⚠️ Price history selhal: {e}', file=sys.stderr)
@@ -625,7 +625,7 @@ def main():
             if t not in ticker_lots:
                 ticker_lots[t] = []
             ticker_lots[t].append({'date': lot['open_date'], 'quantity': round(lot['quantity'], 6), 'price': round(lot['open_price'], 4), 'currency': 'USD' if lot['is_usd'] else 'EUR'})
-        for h in holdings_in_snap:
+        for h in holdings_list:
             ticker = h.get('ticker', '')
             if ticker in ticker_lots:
                 h['lots'] = sorted(ticker_lots[ticker], key=lambda x: x['date'])
