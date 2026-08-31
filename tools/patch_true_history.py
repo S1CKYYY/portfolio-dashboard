@@ -524,26 +524,26 @@ def main():
             print(f"  Geografická alokace: {', '.join(f'{r["key"]} {r["allocation_pct"]*100:.1f}%' for r in region_alloc[:5])}")
 
     # Oprav max drawdown z reálné historie
-    if drawdown and dates:
-        min_dd = min(drawdown)
-        min_idx = drawdown.index(min_dd)
-        # Najdi peak před minimem
-        peak_idx = max(range(min_idx + 1), key=lambda i: values[i])
-        # Najdi recovery po minimu
-        recovery_idx = None
-        peak_val = values[peak_idx]
-        for i in range(min_idx + 1, len(values)):
-            if values[i] >= peak_val:
-                recovery_idx = i
-                break
-
-        risk_endpoint = snapshot.get('endpoints', {}).get('/portfolio/risk', {})
-        if risk_endpoint and 'max_drawdown' in risk_endpoint:
-            risk_endpoint['max_drawdown']['pct'] = round(min_dd, 6)
-            risk_endpoint['max_drawdown']['peak_date'] = dates[peak_idx]
-            risk_endpoint['max_drawdown']['trough_date'] = dates[min_idx]
-            risk_endpoint['max_drawdown']['recovery_date'] = dates[recovery_idx] if recovery_idx else None
-            print(f'  Max drawdown opraveno: {min_dd*100:.2f}% ({dates[peak_idx]} → {dates[min_idx]})')
+    try:
+        if drawdown and dates and len(drawdown) > 1:
+            min_dd = min(drawdown)
+            min_idx = drawdown.index(min_dd)
+            peak_idx = max(range(min_idx + 1), key=lambda i: values[i]) if min_idx > 0 else 0
+            recovery_idx = None
+            peak_val = values[peak_idx]
+            for i in range(min_idx + 1, len(values)):
+                if values[i] >= peak_val:
+                    recovery_idx = i
+                    break
+            risk_endpoint = snapshot.get('endpoints', {}).get('/portfolio/risk', {})
+            if risk_endpoint and 'max_drawdown' in risk_endpoint:
+                risk_endpoint['max_drawdown']['pct'] = round(min_dd, 6)
+                risk_endpoint['max_drawdown']['peak_date'] = dates[peak_idx]
+                risk_endpoint['max_drawdown']['trough_date'] = dates[min_idx]
+                risk_endpoint['max_drawdown']['recovery_date'] = dates[recovery_idx] if recovery_idx else None
+                print(f'  Max drawdown opraveno: {min_dd*100:.2f}% ({dates[peak_idx]} → {dates[min_idx]})')
+    except Exception as e:
+        print(f'  ⚠️ Drawdown patch selhal: {e}', file=sys.stderr)
 
     # Přidej alokaci podle měny
     if holdings_list and summary:
