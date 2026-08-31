@@ -4,7 +4,7 @@
     {
       "ticker": "BRK-B",
       "name": "BRK-B",
-      "currency": "EUR",
+      "currency": "USD",
       "quantity": 5.4653,
       "asset_class": "Stock",
       "region": "USA",
@@ -14,7 +14,7 @@
     {
       "ticker": "DUOL",
       "name": "DUOL",
-      "currency": "EUR",
+      "currency": "USD",
       "quantity": 10.8342,
       "asset_class": "Stock",
       "region": "USA",
@@ -24,7 +24,7 @@
     {
       "ticker": "PYPL",
       "name": "PYPL",
-      "currency": "EUR",
+      "currency": "USD",
       "quantity": 24.0308,
       "asset_class": "Stock",
       "region": "USA",
@@ -34,7 +34,7 @@
     {
       "ticker": "META",
       "name": "META",
-      "currency": "EUR",
+      "currency": "USD",
       "quantity": 1.9146,
       "asset_class": "Stock",
       "region": "USA",
@@ -44,7 +44,7 @@
     {
       "ticker": "MSFT",
       "name": "MSFT",
-      "currency": "EUR",
+      "currency": "USD",
       "quantity": 1.4525,
       "asset_class": "Stock",
       "region": "USA",
@@ -54,7 +54,7 @@
     {
       "ticker": "NFLX",
       "name": "NFLX",
-      "currency": "EUR",
+      "currency": "USD",
       "quantity": 8.01,
       "asset_class": "Stock",
       "region": "USA",
