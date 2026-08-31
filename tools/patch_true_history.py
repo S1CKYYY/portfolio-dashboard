@@ -598,6 +598,25 @@ def main():
         summary['portfolio_annual_fee'] = round(annual_fee_eur, 2)
         print(f'  Portfolio TER: {weighted_ter:.3f}% = {annual_fee_eur:.0f} EUR/rok')
 
+    # Přidej individuální loty ke každé pozici (pro modal + daňový test)
+    ticker_lots: dict = {}
+    for lot in all_lots:
+        t = lot['yahoo_ticker']
+        if t not in ticker_lots:
+            ticker_lots[t] = []
+        ticker_lots[t].append({
+            'date': lot['open_date'],
+            'quantity': round(lot['quantity'], 6),
+            'price': round(lot['open_price'], 4),
+            'currency': 'USD' if lot['is_usd'] else 'EUR',
+        })
+    holdings_in_snap = snapshot.get('endpoints', {}).get('/holdings', {}).get('holdings', [])
+    for h in holdings_in_snap:
+        ticker = h.get('ticker', '')
+        if ticker in ticker_lots:
+            h['lots'] = sorted(ticker_lots[ticker], key=lambda x: x['date'])
+    print(f'  Loty přidány: {sum(len(v) for v in ticker_lots.values())} celkem')
+
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(',', ':')))
     print(f"✅ Hotovo — {dates[0]} → {dates[-1]}")
 
