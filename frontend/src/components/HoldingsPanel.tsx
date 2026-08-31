@@ -23,6 +23,8 @@ import {
 } from '../lib/format'
 import type { Holding } from '../lib/types'
 import { Panel } from './Panel'
+import { PositionModal } from './PositionModal'
+import { useState } from 'react'
 import { useCurrency } from '../lib/currency'
 import { Sparkline } from './Sparkline'
 
@@ -177,6 +179,7 @@ interface HoldingsPanelProps {
 
 export function HoldingsPanel({ holdings, totalValue }: HoldingsPanelProps) {
   const { displayCurrency, multiplier } = useCurrency()
+  const [selected, setSelected] = useState<typeof holdings[0] | null>(null)
   // Transformuj hodnoty do zobrazovací měny
   const displayHoldings = holdings.map(h => ({
     ...h,
@@ -200,6 +203,7 @@ export function HoldingsPanel({ holdings, totalValue }: HoldingsPanelProps) {
   )
 
   return (
+    <>
     <Panel title="Pozice" subtitle={`${holdings.length} pozic · hodnoty v ${displayCurrency}`}>
       <div className="grid__scroll">
         <table className="grid">
@@ -237,7 +241,7 @@ export function HoldingsPanel({ holdings, totalValue }: HoldingsPanelProps) {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="grid__row">
+              <tr key={row.id} className="grid__row" style={{ cursor: 'pointer' }} onClick={() => setSelected(row.original)}>
                 {row.getAllCells().map((cell) => {
                   const align = (cell.column.columnDef.meta as { align?: string } | undefined)?.align
                   return (
@@ -273,5 +277,12 @@ export function HoldingsPanel({ holdings, totalValue }: HoldingsPanelProps) {
         </table>
       </div>
     </Panel>
+    {selected && (
+      <PositionModal
+        holding={selected}
+        onClose={() => setSelected(null)}
+      />
+    )}
+    </>
   )
 }

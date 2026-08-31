@@ -28,6 +28,13 @@ export interface Health extends Envelope {
   prices_fetched_at: string
 }
 
+export interface Lot {
+  date: string
+  quantity: number
+  price: number
+  currency: string
+}
+
 export interface Holding {
   ticker: string
   name: string
@@ -48,6 +55,7 @@ export interface Holding {
   acquired: string
   /** Trailing 90 trading days of price in base currency, for the row sparkline. */
   sparkline: number[]
+  lots?: Lot[]
 }
 
 export interface HoldingsPayload extends Envelope {
