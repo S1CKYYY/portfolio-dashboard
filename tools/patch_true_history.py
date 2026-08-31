@@ -99,7 +99,7 @@ def parse_lots(xlsx_path):
 
 def build_history(lots, end_date):
     if not lots:
-        return [], [], [], []
+        return [], [], [], [], pd.DataFrame()
 
     start_date = min(lot["open_date"] for lot in lots)
     print(f"  Rozsah dat: {start_date} → {end_date}")
@@ -111,7 +111,7 @@ def build_history(lots, end_date):
     end_plus = (pd.Timestamp(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     raw = yf.download(all_tickers, start=start_date, end=end_plus, auto_adjust=True, progress=False)
     if raw.empty:
-        return [], [], [], []
+        return [], [], [], [], pd.DataFrame()
 
     if isinstance(raw.columns, pd.MultiIndex):
         closes = raw["Close"].copy()
@@ -223,7 +223,7 @@ def build_history(lots, end_date):
     # Ořízni prázdný začátek
     first_valid = next((i for i, v in enumerate(portfolio_values) if v is not None), None)
     if first_valid is None:
-        return [], [], [], []
+        return [], [], [], [], pd.DataFrame()
 
     dates = dates[first_valid:]
     portfolio_values = portfolio_values[first_valid:]
