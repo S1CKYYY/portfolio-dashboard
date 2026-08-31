@@ -550,11 +550,21 @@ def main():
                 summary["changes"]["all"]["start_value"] = round(total_cost, 2)
                 print(f"  Opraveno All Time: cost={total_cost:.0f} EUR, return={true_return*100:.2f}%")
 
-    # Vypočítej vážený roční poplatek portfolia
+    # Vypočítej vážený roční poplatek portfolia z holdings.json (má ter_pct)
     if summary and holdings_list:
+        import json as _json2
+        ter_map = {}
+        try:
+            with open('backend/holdings.json') as f:
+                orig_h = _json2.load(f)
+            for h in orig_h.get('holdings', []):
+                ter_map[h['ticker']] = h.get('ter_pct', 0.0)
+        except Exception as e:
+            print(f'  ⚠️ Nelze načíst ter z holdings.json: {e}')
+
         total_val = sum(h.get('value_base', 0) for h in holdings_list)
         weighted_ter = sum(
-            h.get('value_base', 0) * h.get('ter_pct', 0.0)
+            h.get('value_base', 0) * ter_map.get(h.get('ticker', ''), 0.0)
             for h in holdings_list
         ) / total_val if total_val > 0 else 0.0
         annual_fee_eur = total_val * weighted_ter / 100.0
