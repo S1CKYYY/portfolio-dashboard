@@ -537,6 +537,19 @@ def main():
             summary["allocation_by_sector"] = sector_alloc
             print(f"  Sektory: {', '.join(f'{s["key"]} {s["allocation_pct"]*100:.1f}%' for s in sector_alloc[:4])}")
 
+    # Oprav summary.changes.all na skutečný výnos (cost basis)
+    if summary:
+        total_value = summary.get("total_value", 0)
+        total_cost = summary.get("total_cost", 0)
+        if total_cost and total_cost > 0:
+            true_return = (total_value - total_cost) / total_cost
+            true_absolute = total_value - total_cost
+            if "changes" in summary and "all" in summary["changes"]:
+                summary["changes"]["all"]["pct"] = round(true_return, 6)
+                summary["changes"]["all"]["absolute"] = round(true_absolute, 2)
+                summary["changes"]["all"]["start_value"] = round(total_cost, 2)
+                print(f"  Opraveno All Time: cost={total_cost:.0f} EUR, return={true_return*100:.2f}%")
+
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")))
     print(f"✅ Hotovo — {dates[0]} → {dates[-1]}")
 
