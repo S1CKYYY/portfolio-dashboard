@@ -240,7 +240,7 @@ def build_history(lots, end_date):
             result.append(last or 0.0)
         return result
 
-    return dates, ffill(portfolio_values), ffill(benchmark_values), ffill(cumulative_invested)
+    return dates, ffill(portfolio_values), ffill(benchmark_values), ffill(cumulative_invested), closes
 
 
 def compute_drawdown(values):
