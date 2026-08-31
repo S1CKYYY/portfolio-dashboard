@@ -69,12 +69,15 @@
 .allocation__value {
   text-align: right;
   color: var(--text-primary);
+  padding-right: var(--space-4) !important;
 }
 
 .allocation__pct {
   width: 56px;
   padding-right: var(--space-5) !important;
+  padding-left: var(--space-3) !important;
   text-align: right;
+  border-left: 1px solid var(--line-faint);
 }
 
 /* ------------------------------------------------------------------ *
