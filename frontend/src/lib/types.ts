@@ -87,6 +87,8 @@ export interface SummaryPayload extends Envelope {
   benchmark_return_pct?: number
   allocation_by_sector?: AllocationBucket[]
   allocation_by_currency?: AllocationBucket[]
+  portfolio_ter_pct?: number
+  portfolio_annual_fee?: number
   sparkline: {
     dates: string[]
     values: number[]

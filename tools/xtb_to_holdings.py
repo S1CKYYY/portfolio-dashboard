@@ -59,6 +59,22 @@ TICKER_OVERRIDE = {
     "NFLX.US": "NFLX",
 }
 
+TER_MAP = {
+    # TER v procentech ročně
+    'VUAA.DE': 0.07,
+    'ZPRV.DE': 0.30,
+    'XNAS.DE': 0.20,
+    'VWCE.DE': 0.19,
+    '4GLD.DE': 0.35,
+    'IS3N.DE': 0.18,
+    'BRK-B':   0.00,
+    'DUOL':    0.00,
+    'PYPL':    0.00,
+    'META':    0.00,
+    'MSFT':    0.00,
+    'NFLX':    0.00,
+}
+
 NAMES = {
     "VUAA.DE": "Vanguard S&P 500 UCITS ETF",
     "ZPRV.DE": "SPDR MSCI USA Small Cap Value Weighted UCITS ETF",
@@ -194,6 +210,7 @@ def parse_open_positions(xlsx_path: Path) -> list[dict]:
             "quantity": round(total_qty, 6),
             "asset_class": asset_class,
             "region": REGION_MAP.get(yahoo_ticker, "USA"),
+            "ter_pct": TER_MAP.get(yahoo_ticker, 0.0),
         }
         if vwap is not None:
             holding["cost_basis_per_unit"] = round(vwap, 6)

@@ -30,7 +30,6 @@ interface Kpi {
 
 export function KpiStrip({ risk, montecarlo, summary }: KpiStripProps) {
   const { displayCurrency, multiplier } = useCurrency()
-  const var95 = risk.value_at_risk['95']
   const drawdown = risk.max_drawdown
   const drawdownWindow =
     drawdown.peak_date && drawdown.trough_date
@@ -68,13 +67,7 @@ export function KpiStrip({ risk, montecarlo, summary }: KpiStripProps) {
       tone: signClass(drawdown.pct),
       context: drawdownWindow,
     },
-    {
-      label: 'VaR 95%',
-      raw: var95?.historical_value ?? null,
-      format: withCurrency,
-      tone: 'neg',
-      context: `1-denní historická · ${formatPercent(var95?.historical_pct)}`,
-    },
+
     {
       label: `Beta vs ${risk.beta.benchmark_name}`,
       raw: risk.beta.value,
@@ -90,6 +83,14 @@ export function KpiStrip({ risk, montecarlo, summary }: KpiStripProps) {
       format: (value) => formatPercent(value, 1),
       tone: montecarlo.probability_below_start_pct > 0.5 ? 'neg' : undefined,
       context: `${montecarlo.paths.toLocaleString('cs-CZ')} simulovaných scénářů`,
+    },
+    {
+      label: 'Roční poplatek',
+      raw: summary.portfolio_ter_pct ?? null,
+      format: (v) => v !== null && v !== undefined ? `${v.toFixed(3)} %` : '—',
+      context: summary.portfolio_annual_fee
+        ? `${withCurrency(summary.portfolio_annual_fee)} / rok`
+        : 'z hodnoty portfolia',
     },
     {
       label: 'Median 1Y',
