@@ -2,19 +2,12 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig, type Plugin } from 'vite'
 
 const SNAPSHOT_PATH = resolve(import.meta.dirname, '../snapshot.json')
 const SNAPSHOT_ROUTE = '/snapshot.json'
 
-/**
- * Serves the repository-root `snapshot.json` to the frontend.
- *
- * The snapshot is committed at the repo root (it is the backend's output, not
- * a frontend asset), so rather than duplicating it into `public/` this plugin
- * serves it from disk in dev and emits it into `dist/` at build time. One file,
- * one source of truth.
- */
 function snapshotPlugin(): Plugin {
   return {
     name: 'portfolio-snapshot',
@@ -25,11 +18,7 @@ function snapshotPlugin(): Plugin {
           response.end(readFileSync(SNAPSHOT_PATH, 'utf-8'))
         } catch {
           response.statusCode = 404
-          response.end(
-            JSON.stringify({
-              error: 'snapshot.json not found - run backend/generate_snapshot.py',
-            }),
-          )
+          response.end(JSON.stringify({ error: 'snapshot.json not found' }))
         }
       })
     },
@@ -44,11 +33,12 @@ function snapshotPlugin(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), snapshotPlugin()],
+  plugins: [tailwindcss(), react(), snapshotPlugin()],
+  resolve: {
+    alias: { '@': resolve(import.meta.dirname, './src') },
+  },
   build: {
     target: 'es2022',
-    // ECharts and Lightweight Charts are large; splitting them keeps the app
-    // chunk small enough to parse quickly on first paint.
     rollupOptions: {
       output: {
         manualChunks(id) {

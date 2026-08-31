@@ -10,10 +10,7 @@
  * Allocation                                                          *
  * ------------------------------------------------------------------ */
 
-.allocation {
-  display: flex;
-  flex-direction: column;
-}
+.allocation { display: flex; flex-direction: column; gap: 0; }
 
 /* Tuned so the two breakdowns together stand roughly as tall as the holdings
    grid beside them, keeping the row visually balanced. */
