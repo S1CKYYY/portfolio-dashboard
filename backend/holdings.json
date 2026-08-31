@@ -8,6 +8,7 @@
       "quantity": 5.4653,
       "asset_class": "Stock",
       "region": "USA",
+      "ter_pct": 0.0,
       "cost_basis_per_unit": 489.141604,
       "acquired": "2025-01-13"
     },
@@ -18,6 +19,7 @@
       "quantity": 10.8342,
       "asset_class": "Stock",
       "region": "USA",
+      "ter_pct": 0.0,
       "cost_basis_per_unit": 199.693674,
       "acquired": "2025-11-04"
     },
@@ -28,6 +30,7 @@
       "quantity": 24.0308,
       "asset_class": "Stock",
       "region": "USA",
+      "ter_pct": 0.0,
       "cost_basis_per_unit": 60.962872,
       "acquired": "2025-12-15"
     },
@@ -38,6 +41,7 @@
       "quantity": 1.9146,
       "asset_class": "Stock",
       "region": "USA",
+      "ter_pct": 0.0,
       "cost_basis_per_unit": 614.394561,
       "acquired": "2026-01-14"
     },
@@ -48,6 +52,7 @@
       "quantity": 1.4525,
       "asset_class": "Stock",
       "region": "USA",
+      "ter_pct": 0.0,
       "cost_basis_per_unit": 413.08,
       "acquired": "2026-02-03"
     },
@@ -58,6 +63,7 @@
       "quantity": 8.01,
       "asset_class": "Stock",
       "region": "USA",
+      "ter_pct": 0.0,
       "cost_basis_per_unit": 81.02,
       "acquired": "2026-02-04"
     },
@@ -68,6 +74,7 @@
       "quantity": 90.8762,
       "asset_class": "ETF",
       "region": "USA",
+      "ter_pct": 0.07,
       "cost_basis_per_unit": 102.648904,
       "acquired": "2025-03-27"
     },
@@ -78,6 +85,7 @@
       "quantity": 93.1437,
       "asset_class": "ETF",
       "region": "USA",
+      "ter_pct": 0.3,
       "cost_basis_per_unit": 61.368184,
       "acquired": "2025-02-19"
     },
@@ -88,6 +96,7 @@
       "quantity": 122.5219,
       "asset_class": "ETF",
       "region": "USA",
+      "ter_pct": 0.2,
       "cost_basis_per_unit": 42.349418,
       "acquired": "2025-04-22"
     },
@@ -98,6 +107,7 @@
       "quantity": 31.8105,
       "asset_class": "ETF",
       "region": "Svět",
+      "ter_pct": 0.19,
       "cost_basis_per_unit": 130.975099,
       "acquired": "2025-03-27"
     },
@@ -108,6 +118,7 @@
       "quantity": 44.7964,
       "asset_class": "ETC",
       "region": "Komodity",
+      "ter_pct": 0.35,
       "cost_basis_per_unit": 94.992835,
       "acquired": "2025-02-04"
     },
@@ -118,6 +129,7 @@
       "quantity": 55.4271,
       "asset_class": "ETF",
       "region": "Rozvíjející se trhy",
+      "ter_pct": 0.18,
       "cost_basis_per_unit": 33.399803,
       "acquired": "2024-12-19"
     }
