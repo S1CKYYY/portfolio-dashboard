@@ -85,9 +85,9 @@ export function KpiStrip({ risk, montecarlo, summary }: KpiStripProps) {
       context: `${montecarlo.paths.toLocaleString('cs-CZ')} simulovaných scénářů`,
     },
     {
-      label: 'Roční poplatek',
+      label: 'TER',
       raw: summary.portfolio_ter_pct ?? null,
-      format: (v) => v !== null && v !== undefined ? `${v.toFixed(3)} %` : '—',
+      format: (v) => v !== null && v !== undefined ? `${v.toFixed(2)} %` : '—',
       context: summary.portfolio_annual_fee
         ? `${withCurrency(summary.portfolio_annual_fee)} / rok`
         : 'z hodnoty portfolia',
