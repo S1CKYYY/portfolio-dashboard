@@ -598,41 +598,40 @@ def main():
         summary['portfolio_annual_fee'] = round(annual_fee_eur, 2)
         print(f'  Portfolio TER: {weighted_ter:.3f}% = {annual_fee_eur:.0f} EUR/rok')
 
-    # Přidej historii cen pro každý ticker (pro modal detail)
-    eurusd_col = 'EURUSD=X' if 'EURUSD=X' in closes.columns else None
-    for h in holdings_in_snap:
-        ticker = h.get('ticker', '')
-        if ticker in closes.columns:
-            price_series = closes[ticker].dropna()
-            prices = []
-            for date_idx, price_val in price_series.items():
-                if pd.notna(price_val):
-                    prices.append({
-                        'time': date_idx.strftime('%Y-%m-%d'),
-                        'value': round(float(price_val), 4),
-                    })
-            if prices:
-                h['price_history'] = prices
-    print(f'  Price history přidána pro {sum(1 for h in holdings_in_snap if h.get("price_history"))} tickerů')
+    # Přidej historii cen + loty (try-except aby nebyly fatální)
+    try:
+        if not closes.empty:
+            for h in holdings_in_snap:
+                ticker = h.get('ticker', '')
+                col = closes[ticker] if ticker in closes.columns else None
+                if col is not None:
+                    prices = []
+                    for date_idx, price_val in col.dropna().items():
+                        try:
+                            prices.append({'time': date_idx.strftime('%Y-%m-%d'), 'value': round(float(price_val), 4)})
+                        except Exception:
+                            pass
+                    if prices:
+                        h['price_history'] = prices
+            n_ph = sum(1 for h in holdings_in_snap if h.get('price_history'))
+            print(f'  Price history přidána pro {n_ph} tickerů')
+    except Exception as e:
+        print(f'  ⚠️ Price history selhal: {e}', file=sys.stderr)
 
-    # Přidej individuální loty ke každé pozici (pro modal + daňový test)
-    ticker_lots: dict = {}
-    for lot in all_lots:
-        t = lot['yahoo_ticker']
-        if t not in ticker_lots:
-            ticker_lots[t] = []
-        ticker_lots[t].append({
-            'date': lot['open_date'],
-            'quantity': round(lot['quantity'], 6),
-            'price': round(lot['open_price'], 4),
-            'currency': 'USD' if lot['is_usd'] else 'EUR',
-        })
-    holdings_in_snap = snapshot.get('endpoints', {}).get('/holdings', {}).get('holdings', [])
-    for h in holdings_in_snap:
-        ticker = h.get('ticker', '')
-        if ticker in ticker_lots:
-            h['lots'] = sorted(ticker_lots[ticker], key=lambda x: x['date'])
-    print(f'  Loty přidány: {sum(len(v) for v in ticker_lots.values())} celkem')
+    try:
+        ticker_lots: dict = {}
+        for lot in all_lots:
+            t = lot['yahoo_ticker']
+            if t not in ticker_lots:
+                ticker_lots[t] = []
+            ticker_lots[t].append({'date': lot['open_date'], 'quantity': round(lot['quantity'], 6), 'price': round(lot['open_price'], 4), 'currency': 'USD' if lot['is_usd'] else 'EUR'})
+        for h in holdings_in_snap:
+            ticker = h.get('ticker', '')
+            if ticker in ticker_lots:
+                h['lots'] = sorted(ticker_lots[ticker], key=lambda x: x['date'])
+        print(f'  Loty přidány: {sum(len(v) for v in ticker_lots.values())} celkem')
+    except Exception as e:
+        print(f'  ⚠️ Loty selhal: {e}', file=sys.stderr)
 
     args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(',', ':')))
     print(f"✅ Hotovo — {dates[0]} → {dates[-1]}")
