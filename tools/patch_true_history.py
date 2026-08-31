@@ -458,7 +458,7 @@ def main():
     end_date = snapshot.get("as_of", datetime.today().strftime("%Y-%m-%d"))
 
     print("\n📈 Rekonstruuji historii portfolia + benchmark...")
-    dates, portfolio, benchmark, invested = build_history(all_lots, end_date)
+    dates, portfolio, benchmark, invested, closes = build_history(all_lots, end_date)
 
     if not dates:
         print("❌ Nepodařilo se vygenerovat historii", file=sys.stderr)
@@ -597,6 +597,23 @@ def main():
         summary['portfolio_ter_pct'] = round(weighted_ter, 4)
         summary['portfolio_annual_fee'] = round(annual_fee_eur, 2)
         print(f'  Portfolio TER: {weighted_ter:.3f}% = {annual_fee_eur:.0f} EUR/rok')
+
+    # Přidej historii cen pro každý ticker (pro modal detail)
+    eurusd_col = 'EURUSD=X' if 'EURUSD=X' in closes.columns else None
+    for h in holdings_in_snap:
+        ticker = h.get('ticker', '')
+        if ticker in closes.columns:
+            price_series = closes[ticker].dropna()
+            prices = []
+            for date_idx, price_val in price_series.items():
+                if pd.notna(price_val):
+                    prices.append({
+                        'time': date_idx.strftime('%Y-%m-%d'),
+                        'value': round(float(price_val), 4),
+                    })
+            if prices:
+                h['price_history'] = prices
+    print(f'  Price history přidána pro {sum(1 for h in holdings_in_snap if h.get("price_history"))} tickerů')
 
     # Přidej individuální loty ke každé pozici (pro modal + daňový test)
     ticker_lots: dict = {}

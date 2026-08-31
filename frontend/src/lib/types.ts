@@ -56,6 +56,7 @@ export interface Holding {
   /** Trailing 90 trading days of price in base currency, for the row sparkline. */
   sparkline: number[]
   lots?: Lot[]
+  price_history?: { time: string; value: number }[]
 }
 
 export interface HoldingsPayload extends Envelope {
