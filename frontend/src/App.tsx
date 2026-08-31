@@ -50,11 +50,11 @@ export default function App() {
 
   return (
     <CurrencyProvider czkRate={czkRate}>
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="app">
       <TopBar summary={summary} health={health} config={config} />
-      <main className="max-w-[1800px] mx-auto px-6 py-6 flex flex-col gap-4">
+      <main className="app__main">
         <KpiStrip risk={risk} montecarlo={montecarlo} summary={summary} currency={currency} />
-        <div className="grid gap-4" style={{gridTemplateColumns: "1fr var(--sidebar-width)"}}>
+        <div className="row row--overview">
           <PerformancePanel
             history={history}
             summary={summary}
@@ -69,7 +69,7 @@ export default function App() {
             currency={currency}
           />
         </div>
-        <div className="grid gap-4" style={{gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr) 300px"}}>
+        <div className="row row--analytics">
           <DrawdownPanel history={history} risk={risk} />
           <MonteCarloPanel montecarlo={montecarlo} currency={currency} />
           <OutcomeDistributionPanel montecarlo={montecarlo} currency={currency} />
@@ -79,14 +79,19 @@ export default function App() {
           totalValue={holdings.total_value}
           currency={currency}
         />
-        <div className="grid gap-4" style={{gridTemplateColumns: "minmax(0,1.15fr) minmax(0,1fr)"}}>
+        <div className="row row--risk">
           <RiskPanel risk={risk} currency={currency} />
           <CorrelationPanel correlation={risk.correlation} />
         </div>
       </main>
-      <footer className="border-t border-zinc-800 px-6 py-3 flex items-center justify-between">
-        <span className="text-xs text-zinc-500">Moje portfolio · není investiční doporučení · ceny z Yahoo Finance</span>
-        <span className="text-xs text-zinc-600">TradingView + ECharts · vygenerováno {formatTimestamp(summary.generated_at)}</span>
+      <footer className="footer">
+        <span>
+          Moje portfolio · není investiční doporučení · ceny z Yahoo Finance
+        </span>
+        <span>
+          TradingView Lightweight Charts + Apache ECharts · vygenerováno{' '}
+          {formatTimestamp(summary.generated_at)}
+        </span>
       </footer>
     </div>
     </CurrencyProvider>

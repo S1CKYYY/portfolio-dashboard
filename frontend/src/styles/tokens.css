@@ -1,52 +1,81 @@
 /**
- * Design tokens — shadcn-inspired dark theme
- * Zinc palette, rounded cards, blue accent.
+ * Design tokens - the single source of truth for the visual system.
+ *
+ * Rules this file encodes (see README "Design decisions"):
+ *   - Flat, solid colours only. No gradients, no shadows, no elevation.
+ *   - Separation comes from 1px hairline rules, never from floating cards.
+ *   - Semantic green/red are reserved for numeric sign; they are never used as
+ *     decorative fills.
+ *   - Every number in the UI is set in IBM Plex Mono with tabular figures.
+ *
+ * The spacing and type scales follow the IBM Carbon Design System, so the
+ * density and rhythm match a real enterprise analytics tool rather than an
+ * arbitrary set of magic numbers.
  */
 
-@import 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
-
 :root {
-  /* ── Surfaces (shadcn zinc dark) ────────────────────────────────── */
-  --surface-page:   #09090b;  /* zinc-950 */
-  --surface-panel:  #18181b;  /* zinc-900 */
-  --surface-header: #09090b;  /* zinc-950 */
-  --surface-raised: #27272a;  /* zinc-800 */
-  --surface-hover:  #27272a;
-  --surface-active: #3f3f46;  /* zinc-700 */
+  /* ---------------------------------------------------------------- *
+   * Surfaces - a true black page with panels barely lifted off it.    *
+   *                                                                   *
+   * The page is #000: on a trading floor the display is the only      *
+   * light source, and pure black maximises the contrast ratio of the  *
+   * figures sitting on it. Panels are lifted by only 3-4 points of    *
+   * luminance, so the grid reads as one continuous surface divided by *
+   * rules rather than as a set of stacked slabs.                      *
+   * ---------------------------------------------------------------- */
+  --surface-page: #000000;
+  --surface-panel: #08090b;
+  --surface-header: #0e0f12;
+  --surface-raised: #131519;
+  --surface-hover: #16181c;
+  --surface-active: #1d2025;
 
-  /* ── Borders ───────────────────────────────────────────────────── */
-  --line:        hsl(240 3.7% 15.9%);  /* zinc-800 */
-  --line-strong: hsl(240 5% 26%);
-  --line-faint:  hsl(240 3.7% 12%);
+  /* Hairlines. --line is the default 1px rule that separates every region. */
+  --line: #1a1c20;
+  --line-strong: #292c32;
+  --line-faint: #121317;
 
-  /* ── Text ───────────────────────────────────────────────────────── */
-  --text-primary:   #fafafa;   /* zinc-50 */
-  --text-secondary: #a1a1aa;   /* zinc-400 */
-  --text-tertiary:  #71717a;   /* zinc-500 */
-  --text-disabled:  #52525b;   /* zinc-600 */
-  --text-inverse:   #09090b;
+  /* ---------------------------------------------------------------- *
+   * Text - high-contrast primary, progressively muted supporting text *
+   * ---------------------------------------------------------------- */
+  --text-primary: #e9ebee;
+  --text-secondary: #9ba3ae;
+  --text-tertiary: #6a7280;
+  --text-disabled: #4a505a;
+  --text-inverse: #0a0b0d;
 
-  /* ── Accent (shadcn blue) ───────────────────────────────────────── */
-  --accent:      hsl(217 91% 60%);
-  --accent-dim:  hsl(217 91% 45%);
-  --accent-faint:hsl(217 91% 12%);
+  /* ---------------------------------------------------------------- *
+   * Accent - exactly one, used for interaction and the primary series *
+   * ---------------------------------------------------------------- */
+  --accent: #4589ff;
+  --accent-dim: #2f5fb0;
+  --accent-faint: #16233a;
 
-  /* ── Semantic ───────────────────────────────────────────────────── */
-  --positive:     #22c55e;  /* green-500 */
-  --positive-dim: #15803d;
-  --negative:     #ef4444;  /* red-500 */
-  --negative-dim: #991b1b;
-  --neutral:      var(--text-secondary);
-  --warning:      #f59e0b;
+  /* ---------------------------------------------------------------- *
+   * Semantic - sign of a number only (gain / loss / neutral)          *
+   * ---------------------------------------------------------------- */
+  --positive: #42be65;
+  --positive-dim: #1f6b38;
+  --negative: #fa4d56;
+  --negative-dim: #8a2c31;
+  --neutral: var(--text-secondary);
+  --warning: #d9a441;
 
-  /* ── Data viz ───────────────────────────────────────────────────── */
-  --viz-cat-1: #60a5fa;
-  --viz-cat-2: #34d399;
-  --viz-cat-3: #f59e0b;
-  --viz-cat-4: #a78bfa;
-  --viz-cat-5: #fb7185;
-  --viz-cat-6: #38bdf8;
+  /* ---------------------------------------------------------------- *
+   * Data visualisation                                                *
+   * ---------------------------------------------------------------- */
 
+  /* Categorical: a restrained steel ramp for allocation breakdowns.
+     Ordered light-to-dark so the largest slice reads strongest. */
+  --viz-cat-1: #7aa5e8;
+  --viz-cat-2: #5b83bd;
+  --viz-cat-3: #446596;
+  --viz-cat-4: #344d72;
+  --viz-cat-5: #2a3c56;
+  --viz-cat-6: #232f42;
+
+  /* Sequential: single hue, dark to light, for the correlation heatmap.
+     Deliberately not a rainbow - luminance alone encodes magnitude. */
   --viz-seq-1: #0e1116;
   --viz-seq-2: #172433;
   --viz-seq-3: #234057;
@@ -55,72 +84,84 @@
   --viz-seq-6: #59a0d0;
   --viz-seq-7: #8cc3e8;
 
-  --viz-negative:   #7a4a52;
-  --viz-grid:       #1a1a1f;
-  --viz-axis:       #27272a;
-  --viz-band:       #1e3a5f;
-  --viz-band-inner: #1e40af;
-  --viz-crosshair:  #52525b;
-  --viz-benchmark:  #71717a;
+  /* Negative correlation is rare here but must not be silently clipped. */
+  --viz-negative: #7a4a52;
 
-  /* ── Typography ─────────────────────────────────────────────────── */
-  --font-sans: 'Inter', 'IBM Plex Sans', system-ui, sans-serif;
+  /* Chart furniture */
+  --viz-grid: #131519;
+  --viz-axis: #24272d;
+  --viz-band: #15243a;
+  --viz-band-inner: #21406b;
+  --viz-crosshair: #5d6673;
+  --viz-benchmark: #6a7280;
+
+  /* ---------------------------------------------------------------- *
+   * Typography                                                        *
+   * ---------------------------------------------------------------- */
+  --font-sans: 'IBM Plex Sans', Arial, sans-serif;
   --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
 
-  --size-micro:   10px;
-  --size-label:   11px;
+  /* Carbon type scale, trimmed to what this dashboard actually uses. */
+  --size-micro: 10px;
+  --size-label: 11px;
   --size-caption: 12px;
-  --size-body:    13px;
-  --size-data:    14px;
+  --size-body: 13px;
+  --size-data: 14px;
   --size-heading: 16px;
-  --size-large:   20px;
+  --size-large: 20px;
   --size-display: 34px;
 
-  --weight-regular:  400;
-  --weight-medium:   500;
+  --weight-regular: 400;
+  --weight-medium: 500;
   --weight-semibold: 600;
-  --weight-bold:     700;
 
-  --leading-tight:  1.15;
-  --leading-snug:   1.35;
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
   --leading-normal: 1.5;
 
-  --tracking-label: 0.05em;
-  --tracking-wide:  0.025em;
+  /* Uppercase panel and column labels */
+  --tracking-label: 0.08em;
+  --tracking-wide: 0.04em;
 
-  /* ── Spacing ────────────────────────────────────────────────────── */
-  --space-1:  2px;
-  --space-2:  4px;
-  --space-3:  8px;
-  --space-4:  12px;
-  --space-5:  16px;
-  --space-6:  20px;
-  --space-7:  24px;
-  --space-8:  32px;
-  --space-9:  40px;
+  /* ---------------------------------------------------------------- *
+   * Spacing - Carbon's 2/4/8 based scale                              *
+   * ---------------------------------------------------------------- */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
+  --space-9: 40px;
   --space-10: 48px;
 
-  --row-height:         32px;
-  --row-height-compact: 28px;
-  --header-height:      32px;
-  --panel-header-height: 44px;
+  /* Dense, terminal-like row rhythm */
+  --row-height: 30px;
+  --row-height-compact: 26px;
+  --header-height: 30px;
+  --panel-header-height: 34px;
 
-  /* ── Motion ─────────────────────────────────────────────────────── */
+  /* ---------------------------------------------------------------- *
+   * Motion - subtle only; nothing bounces, nothing slides             *
+   * ---------------------------------------------------------------- */
   --duration-fast: 90ms;
-  --duration-base: 150ms;
-  --easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-base: 140ms;
+  --easing: cubic-bezier(0.2, 0, 0.38, 0.9);
 
-  /* ── Layout ─────────────────────────────────────────────────────── */
-  --max-width:    1800px;
+  /* Layout */
+  --max-width: 1800px;
   --sidebar-width: 300px;
 
-  /* ── Border radius (shadcn style) ───────────────────────────────── */
-  --radius:    8px;
-  --radius-sm: 6px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* Deliberately square. Rounded corners read as "card"; this is a terminal. */
+  --radius: 0px;
 }
 
+/**
+ * Respect a reduced-motion preference: transitions are decorative here, so
+ * removing them costs nothing.
+ */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --duration-fast: 0ms;
