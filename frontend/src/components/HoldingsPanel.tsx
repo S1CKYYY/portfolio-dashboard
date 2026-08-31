@@ -78,19 +78,30 @@ const columns = column.columns([
     meta: { align: 'right' },
     cell: (info) => <Num>{formatQuantity(info.getValue())}</Num>,
   }),
-  column.accessor('price_base', {
-    header: 'Cena',
-    sortFn: 'basic',
+  column.display({
+    id: 'avg_buy_price',
+    header: 'Prům. nákup',
     meta: { align: 'right' },
     cell: (info) => {
-      const holding = info.row.original
-      const title =
-        holding.currency === 'EUR'
-          ? undefined
-          : `${formatPrice(holding.price_native, holding.currency)} v původní měně`
+      const h = info.row.original
+      const symbol = h.currency === 'USD' ? '$' : '€'
       return (
-        <span className="num" title={title}>
-          {formatMoney(info.getValue())}
+        <span className="num muted">
+          {symbol}{formatPrice(h.cost_basis_native, h.currency)}
+        </span>
+      )
+    },
+  }),
+  column.display({
+    id: 'price_native_display',
+    header: 'Cena',
+    meta: { align: 'right' },
+    cell: (info) => {
+      const h = info.row.original
+      const symbol = h.currency === 'USD' ? '$' : '€'
+      return (
+        <span className="num">
+          {symbol}{formatPrice(h.price_native, h.currency)}
         </span>
       )
     },
