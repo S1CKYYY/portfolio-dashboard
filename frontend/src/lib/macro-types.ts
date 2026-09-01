@@ -45,6 +45,7 @@ export interface MacroData {
     gold?: MarketCard
     us10y?: MarketCard
     us2y?: MarketCard
+    us30y?: MarketCard
     yield_spread?: MarketCard
   }
   fred: {

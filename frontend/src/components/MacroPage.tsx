@@ -394,12 +394,9 @@ export function MacroPage() {
   const cpiWagesSeries = data.cpi_wages_history
 
   const bondSeries = [
-    ...(m.us10y?.history ? [{ name: 'US 10Y', dates: m.us10y.history.dates, values: m.us10y.history.values, color: '#6366f1' }] : []),
-    ...(m.us2y?.history  ? [{ name: 'US 2Y',  dates: m.us2y.history.dates,  values: m.us2y.history.values,  color: '#3b82f6' }] : []),
-  ]
-  const currencySeries = [
-    ...(m.eur_usd?.history ? [{ name: 'EUR/USD', dates: m.eur_usd.history.dates, values: m.eur_usd.history.values, color: '#22c55e' }] : []),
-    ...(m.eur_czk?.history ? [{ name: 'EUR/CZK', dates: m.eur_czk.history.dates, values: m.eur_czk.history.values, color: '#f59e0b' }] : []),
+    ...(m.us2y?.history   ? [{ name: 'US 2Y',  dates: m.us2y.history.dates,   values: m.us2y.history.values,   color: '#3b82f6' }] : []),
+    ...(m.us10y?.history  ? [{ name: 'US 10Y', dates: m.us10y.history.dates,  values: m.us10y.history.values,  color: '#6366f1' }] : []),
+    ...(m.us30y?.history  ? [{ name: 'US 30Y', dates: m.us30y.history.dates,  values: m.us30y.history.values,  color: '#a78bfa' }] : []),
   ]
 
   return (
@@ -440,47 +437,38 @@ export function MacroPage() {
             Aktualizováno: {ts}
           </div>
 
-          {/* ── VIX + kurzy + DXY ── */}
-          <Sec title="SENTIMENT & MĚNY" />
-          <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 10, marginBottom: 12 }}>
-            <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ fontSize: 9, letterSpacing: '0.18em', color: 'var(--text-tertiary)', marginBottom: 4 }}>VIX — INDEX STRACHU</div>
+          {/* ── SENTIMENT & DLUHOPISY ── */}
+          <Sec title="SENTIMENT & DLUHOPISY" />
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr 240px', gap: 10, marginBottom: 12 }}>
+
+            {/* VIX gauge + history */}
+            <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '12px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 2 }}>VIX — INDEX STRACHU</div>
               <VixGauge card={m.vix} />
               {vixHistory && (
-                <div style={{ width: '100%', marginTop: 6 }}>
-                  <HistoryChart series={[{ name: 'VIX', dates: vixHistory.dates, values: vixHistory.values, color: '#f59e0b' }]} height={160} />
+                <div style={{ width: '100%', marginTop: 4 }}>
+                  <HistoryChart series={[{ name: 'VIX', dates: vixHistory.dates, values: vixHistory.values, color: '#f59e0b' }]} height={130} />
                 </div>
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                <Card label="DXY (Dolar)" card={m.dxy} decimals={3} />
-                <Card label="EUR/USD"  card={m.eur_usd} decimals={4} />
-                <Card label="EUR/CZK"  card={m.eur_czk} decimals={3} />
-              </div>
-              {currencySeries.length > 0 && (
-                <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '10px 12px', flex: 1 }}>
-                  <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', marginBottom: 6 }}>KURZY — 1 ROK</div>
-                  <HistoryChart series={currencySeries} height={200} />
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* ── DLUHOPISY ── */}
-          <Sec title="DLUHOPISY & SAZBY" />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
-            <Card label="US 10Y výnos" card={m.us10y} suffix="%" decimals={3} />
-            <Card label="US 2Y výnos"  card={m.us2y}  suffix="%" decimals={3} />
-            <YieldCurve us2y={m.us2y} us10y={m.us10y} spread={m.yield_spread} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 12 }}>
-            {bondSeries.length > 0 && (
-              <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '10px 12px' }}>
-                <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', marginBottom: 6 }}>VÝNOSY 10Y & 2Y — 1 ROK</div>
-                <HistoryChart series={bondSeries} height={240} />
+            {/* Výnosy karty + graf */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                <Card label="US 2Y výnos"  card={m.us2y}  suffix="%" decimals={3} />
+                <Card label="US 10Y výnos" card={m.us10y} suffix="%" decimals={3} />
+                <Card label="US 30Y výnos" card={m.us30y} suffix="%" decimals={3} />
+                <YieldCurve us2y={m.us2y} us10y={m.us10y} spread={m.yield_spread} />
               </div>
-            )}
+              {bondSeries.length > 0 && (
+                <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '8px 12px', flex: 1 }}>
+                  <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', marginBottom: 4 }}>VÝNOSY 2Y · 10Y · 30Y — 1 ROK</div>
+                  <HistoryChart series={bondSeries} height={200} />
+                </div>
+              )}
+            </div>
+
+            {/* Fed Funds Rate */}
             <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
           </div>
 

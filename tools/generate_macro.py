@@ -236,6 +236,7 @@ def main():
         "gold":    "GC=F",
         "us10y":   "^TNX",
         "us2y":    "^IRX",
+        "us30y":   "^TYX",
     }
     market = fetch_yahoo(yahoo_tickers, period="1y")
 
