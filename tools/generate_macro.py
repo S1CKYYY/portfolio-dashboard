@@ -1,13 +1,10 @@
 """
-tools/generate_macro.py
-Generuje macro.json s makroekonomickými daty pro Makro stránku dashboardu.
-Zdroje: Yahoo Finance (yfinance) + FRED CSV API (bez klíče)
+tools/generate_macro.py — makroekonomická data + news pro dashboard.
+Zdroje: Yahoo Finance (yfinance) + FRED CSV API
 """
 
-import json
-import sys
-import warnings
-from datetime import datetime, timezone, timedelta
+import json, sys, warnings, time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -20,12 +17,12 @@ yf.set_tz_cache_location("/tmp/yf-tz-macro")
 OUT = Path("macro.json")
 NOW = datetime.now(timezone.utc)
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+# ── Helpers ────────────────────────────────────────────────────────────────
 
 def safe_float(val):
     try:
         v = float(val)
-        return v if not (v != v) else None  # NaN check
+        return None if v != v else v  # NaN check
     except Exception:
         return None
 
@@ -34,16 +31,21 @@ def sparkline(series: pd.Series, n: int = 30) -> list:
     return [round(float(v), 4) for v in s]
 
 def yoy(series: pd.Series) -> pd.Series:
-    """Meziroční změna v procentech."""
     return ((series / series.shift(12)) - 1) * 100
 
+def history_data(series: pd.Series, n: int = 252) -> dict:
+    """Vrátí dates + values pro historický graf."""
+    s = series.dropna().tail(n)
+    return {
+        "dates":  [d.strftime("%Y-%m-%d") for d in s.index],
+        "values": [round(float(v), 4) for v in s],
+    }
 
-# ── Yahoo Finance ─────────────────────────────────────────────────────────────
+# ── Yahoo Finance market data ──────────────────────────────────────────────
 
-def fetch_yahoo(tickers: dict, period: str = "3mo") -> dict:
-    """Stáhne close ceny pro tickers a vrátí karty s hodnotou + change + sparkline."""
-    print(f"  Stahuji Yahoo Finance: {list(tickers.keys())}")
+def fetch_yahoo(tickers: dict, period: str = "1y") -> dict:
     symbols = list(tickers.values())
+    print(f"  Yahoo Finance: {symbols}")
     try:
         raw = yf.download(symbols, period=period, auto_adjust=True, progress=False)
         if raw.empty:
@@ -51,7 +53,7 @@ def fetch_yahoo(tickers: dict, period: str = "3mo") -> dict:
         closes = raw["Close"] if isinstance(raw.columns, pd.MultiIndex) else raw[["Close"]].rename(columns={"Close": symbols[0]})
         closes = closes.ffill()
     except Exception as e:
-        print(f"  ⚠️ Yahoo download selhal: {e}", file=sys.stderr)
+        print(f"  ⚠️ Yahoo: {e}", file=sys.stderr)
         return {}
 
     result = {}
@@ -72,31 +74,33 @@ def fetch_yahoo(tickers: dict, period: str = "3mo") -> dict:
             "change_pct": chg_pct,
             "change_abs": chg_abs,
             "sparkline":  sparkline(s),
+            "history":    history_data(s),  # pro grafy
         }
     return result
 
-
-# ── FRED CSV ─────────────────────────────────────────────────────────────────
+# ── FRED CSV ───────────────────────────────────────────────────────────────
 
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id="
 
-def fetch_fred(series_id: str, n_periods: int = 36) -> pd.Series:
-    try:
-        url = FRED_URL + series_id
-        df = pd.read_csv(url, parse_dates=["DATE"], index_col="DATE")
-        s = df.iloc[:, 0].replace(".", float("nan")).astype(float).dropna()
-        return s.tail(n_periods)
-    except Exception as e:
-        print(f"  ⚠️ FRED {series_id} selhal: {e}", file=sys.stderr)
-        return pd.Series(dtype=float)
+def fetch_fred(series_id: str, n: int = 60) -> pd.Series:
+    for attempt in range(3):
+        try:
+            url = FRED_URL + series_id
+            df = pd.read_csv(url, parse_dates=["DATE"], index_col="DATE", timeout=15)
+            s = df.iloc[:, 0].replace(".", float("nan")).astype(float).dropna()
+            return s.tail(n)
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(2)
+            else:
+                print(f"  ⚠️ FRED {series_id} selhal: {e}", file=sys.stderr)
+    return pd.Series(dtype=float)
 
-def fred_card(series: pd.Series, label: str, is_yoy: bool = False) -> dict | None:
-    if series.empty or len(series) < 2:
+def fred_card(s: pd.Series, yoy_mode: bool = False) -> dict | None:
+    if s.empty or len(s) < 2:
         return None
-    if is_yoy:
-        s = yoy(fetch_fred(label, n_periods=60)).dropna()
-    else:
-        s = series
+    if yoy_mode:
+        s = yoy(s).dropna()
     if s.empty or len(s) < 2:
         return None
     val  = safe_float(s.iloc[-1])
@@ -109,10 +113,46 @@ def fred_card(series: pd.Series, label: str, is_yoy: bool = False) -> dict | Non
         "change":   round(val - prev, 3) if prev is not None else None,
         "date":     s.index[-1].strftime("%Y-%m-%d"),
         "sparkline": sparkline(s, 24),
+        "history":  history_data(s, 36),
     }
 
+# ── News ───────────────────────────────────────────────────────────────────
 
-# ── Yield spread ──────────────────────────────────────────────────────────────
+PORTFOLIO_TICKERS = ["BRK-B", "DUOL", "PYPL", "META", "MSFT", "NFLX"]
+MARKET_TICKERS    = ["^VIX", "^TNX", "GC=F"]
+
+def fetch_news() -> list:
+    print("  Stahuji news...")
+    seen = set()
+    items = []
+    all_tickers = PORTFOLIO_TICKERS + MARKET_TICKERS
+    for sym in all_tickers:
+        try:
+            news = yf.Ticker(sym).news or []
+            for n in news[:3]:
+                url = n.get("link") or n.get("url") or ""
+                if not url or url in seen:
+                    continue
+                seen.add(url)
+                # Rozhoduj relevanci
+                title = n.get("title", "")
+                if not title:
+                    continue
+                ts = n.get("providerPublishTime") or n.get("publish_time") or 0
+                items.append({
+                    "ticker":    sym,
+                    "title":     title,
+                    "publisher": n.get("publisher") or n.get("source") or "",
+                    "url":       url,
+                    "ts":        int(ts),
+                })
+        except Exception:
+            pass
+    # Seřaď podle času, nejnovější první
+    items.sort(key=lambda x: x["ts"], reverse=True)
+    return items[:40]
+
+# ── Yield spread ───────────────────────────────────────────────────────────
 
 def yield_spread(market: dict) -> dict | None:
     t10 = market.get("us10y", {}).get("value")
@@ -120,33 +160,39 @@ def yield_spread(market: dict) -> dict | None:
     if t10 is None or t2 is None:
         return None
     spread = round(t10 - t2, 3)
-    sp_prev = (market.get("us10y", {}).get("change_abs", 0) or 0) - (market.get("us2y", {}).get("change_abs", 0) or 0)
+    h10 = market.get("us10y", {}).get("history", {})
+    h2  = market.get("us2y",  {}).get("history",  {})
+    # Spread history
+    dates = h10.get("dates", [])
+    v10   = h10.get("values", [])
+    v2    = h2.get("values", [])
+    if dates and len(v10) == len(v2) == len(dates):
+        spread_vals = [round(a - b, 3) for a, b in zip(v10, v2)]
+    else:
+        spread_vals = []
     return {
         "value":      spread,
-        "change_abs": round(sp_prev, 3),
+        "change_abs": round((market.get("us10y", {}).get("change_abs", 0) or 0) -
+                            (market.get("us2y",  {}).get("change_abs", 0) or 0), 3),
         "change_pct": None,
-        "sparkline":  [],
         "inverted":   spread < 0,
+        "history":    {"dates": dates, "values": spread_vals},
     }
 
+# ── VIX stav ────────────────────────────────────────────────────────────────
 
-# ── VIX stav ──────────────────────────────────────────────────────────────────
-
-def vix_state(vix_val: float) -> str:
-    if vix_val < 15:   return "Klid"
-    if vix_val < 20:   return "Mírné napětí"
-    if vix_val < 25:   return "Pozor"
-    if vix_val < 30:   return "Strach"
+def vix_state(v: float) -> str:
+    if v < 15: return "Klid"
+    if v < 20: return "Mírné napětí"
+    if v < 25: return "Pozor"
+    if v < 30: return "Strach"
     return "Panika"
 
-
-# ── Fed Funds Futures (ZQ) ────────────────────────────────────────────────────
+# ── Polymarket / Fed Futures ───────────────────────────────────────────────
 
 def rate_expectations(current_rate: float | None) -> dict:
-    """Odhadne pravděpodobnost pohybu sazeb z Fed Funds Futures."""
     try:
-        # ZQU26 = September 2026 futures (zkusíme generický ticker)
-        tickers_to_try = ["ZQU26.CBT", "ZQU6.CBT", "ZQU26=F"]
+        tickers_to_try = ["ZQU26.CBT", "ZQU6.CBT"]
         price = None
         for t in tickers_to_try:
             try:
@@ -156,136 +202,99 @@ def rate_expectations(current_rate: float | None) -> dict:
                     break
             except Exception:
                 continue
-
         if price is None or current_rate is None:
-            return {"available": False}
-
-        implied_rate = round(100 - price, 3)
-        diff = round(implied_rate - current_rate, 3)
-
-        # Pravděpodobnosti — zjednodušený model
-        # Pokud implied < current o >0.15 = cut pravděpodobný
-        # Pokud implied > current o >0.15 = hike pravděpodobný
+            return {"available": False, "current_rate": current_rate}
+        implied = round(100 - price, 3)
+        diff = implied - current_rate
         if diff < -0.15:
-            cut_p  = min(0.95, 0.5 + abs(diff) * 2)
-            hold_p = 1.0 - cut_p
-            hike_p = 0.0
+            cut_p = min(0.95, 0.5 + abs(diff) * 2); hold_p = 1 - cut_p; hike_p = 0.0
         elif diff > 0.15:
-            hike_p = min(0.95, 0.5 + diff * 2)
-            hold_p = 1.0 - hike_p
-            cut_p  = 0.0
+            hike_p = min(0.95, 0.5 + diff * 2); hold_p = 1 - hike_p; cut_p = 0.0
         else:
-            hold_p = 0.6
-            cut_p  = max(0, 0.4 - diff * 2)
-            hike_p = max(0, 0.4 + diff * 2)
-            total  = hold_p + cut_p + hike_p
-            hold_p, cut_p, hike_p = hold_p/total, cut_p/total, hike_p/total
-
-        return {
-            "available":        True,
-            "current_rate":     current_rate,
-            "implied_rate":     implied_rate,
-            "cut_probability":  round(cut_p, 3),
-            "hold_probability": round(hold_p, 3),
-            "hike_probability": round(hike_p, 3),
-        }
+            hold_p = 0.6; cut_p = max(0, 0.4 - diff * 2); hike_p = max(0, 0.4 + diff * 2)
+            t = hold_p + cut_p + hike_p; hold_p /= t; cut_p /= t; hike_p /= t
+        return {"available": True, "current_rate": current_rate, "implied_rate": implied,
+                "cut_probability": round(cut_p, 3), "hold_probability": round(hold_p, 3),
+                "hike_probability": round(hike_p, 3)}
     except Exception as e:
-        print(f"  ⚠️ Rate expectations selhal: {e}", file=sys.stderr)
-        return {"available": False}
+        print(f"  ⚠️ Futures: {e}", file=sys.stderr)
+        return {"available": False, "current_rate": current_rate}
 
-
-# ── Main ──────────────────────────────────────────────────────────────────────
+# ── Main ────────────────────────────────────────────────────────────────────
 
 def main():
-    print("\n📊 Generuji macro.json...")
+    print("\n📊 generate_macro.py...")
 
-    # 1. Yahoo Finance — tržní indikátory
-    print("\n🌐 Tržní indikátory (Yahoo Finance)...")
+    print("\n🌐 Yahoo Finance...")
     yahoo_tickers = {
-        "vix":      "^VIX",
-        "sp500":    "^GSPC",
-        "nasdaq":   "^IXIC",
-        "dxy":      "DX-Y.NYB",
-        "eur_usd":  "EURUSD=X",
-        "usd_czk":  "USDCZK=X",
-        "eur_czk":  "EURCZK=X",
-        "brent":    "BZ=F",
-        "wti":      "CL=F",
-        "gold":     "GC=F",
-        "us10y":    "^TNX",
-        "us2y":     "^IRX",
+        "vix":     "^VIX",
+        "dxy":     "DX-Y.NYB",
+        "eur_usd": "EURUSD=X",
+        "usd_czk": "USDCZK=X",
+        "eur_czk": "EURCZK=X",
+        "brent":   "BZ=F",
+        "gold":    "GC=F",
+        "us10y":   "^TNX",
+        "us2y":    "^IRX",
     }
-    market = fetch_yahoo(yahoo_tickers, period="3mo")
+    market = fetch_yahoo(yahoo_tickers, period="1y")
 
-    # Yield spread
     if "us10y" in market and "us2y" in market:
         market["yield_spread"] = yield_spread(market)
-
-    # VIX stav
     if "vix" in market:
         market["vix"]["state"] = vix_state(market["vix"]["value"])
 
-    # 2. FRED — makro data
-    print("\n📈 FRED makro data...")
-    fred_raw = {
-        "cpi":          fetch_fred("CPIAUCSL", 60),
-        "core_cpi":     fetch_fred("CPILFESL", 60),
-        "pce":          fetch_fred("PCEPI", 60),
-        "wages":        fetch_fred("CES0500000003", 60),
-        "unemployment": fetch_fred("UNRATE", 24),
-        "fed_funds":    fetch_fred("FEDFUNDS", 24),
-        "gdp":          fetch_fred("A191RL1Q225SBEA", 16),
+    print("\n📈 FRED...")
+    fred_series = {
+        "cpi":          ("CPIAUCSL", True,  60),
+        "core_cpi":     ("CPILFESL", True,  60),
+        "pce":          ("PCEPI",    True,  60),
+        "wages":        ("CES0500000003", True, 60),
+        "unemployment": ("UNRATE",   False, 24),
+        "fed_funds":    ("FEDFUNDS", False, 24),
+        "gdp":          ("A191RL1Q225SBEA", False, 16),
     }
-
     fred = {}
-    # YoY série
-    for key in ["cpi", "core_cpi", "pce", "wages"]:
-        s = fred_raw[key]
-        if not s.empty and len(s) >= 13:
-            yoy_s = yoy(s).dropna()
-            card = fred_card(yoy_s, key)
-            if card:
-                fred[f"{key}_yoy"] = card
-                print(f"  {key}_yoy: {card['value']:.2f}% (předchozí {card['prev']:.2f}%)")
+    for key, (sid, is_yoy, n) in fred_series.items():
+        raw = fetch_fred(sid, n)
+        card = fred_card(raw, is_yoy)
+        if card:
+            label = f"{key}_yoy" if is_yoy else key
+            fred[label] = card
+            print(f"  {label}: {card['value']:.2f}")
+        else:
+            print(f"  ⚠️ {key}: žádná data")
 
-    # Přímé hodnoty
-    for key in ["unemployment", "fed_funds", "gdp"]:
-        s = fred_raw[key]
-        if not s.empty:
-            card = fred_card(s, key)
-            if card:
-                fred[key] = card
-                print(f"  {key}: {card['value']}")
-
-    # 3. CPI vs mzdy — historická data (24 měsíců)
-    print("\n📉 CPI vs mzdy — historická data...")
-    cpi_hist  = yoy(fred_raw["cpi"]).dropna().tail(24)
-    wage_hist = yoy(fred_raw["wages"]).dropna().tail(24)
-    # Sjednoť indexy
-    common_idx = cpi_hist.index.intersection(wage_hist.index)
+    print("\n📉 CPI vs mzdy...")
+    cpi_raw  = fetch_fred("CPIAUCSL", 60)
+    wage_raw = fetch_fred("CES0500000003", 60)
+    cpi_hist  = yoy(cpi_raw).dropna().tail(24)
+    wage_hist = yoy(wage_raw).dropna().tail(24)
+    common = cpi_hist.index.intersection(wage_hist.index)
     cpi_wages_history = {
-        "dates":     [d.strftime("%Y-%m") for d in common_idx],
-        "cpi_yoy":   [round(float(cpi_hist.loc[d]), 3) for d in common_idx],
-        "wages_yoy": [round(float(wage_hist.loc[d]), 3) for d in common_idx],
+        "dates":     [d.strftime("%Y-%m") for d in common],
+        "cpi_yoy":   [round(float(cpi_hist.loc[d]), 3) for d in common],
+        "wages_yoy": [round(float(wage_hist.loc[d]), 3) for d in common],
     }
 
-    # 4. Sazby — očekávání
-    print("\n🏦 Fed Funds Futures...")
+    print("\n🏦 Fed futures...")
     current_rate = fred.get("fed_funds", {}).get("value")
     rate_exp = rate_expectations(current_rate)
 
-    # 5. Sestavit výstup
+    print("\n📰 News...")
+    news = fetch_news()
+    print(f"  {len(news)} zpráv")
+
     macro = {
         "generated_at":      NOW.isoformat(),
         "market":            market,
         "fred":              fred,
         "cpi_wages_history": cpi_wages_history,
         "rate_expectations": rate_exp,
+        "news":              news,
     }
-
     OUT.write_text(json.dumps(macro, ensure_ascii=False, separators=(",", ":")))
-    print(f"\n✅ macro.json uložen ({len(json.dumps(macro))} bytes)")
-
+    print(f"\n✅ macro.json hotov ({len(json.dumps(macro)) // 1024} KB)")
 
 if __name__ == "__main__":
     main()

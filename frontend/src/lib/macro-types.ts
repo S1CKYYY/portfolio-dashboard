@@ -1,8 +1,22 @@
+export interface HistoryData {
+  dates: string[]
+  values: number[]
+}
+
+export interface NewsItem {
+  ticker: string
+  title: string
+  publisher: string
+  url: string
+  ts: number
+}
+
 export interface MarketCard {
   value: number
   change_pct: number | null
   change_abs: number | null
   sparkline: number[]
+  history?: HistoryData
   state?: string   // VIX state
   inverted?: boolean  // yield curve
 }
@@ -13,6 +27,7 @@ export interface FredCard {
   change: number | null
   date: string
   sparkline: number[]
+  history?: HistoryData
 }
 
 export interface MacroData {
@@ -46,6 +61,7 @@ export interface MacroData {
     cpi_yoy: number[]
     wages_yoy: number[]
   }
+  news: NewsItem[]
   rate_expectations: {
     available: boolean
     current_rate?: number
