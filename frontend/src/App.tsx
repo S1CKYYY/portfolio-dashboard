@@ -46,8 +46,10 @@ export default function App() {
   if (loading) return <LoadingState />
   if (error) return <ErrorState error={error} onRetry={reload} />
   if (!data) return null
-  const { health, holdings, summary, history, returns, risk, montecarlo } = data
-  const currency = summary.base_currency
+  return <AppInner data={data} config={config} />
+}
+
+function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAnalytics>['data']>; config: ReturnType<typeof useAnalytics>['config'] }) {
   const [page, setPage] = useState<'dashboard' | 'macro'>(() =>
     window.location.hash === '#/macro' ? 'macro' : 'dashboard'
   )
@@ -55,6 +57,8 @@ export default function App() {
     setPage(p)
     window.location.hash = p === 'macro' ? '/macro' : '/dashboard'
   }
+  const { health, holdings, summary, history, returns, risk, montecarlo } = data
+  const currency = summary.base_currency
 
   const czkRate = summary.czk_rate ?? 25.3
 
