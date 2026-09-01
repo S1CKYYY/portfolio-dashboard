@@ -86,16 +86,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add snapshot.json backend/holdings.json
+          git add snapshot.json backend/holdings.json macro.json 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore: update snapshot $(date -u '+%Y-%m-%d %H:%M UTC')"
-            git pull --rebase origin main
-            git push
+            git pull --rebase origin main || true
+            git push || true
           else
             echo "Beze změny"
           fi
 
       - uses: peaceiris/actions-gh-pages@v4
+        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: frontend/dist
