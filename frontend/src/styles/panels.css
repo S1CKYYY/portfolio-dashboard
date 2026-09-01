@@ -535,3 +535,66 @@
     display: none;
   }
 }
+
+/* ── Macro page ── */
+.macro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.macro-card {
+  background: var(--surface-panel);
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.macro-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.macro-card__label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.macro-card__badge {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+}
+
+.macro-card__date {
+  font-size: 9px;
+  color: var(--text-disabled);
+  font-family: var(--font-mono);
+}
+
+.macro-card__value {
+  font-size: 22px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.macro-card__change {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .macro-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

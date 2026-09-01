@@ -72,7 +72,11 @@ jobs:
         run: npm ci
 
       - name: Copy snapshot to frontend
-        run: mkdir -p frontend/public && cp snapshot.json frontend/public/snapshot.json
+        run: |
+          mkdir -p frontend/public
+          cp snapshot.json frontend/public/snapshot.json
+          # Generuj macro.json
+          python tools/generate_macro.py && cp macro.json frontend/public/macro.json || echo "⚠️ macro.json selhal, přeskakuji"
 
       - name: Build frontend
         working-directory: frontend

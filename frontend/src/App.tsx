@@ -2,6 +2,7 @@
  * Dashboard shell: loads the analytics once, then lays the panels out as a
  * dense, hairline-separated grid.
  */
+import { useState } from 'react'
 import { AllocationPanel } from './components/AllocationPanel'
 import { CorrelationPanel } from './components/CorrelationPanel'
 import { DrawdownPanel } from './components/DrawdownPanel'
@@ -12,6 +13,7 @@ import { PerformancePanel } from './components/PerformancePanel'
 import { RiskPanel } from './components/RiskPanel'
 import { TopBar } from './components/TopBar'
 import { formatTimestamp } from './lib/format'
+import { MacroPage } from './components/MacroPage'
 import { CurrencyProvider } from './lib/currency'
 import { useAnalytics } from './lib/useAnalytics'
 
@@ -46,12 +48,23 @@ export default function App() {
   if (!data) return null
   const { health, holdings, summary, history, returns, risk, montecarlo } = data
   const currency = summary.base_currency
+  const [page, setPage] = useState<'dashboard' | 'macro'>(() =>
+    window.location.hash === '#/macro' ? 'macro' : 'dashboard'
+  )
+  const navigate = (p: 'dashboard' | 'macro') => {
+    setPage(p)
+    window.location.hash = p === 'macro' ? '/macro' : '/dashboard'
+  }
+
   const czkRate = summary.czk_rate ?? 25.3
 
   return (
     <CurrencyProvider czkRate={czkRate}>
     <div className="app">
-      <TopBar summary={summary} health={health} config={config} />
+      <TopBar summary={summary} health={health} config={config} page={page} onNavigate={navigate} />
+      {page === 'macro' ? (
+        <MacroPage />
+      ) : (
       <main className="app__main">
         <KpiStrip risk={risk} montecarlo={montecarlo} summary={summary} currency={currency} />
         <div className="row row--overview">
@@ -84,6 +97,7 @@ export default function App() {
           <CorrelationPanel correlation={risk.correlation} />
         </div>
       </main>
+      )}
       <footer className="footer">
         <span>
           Moje portfolio · není investiční doporučení · ceny z Yahoo Finance

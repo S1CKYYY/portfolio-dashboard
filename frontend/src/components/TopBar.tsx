@@ -12,6 +12,8 @@ interface TopBarProps {
   summary: SummaryPayload
   health: Health
   config: DataConfig
+  page?: 'dashboard' | 'macro'
+  onNavigate?: (p: 'dashboard' | 'macro') => void
 }
 
 interface DeltaProps {
@@ -40,7 +42,7 @@ function Delta({ label, absolute, percent, delay }: DeltaProps) {
   )
 }
 
-export function TopBar({ summary, health, config }: TopBarProps) {
+export function TopBar({ summary, health, config, page = 'dashboard', onNavigate }: TopBarProps) {
   const { displayCurrency, multiplier, toggle } = useCurrency()
   const today = summary.changes.day
   const live = config.source === 'api'
@@ -59,6 +61,11 @@ export function TopBar({ summary, health, config }: TopBarProps) {
             format={formatMoneyCompact}
             className="num topbar__amount"
           />
+          {/* Navigace */}
+          <div style={{ display: 'flex', gap: 2, marginRight: 8 }}>
+            <button type="button" className="segmented__option" style={{ opacity: page === 'dashboard' ? 1 : 0.5 }} onClick={() => onNavigate?.('dashboard')}>Portfolio</button>
+            <button type="button" className="segmented__option" style={{ opacity: page === 'macro' ? 1 : 0.5 }} onClick={() => onNavigate?.('macro')}>Makro</button>
+          </div>
           <button
             type="button"
             className="segmented__option"
