@@ -82,18 +82,29 @@ def fetch_yahoo(tickers: dict, period: str = "1y") -> dict:
 
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id="
 
+FRED_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+    'Accept': 'text/html,application/xhtml+xml,text/csv,*/*',
+    'Referer': 'https://fred.stlouisfed.org/',
+}
+
 def fetch_fred(series_id: str, n: int = 60) -> pd.Series:
     for attempt in range(3):
         try:
             url = FRED_URL + series_id
-            df = pd.read_csv(url, parse_dates=["DATE"], index_col="DATE", timeout=15)
+            resp = requests.get(url, headers=FRED_HEADERS, timeout=20)
+            resp.raise_for_status()
+            from io import StringIO
+            df = pd.read_csv(StringIO(resp.text), parse_dates=["DATE"], index_col="DATE")
             s = df.iloc[:, 0].replace(".", float("nan")).astype(float).dropna()
-            return s.tail(n)
+            result = s.tail(n)
+            if not result.empty:
+                print(f"    FRED {series_id}: {len(result)} bodů, poslední {result.iloc[-1]:.3f}")
+            return result
         except Exception as e:
+            print(f"  ⚠️ FRED {series_id} attempt {attempt+1}: {e}", file=sys.stderr)
             if attempt < 2:
-                time.sleep(2)
-            else:
-                print(f"  ⚠️ FRED {series_id} selhal: {e}", file=sys.stderr)
+                time.sleep(3)
     return pd.Series(dtype=float)
 
 def fred_card(s: pd.Series, yoy_mode: bool = False) -> dict | None:

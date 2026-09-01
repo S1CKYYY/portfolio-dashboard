@@ -102,9 +102,10 @@ function Spark({ data, color, w=80, h=28 }: { data: number[]; color: string; w?:
 
 // ── ECharts line chart (history) ──────────────────────────────────────────
 
-function HistoryChart({ series, height = 180 }: {
+function HistoryChart({ series, height = 180, tight = false }: {
   series: { name: string; dates: string[]; values: number[]; color: string }[]
   height?: number
+  tight?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -116,7 +117,17 @@ function HistoryChart({ series, height = 180 }: {
       tooltip: { trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46', textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 11 } },
       legend: series.length > 1 ? { data: series.map(s=>s.name), top: 2, textStyle: { color: '#a1a1aa', fontSize: 10 } } : undefined,
       xAxis: { type: 'category', data: series[0]?.dates ?? [], axisLabel: { color: '#52525b', fontSize: 9 }, axisLine: { lineStyle: { color: '#27272a' } } },
-      yAxis: { type: 'value', axisLabel: { color: '#71717a', fontSize: 9 }, splitLine: { lineStyle: { color: '#18181b' } } },
+      yAxis: (() => {
+        const allVals = series.flatMap(s => s.values).filter(v => isFinite(v))
+        const lo = Math.min(...allVals), hi = Math.max(...allVals), pad = (hi - lo) * 0.08 || 0.1
+        return {
+          type: 'value' as const,
+          min: tight ? Math.max(0, lo - pad) : undefined,
+          max: tight ? hi + pad : undefined,
+          axisLabel: { color: '#71717a', fontSize: 9 },
+          splitLine: { lineStyle: { color: '#18181b' } },
+        }
+      })(),
       series: series.map(s => ({
         name: s.name, type: 'line', data: s.values, smooth: false,
         lineStyle: { color: s.color, width: 1.5 }, itemStyle: { color: s.color }, symbol: 'none',
@@ -463,7 +474,7 @@ export function MacroPage() {
               {bondSeries.length > 0 && (
                 <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '8px 12px', flex: 1 }}>
                   <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', marginBottom: 4 }}>VÝNOSY 2Y · 10Y · 30Y — 1 ROK</div>
-                  <HistoryChart series={bondSeries} height={200} />
+                  <HistoryChart series={bondSeries} height={200} tight={true} />
                 </div>
               )}
             </div>
