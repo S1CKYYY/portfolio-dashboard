@@ -281,6 +281,116 @@ function Sec({ title, sub }: { title: string; sub?: string }) {
   )
 }
 
+// ── 52W range indicator ──────────────────────────────────────────────────
+
+function RangeBar({ current, values, favorableHigh, label }: {
+  current: number; values: number[]; favorableHigh: boolean; label: string
+}) {
+  if (!values.length) return null
+  const lo = Math.min(...values), hi = Math.max(...values)
+  const pct = Math.max(0, Math.min(100, (current - lo) / (hi - lo) * 100))
+  const goodPct = favorableHigh ? pct : 100 - pct
+  const col = goodPct > 65 ? '#22c55e' : goodPct > 35 ? '#f59e0b' : '#ef4444'
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)', marginBottom: 4 }}>
+        <span>{lo.toFixed(3)}</span>
+        <span style={{ color: '#71717a' }}>{label} · 52W</span>
+        <span>{hi.toFixed(3)}</span>
+      </div>
+      <div style={{ position: 'relative', height: 6, background: '#27272a', borderRadius: 3 }}>
+        <div style={{ position: 'absolute', left: favorableHigh ? '50%' : 0, width: '50%', height: '100%', background: 'rgba(34,197,94,0.18)', borderRadius: 3 }} />
+        <div style={{ position: 'absolute', left: `${pct}%`, top: '50%', width: 12, height: 12, borderRadius: '50%', background: col, border: '2px solid #09090b', transform: 'translate(-50%,-50%)' }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 9 }}>
+        <span style={{ color: favorableHigh ? '#ef4444' : '#22c55e' }}>{favorableHigh ? '← špatné' : '← dobré'}</span>
+        <span style={{ color: col, fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{pct.toFixed(0)}. percentil</span>
+        <span style={{ color: favorableHigh ? '#22c55e' : '#ef4444' }}>{favorableHigh ? 'dobré →' : 'špatné →'}</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Currency zone chart ───────────────────────────────────────────────────
+
+function CurrencyZoneChart({ dates, values, label, favorableHigh = true, height = 160 }: {
+  dates: string[]; values: number[]; label: string; favorableHigh?: boolean; height?: number
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!ref.current || !values.length) return
+    const chart = echarts.init(ref.current, 'dark')
+    const avg = values.reduce((a, b) => a + b, 0) / values.length
+    const mn = Math.min(...values), mx = Math.max(...values), rng = mx - mn
+    const mid = (mn + mx) / 2
+    chart.setOption({
+      backgroundColor: 'transparent',
+      grid: { top: 12, bottom: 28, left: 50, right: 8 },
+      tooltip: { trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46', textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 11 } },
+      xAxis: { type: 'category', data: dates, axisLabel: { color: '#52525b', fontSize: 9 }, axisLine: { lineStyle: { color: '#27272a' } } },
+      yAxis: { type: 'value', min: mn - rng*0.05, max: mx + rng*0.05, axisLabel: { color: '#71717a', fontSize: 9 }, splitLine: { lineStyle: { color: '#18181b' } } },
+      series: [{
+        name: label, type: 'line', data: values, smooth: false,
+        lineStyle: { color: '#60a5fa', width: 1.5 }, itemStyle: { color: '#60a5fa' }, symbol: 'none',
+        markArea: { silent: true, data: [
+          [{ yAxis: favorableHigh ? mid : mn-rng*0.1, itemStyle: { color: 'rgba(34,197,94,0.09)' } }, { yAxis: favorableHigh ? mx+rng*0.1 : mid }],
+          [{ yAxis: favorableHigh ? mn-rng*0.1 : mid, itemStyle: { color: 'rgba(239,68,68,0.09)' } }, { yAxis: favorableHigh ? mid : mx+rng*0.1 }],
+        ]},
+        markLine: { silent: true, symbol: 'none', data: [{ yAxis: avg, lineStyle: { color: '#3f3f46', type: 'dashed', width: 1 }, label: { formatter: `Prům: ${avg.toFixed(3)}`, color: '#52525b', fontSize: 8 } }] },
+      }],
+    })
+    const resize = () => chart.resize()
+    window.addEventListener('resize', resize)
+    return () => { window.removeEventListener('resize', resize); chart.dispose() }
+  }, [dates, values])
+  return <div ref={ref} style={{ width: '100%', height }} />
+}
+
+// ── Currency impact card ──────────────────────────────────────────────────
+
+function CurrencyImpact({ title, card, portfolioShare, favorableHigh, explanation, impactNote }: {
+  title: string; card?: MarketCard; portfolioShare: number; favorableHigh: boolean; explanation: string; impactNote: string
+}) {
+  if (!card) return null
+  const values = card.history?.values ?? []
+  const dates  = card.history?.dates  ?? []
+  const moveGood = favorableHigh ? (card.change_pct ?? 0) > 0 : (card.change_pct ?? 0) < 0
+  const moveCol  = moveGood ? '#22c55e' : '#ef4444'
+  return (
+    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 3 }}>{title}</div>
+          <div style={{ fontSize: 26, fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{card.value.toFixed(title.includes('CZK') ? 2 : 4)}</div>
+          <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: moveCol, marginTop: 2 }}>
+            {arr(card.change_pct)} {chgStr(card.change_pct)}% · {moveGood ? '✓ výhodný pohyb' : '⚠ nevýhodný pohyb'}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 9, color: '#71717a', marginBottom: 2 }}>Ovlivňuje</div>
+          <div style={{ fontSize: 20, fontWeight: 600, fontFamily: 'var(--font-mono)', color: '#a1a1aa' }}>{portfolioShare}%</div>
+          <div style={{ fontSize: 9, color: '#52525b' }}>portfolia</div>
+        </div>
+      </div>
+      <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.5, margin: '8px 0', padding: '6px 8px', background: '#0d0d0f', borderLeft: '2px solid #3f3f46' }}>
+        {explanation}
+      </div>
+      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#a1a1aa', marginBottom: 6 }}>📐 {impactNote}</div>
+      {values.length > 10 && <RangeBar current={card.value} values={values} favorableHigh={favorableHigh} label={title} />}
+      {dates.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <div style={{ fontSize: 8, color: '#52525b', marginBottom: 3 }}>
+            <span style={{ color: '#22c55e' }}>■</span> výhodná zóna &nbsp;
+            <span style={{ color: '#ef4444' }}>■</span> nevýhodná zóna &nbsp;
+            <span style={{ color: '#3f3f46' }}>– –</span> roční průměr
+          </div>
+          <CurrencyZoneChart dates={dates} values={values} label={title} favorableHigh={favorableHigh} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────
 
 export function MacroPage() {
@@ -373,6 +483,35 @@ export function MacroPage() {
               </div>
             )}
             <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
+          </div>
+
+          {/* ── KURZOVÉ VLIVY NA PORTFOLIO ── */}
+          <Sec title="KURZOVÉ VLIVY NA PORTFOLIO" sub="jak pohyby měn ovlivňují tvůj výnos" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 12 }}>
+            <CurrencyImpact
+              title="EUR/CZK"
+              card={m.eur_czk}
+              portfolioShare={84}
+              favorableHigh={true}
+              explanation="84 % portfolia je v EUR (ETF na Xetra). Čím VYŠŠÍ EUR/CZK, tím VÍCE CZK dostaneš při přepočtu — CZK je slabá, pro tebe výhodné. Pokud CZK posiluje (EUR/CZK klesá), portfolio v CZK ztrácí i bez pohybu trhů."
+              impactNote="Pohyb EUR/CZK o 1 % = změna hodnoty portfolia o ~0.84 %"
+            />
+            <CurrencyImpact
+              title="EUR/USD"
+              card={m.eur_usd}
+              portfolioShare={16}
+              favorableHigh={false}
+              explanation="16 % portfolia jsou US akcie (BRK-B, DUOL, PYPL…). EUR/USD ROSTE = EUR posiluje = USD oslabuje = US akcie jsou v EUR méně cenné. Výhodný pro tebe je NÍZKÝ EUR/USD (silný dolar)."
+              impactNote="Pohyb EUR/USD o 1 % = změna US části o ~1 % (= ~0.16 % portfolia)"
+            />
+            <CurrencyImpact
+              title="DXY (Dolar index)"
+              card={m.dxy}
+              portfolioShare={16}
+              favorableHigh={true}
+              explanation="DXY měří sílu USD vůči koši měn (EUR, JPY, GBP…). Silný dolar (DXY roste) = tvoje US akcie jsou v EUR hodnotnější. DXY a EUR/USD se pohybují opačně — když DXY roste, EUR/USD klesá."
+              impactNote="DXY je vedoucí indikátor — pohyby předcházejí změnám EUR/USD"
+            />
           </div>
 
           {/* ── KOMODITY ── */}
