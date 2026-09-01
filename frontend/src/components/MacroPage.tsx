@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { MacroData, MarketCard, FredCard, NewsItem } from '../lib/macro-types'
+import type { MacroData, MarketCard, FredCard, NewsItem as NewsItemType } from '../lib/macro-types'
 import * as echarts from 'echarts'
 
 async function fetchMacro(): Promise<MacroData | null> {
@@ -225,24 +225,6 @@ const TICKER_COLOR: Record<string, string> = {
   'MSFT': '#0ea5e9', 'NFLX': '#ef4444', '^VIX': '#f59e0b', '^TNX': '#8b5cf6', 'GC=F': '#f59e0b',
 }
 
-function NewsItem({ item }: { item: NewsItem }) {
-  const ts = item.ts ? new Date(item.ts * 1000).toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
-  const col = TICKER_COLOR[item.ticker] ?? '#a1a1aa'
-  const label = TICKER_LABELS[item.ticker] ?? item.ticker
-  return (
-    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textDecoration: 'none', padding: '10px 12px', borderBottom: '1px solid var(--line-faint)', transition: 'background 0.1s' }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-raised)')}
-      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-    >
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
-        <span style={{ fontSize: 9, fontWeight: 600, fontFamily: 'var(--font-mono)', color: col, background: col+'22', padding: '1px 5px', borderRadius: 2 }}>{label}</span>
-        <span style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)' }}>{ts}</span>
-      </div>
-      <div style={{ fontSize: 12, color: '#d4d4d8', lineHeight: 1.4 }}>{item.title}</div>
-      {item.publisher && <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{item.publisher}</div>}
-    </a>
-  )
-}
 
 // ── CPI vs wages ──────────────────────────────────────────────────────────
 
@@ -267,7 +249,7 @@ function CpiWages({ data }: { data: MacroData['cpi_wages_history'] }) {
     window.addEventListener('resize', resize)
     return () => { window.removeEventListener('resize', resize); chart.dispose() }
   }, [data])
-  return <div ref={ref} style={{ width: '100%', height: 200 }} />
+  return <div ref={ref} style={{ width: '100%', height: 240 }} />
 }
 
 // ── Sec header ────────────────────────────────────────────────────────────
@@ -404,7 +386,7 @@ export function MacroPage() {
   const m  = data.market
   const f  = data.fred
   const ts = new Date(data.generated_at).toLocaleString('cs-CZ')
-  const news = data.news ?? []
+  const news: NewsItemType[] = data.news ?? []
   const realWagePos = (f.wages_yoy?.value ?? 0) > (f.cpi_yoy?.value ?? 0)
 
   // Historická data pro grafy
@@ -421,35 +403,42 @@ export function MacroPage() {
   ]
 
   return (
-    <div style={{ display: 'flex', gap: 0, minHeight: 'calc(100vh - 60px)' }}>
+    <div style={{ width: '100%' }}>
 
-      {/* ── NEWS SIDEBAR (levá strana) ── */}
-      <div style={{ width: 320, minWidth: 320, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0 }}>
-        <div style={{ padding: '12px 12px 6px', borderBottom: '1px solid var(--line)', fontSize: 9, letterSpacing: '0.18em', color: 'var(--text-tertiary)' }}>
-          ZPRÁVY — PORTFOLIO & TRH
+      {/* ── NEWS TICKER (vodorovný pruh nahoře) ── */}
+      {news.length > 0 && (
+        <div style={{ borderBottom: '1px solid var(--line)', padding: '6px 20px', display: 'flex', gap: 16, overflowX: 'auto', whiteSpace: 'nowrap', fontSize: 11, color: '#a1a1aa' }}>
+          <span style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', flexShrink: 0 }}>ZPRÁVY</span>
+          {news.slice(0, 8).map((item, i) => {
+            const col = TICKER_COLOR[item.ticker] ?? '#a1a1aa'
+            const label = TICKER_LABELS[item.ticker] ?? item.ticker
+            return (
+              <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
+                style={{ color: '#a1a1aa', textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ color: col, fontSize: 9, fontWeight: 600, fontFamily: 'var(--font-mono)' }}>[{label}]</span>
+                <span style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</span>
+              </a>
+            )
+          })}
         </div>
-        {news.length === 0
-          ? <div style={{ padding: 20, color: '#52525b', fontSize: 12 }}>Žádné zprávy (spusť workflow)</div>
-          : news.map((item, i) => <NewsItem key={i} item={item} />)
-        }
-      </div>
+      )}
 
-      {/* ── MAKRO OBSAH (pravá strana) ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px 40px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      {/* ── MAKRO OBSAH (full width) ── */}
+      <div style={{ padding: '0 24px 48px' }}>
+        <div style={{ maxWidth: '100%' }}>
           <div style={{ padding: '6px 0 2px', fontSize: 10, color: '#52525b', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
             Aktualizováno: {ts}
           </div>
 
           {/* ── VIX + kurzy + DXY ── */}
           <Sec title="SENTIMENT & MĚNY" />
-          <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 10, marginBottom: 12 }}>
             <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ fontSize: 9, letterSpacing: '0.18em', color: 'var(--text-tertiary)', marginBottom: 4 }}>VIX — INDEX STRACHU</div>
               <VixGauge card={m.vix} />
               {vixHistory && (
                 <div style={{ width: '100%', marginTop: 6 }}>
-                  <HistoryChart series={[{ name: 'VIX', dates: vixHistory.dates, values: vixHistory.values, color: '#f59e0b' }]} height={120} />
+                  <HistoryChart series={[{ name: 'VIX', dates: vixHistory.dates, values: vixHistory.values, color: '#f59e0b' }]} height={160} />
                 </div>
               )}
             </div>
@@ -462,7 +451,7 @@ export function MacroPage() {
               {currencySeries.length > 0 && (
                 <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '10px 12px', flex: 1 }}>
                   <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', marginBottom: 6 }}>KURZY — 1 ROK</div>
-                  <HistoryChart series={currencySeries} height={150} />
+                  <HistoryChart series={currencySeries} height={200} />
                 </div>
               )}
             </div>
@@ -475,11 +464,11 @@ export function MacroPage() {
             <Card label="US 2Y výnos"  card={m.us2y}  suffix="%" decimals={3} />
             <YieldCurve us2y={m.us2y} us10y={m.us10y} spread={m.yield_spread} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 12 }}>
             {bondSeries.length > 0 && (
               <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '10px 12px' }}>
                 <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', marginBottom: 6 }}>VÝNOSY 10Y & 2Y — 1 ROK</div>
-                <HistoryChart series={bondSeries} height={180} />
+                <HistoryChart series={bondSeries} height={240} />
               </div>
             )}
             <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
