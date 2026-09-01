@@ -197,28 +197,52 @@ function YieldCurve({ us2y, us10y, spread }: { us2y?: MarketCard; us10y?: Market
 function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedFunds?: FredCard }) {
   const rate = fedFunds?.value ?? exp.current_rate
   return (
-    <div className="macro-card">
+    <div className="macro-card" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
       <span className="macro-card__label">FED FUNDS RATE</span>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 30, fontWeight: 600, marginTop: 6 }}>{rate?.toFixed(2) ?? '—'}%</div>
-      {fedFunds?.prev != null && <div style={{ fontSize: 11, color: '#71717a', fontFamily: 'var(--font-mono)' }}>předch. {fedFunds.prev.toFixed(2)}%</div>}
-      {fedFunds?.date && <div style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)', marginTop: 1 }}>{fedFunds.date}</div>}
-      {exp.available && exp.cut_probability != null && (
-        <div style={{ marginTop: 10 }}>
-          <div style={{ fontSize: 9, letterSpacing: '0.1em', color: '#71717a', marginBottom: 6 }}>FUTURES — NEXT MEETING</div>
-          <div style={{ display: 'flex', gap: 4 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 600, marginTop: 4 }}>{rate?.toFixed(2) ?? '—'}%</div>
+      {fedFunds?.prev != null && (
+        <div style={{ fontSize: 11, color: '#71717a', fontFamily: 'var(--font-mono)' }}>
+          {(rate ?? 0) < (fedFunds.prev ?? 0) ? '▼ sníženo' : (rate ?? 0) > (fedFunds.prev ?? 0) ? '▲ zvýšeno' : '→ beze změny'} z {fedFunds.prev.toFixed(2)}%
+        </div>
+      )}
+      {fedFunds?.date && <div style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)' }}>{fedFunds.date}</div>}
+
+      {/* Vysvětlení */}
+      <div style={{ fontSize: 10, color: '#71717a', lineHeight: 1.5, margin: '8px 0 6px', padding: '5px 7px', background: '#0d0d0f', borderLeft: '2px solid #3f3f46' }}>
+        Základní sazba americké centrální banky (Fed). Ovlivňuje cenu peněz v ekonomice — čím vyšší, tím dražší úvěry, nižší ocenění akcií (zejm. growth) a silnější USD.
+      </div>
+
+      {/* Predikce dalšího zasedání */}
+      {exp.available && exp.cut_probability != null ? (
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: '0.1em', color: '#52525b', marginBottom: 5 }}>
+            TRHY SÁZEJÍ NA PŘÍŠTÍ ZASEDÁNÍ FOMC
+          </div>
+          <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
             {[
-              { l: 'Snížení', p: Math.round((exp.cut_probability)*100),  c: '#22c55e' },
-              { l: 'Hold',    p: Math.round((exp.hold_probability??0)*100), c: '#a1a1aa' },
-              { l: 'Zvýšení', p: Math.round((exp.hike_probability??0)*100), c: '#ef4444' },
+              { l: 'Snížení', p: Math.round((exp.cut_probability)*100),       c: '#22c55e', desc: 'sazba klesne' },
+              { l: 'Hold',    p: Math.round((exp.hold_probability??0)*100),    c: '#a1a1aa', desc: 'beze změny' },
+              { l: 'Zvýšení', p: Math.round((exp.hike_probability??0)*100),    c: '#ef4444', desc: 'sazba roste' },
             ].map(item => (
               <div key={item.l} style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ height: 3, background: item.c, borderRadius: 2, marginBottom: 4, opacity: item.p > 5 ? 1 : 0.2 }} />
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 600, color: item.c }}>{item.p}%</div>
-                <div style={{ fontSize: 8, color: '#71717a' }}>{item.l.toUpperCase()}</div>
+                <div style={{ height: Math.max(2, item.p * 0.4), background: item.c, borderRadius: 2, marginBottom: 3, opacity: item.p > 5 ? 1 : 0.15, transition: 'height 0.3s' }} />
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 600, color: item.c }}>{item.p}%</div>
+                <div style={{ fontSize: 8, color: '#71717a', letterSpacing: '0.06em' }}>{item.l.toUpperCase()}</div>
               </div>
             ))}
           </div>
-          {exp.implied_rate != null && <div style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)', marginTop: 6 }}>Implikovaná sazba: {exp.implied_rate.toFixed(2)}%</div>}
+          <div style={{ fontSize: 9, color: '#52525b', lineHeight: 1.4 }}>
+            Pravděpodobnosti odvozeny z cen Fed Funds Futures — tak se sázejí banky a hedgefondy. Snížení sazby = bullish pro akcie a dluhopisy.
+          </div>
+          {exp.implied_rate != null && (
+            <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: '#3f3f46', marginTop: 4 }}>
+              Trh implikuje: {exp.implied_rate.toFixed(2)}% (nyní {rate?.toFixed(2)}%)
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ fontSize: 10, color: '#52525b', marginTop: 6 }}>
+          Futures predikce nedostupné — Fed Funds Rate futures (ZQ) nelze stáhnout mimo obchodní hodiny.
         </div>
       )}
     </div>
