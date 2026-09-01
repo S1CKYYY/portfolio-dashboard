@@ -154,119 +154,86 @@ def _next_fomc():
         if dt > now: return d, dt.month, dt.year
     return "", 0, 0
 
-def _from_cme_api(current_rate: float) -> dict | None:
-    """Přímý CME FedWatch API endpoint."""
-    import urllib.request
-    url = "https://www.cmegroup.com/CmeWS/mvc/FedWatch/probability.do?venue=G&selected=FOMC"
-    try:
-        req = urllib.request.Request(url, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Accept": "application/json", "Referer": "https://www.cmegroup.com/"})
-        with urllib.request.urlopen(req, timeout=12) as resp:
-            data = json.loads(resp.read())
-        meetings = data.get("meetings", data.get("probabilities", []))
-        if not meetings: return None
-        m = meetings[0] if isinstance(meetings, list) else data
-        probs = m.get("probabilities", m)
-        cut = hold = hike = None
-        for k, v in probs.items():
-            try: pct = float(str(v).replace("%","")) / 100
-            except Exception: continue
-            kl = k.lower()
-            if "cut" in kl or "down" in kl or "-" in k: cut = pct
-            elif "hike" in kl or "up" in kl or "+" in k: hike = pct
-            elif any(x in kl for x in ["unch","hold","no change"]): hold = pct
-        if cut is None and hold is None: return None
-        cut = cut or 0.0; hike = hike or 0.0
-        hold = hold or max(0.0, 1.0 - cut - hike)
-        fomc_date, _, _ = _next_fomc()
-        print(f"  ✓ CME FedWatch API: cut={cut:.1%} hold={hold:.1%} hike={hike:.1%}")
-        return {"available": True, "source": "CME FedWatch",
-                "current_rate": current_rate, "next_meeting": fomc_date,
-                "cut_probability": round(cut,3), "hold_probability": round(hold,3), "hike_probability": round(hike,3)}
-    except Exception as e:
-        print(f"  ⚠️ CME API: {e}", file=sys.stderr); return None
-
 def _from_zq_futures(current_rate: float) -> dict | None:
-    """Výpočet z 30-Day Fed Funds Futures (ZQ) — CME FedWatch metoda."""
+    """CME 30-Day Fed Funds Futures (ZQ) — funguje jen v obchodní hodiny."""
     fomc_date, fomc_month, fomc_year = _next_fomc()
     if not fomc_date: return None
-    # Pro 2. polovinu měsíce použij kontrakt měsíce PO zasedání
     import datetime as dt_mod
     fomc_dt = dt_mod.datetime.strptime(fomc_date, "%Y-%m-%d")
-    if fomc_dt.day > 15:
-        contract_month = fomc_month % 12 + 1
-        contract_year  = fomc_year + (1 if fomc_month == 12 else 0)
-    else:
-        contract_month, contract_year = fomc_month, fomc_year
+    contract_month = (fomc_month % 12 + 1) if fomc_dt.day > 15 else fomc_month
+    contract_year  = fomc_year + (1 if fomc_month == 12 and fomc_dt.day > 15 else 0)
     code = MONTH_CODES.get(contract_month, "")
     yr   = str(contract_year)[-2:]
-    tickers = [f"ZQ{code}{yr}.CBT", f"ZQ{code}{yr}=F", "ZQ=F"]
-    for t in tickers:
+    for t in [f"ZQ{code}{yr}.CBT", f"ZQ{code}{yr}=F", "ZQ=F"]:
         try:
             d = yf.download(t, period="5d", auto_adjust=True, progress=False)
             if not d.empty:
-                price   = float(d["Close"].dropna().iloc[-1])
+                price = float(d["Close"].dropna().iloc[-1])
                 implied = round(100 - price, 3)
-                diff    = implied - current_rate
-                step    = 0.25
+                diff = implied - current_rate; step = 0.25
                 if diff < -(step * 0.4):
-                    cut_p = min(0.97, 0.5 + abs(diff) / step * 0.5)
-                    hold_p = 1 - cut_p; hike_p = 0.0
+                    cut_p = min(0.97, 0.5 + abs(diff)/step*0.5); hold_p = 1-cut_p; hike_p = 0.0
                 elif diff > (step * 0.4):
-                    hike_p = min(0.97, 0.5 + diff / step * 0.5)
-                    hold_p = 1 - hike_p; cut_p = 0.0
+                    hike_p = min(0.97, 0.5 + diff/step*0.5); hold_p = 1-hike_p; cut_p = 0.0
                 else:
-                    hold_p = 0.75; cut_p = max(0, 0.25 - diff * 2); hike_p = max(0, diff * 2)
-                    tot = hold_p + cut_p + hike_p
-                    hold_p /= tot; cut_p /= tot; hike_p /= tot
-                print(f"  ✓ ZQ futures {t}: price={price:.3f} implied={implied:.3f}%")
-                return {"available": True, "source": f"CME ZQ Futures ({t})",
-                        "current_rate": current_rate, "implied_rate": implied, "next_meeting": fomc_date,
-                        "cut_probability": round(cut_p,3), "hold_probability": round(hold_p,3), "hike_probability": round(hike_p,3)}
+                    hold_p=0.75; cut_p=max(0,0.25-diff*2); hike_p=max(0,diff*2)
+                    tot=hold_p+cut_p+hike_p; hold_p/=tot; cut_p/=tot; hike_p/=tot
+                print(f"  ✓ ZQ {t}: {price:.3f} → implied {implied:.2f}%")
+                return {"available":True,"source":f"CME ZQ Futures ({t})",
+                        "current_rate":current_rate,"implied_rate":implied,"next_meeting":fomc_date,
+                        "cut_probability":round(cut_p,3),"hold_probability":round(hold_p,3),"hike_probability":round(hike_p,3)}
         except Exception: pass
     return None
 
-def _from_manifold(current_rate: float) -> dict | None:
-    """Fallback: Manifold Markets (veřejný prediction market, EU přístupný)."""
-    import urllib.request
+def _from_yield_curve(current_rate: float, us2y_val: float | None) -> dict | None:
+    """Odhad z 2Y Treasury výnosu vs. Fed Funds Rate.
+    
+    Principiální metoda: 2Y výnos zahrnuje tržní očekávání Fed sazby
+    na 2 roky dopředu. Spread (2Y - FF) odhaluje směr trhu.
+    Příklad: FF=4.75%, 2Y=3.77% → spread=-0.98% → trh čeká sazby níže.
+    """
+    if us2y_val is None: return None
     fomc_date, _, _ = _next_fomc()
-    for query in ["federal+reserve+rate+cut+2026", "FOMC+cut+september"]:
-        try:
-            url = f"https://api.manifold.markets/v0/search-markets?term={query}&limit=5"
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=8) as resp:
-                markets = json.loads(resp.read())
-            for mkt in markets:
-                prob = mkt.get("probability"); q = mkt.get("question","").lower()
-                if prob is not None and "cut" in q and ("fed" in q or "fomc" in q):
-                    cut_p = float(prob)
-                    hold_p = max(0, 1 - cut_p - 0.03); hike_p = max(0, 1 - cut_p - hold_p)
-                    print(f"  ✓ Manifold: cut={cut_p:.1%} — {mkt.get('question','')[:50]}")
-                    return {"available": True, "source": "Manifold Markets",
-                            "current_rate": current_rate, "next_meeting": fomc_date,
-                            "cut_probability": round(cut_p,3), "hold_probability": round(hold_p,3), "hike_probability": round(hike_p,3)}
-        except Exception as e:
-            print(f"  ⚠️ Manifold: {e}", file=sys.stderr)
-    return None
+    spread = us2y_val - current_rate  # záporný = čekají snížení
+    # Kalibrace: každých -25bp spreadu = ~35% šance na snížení na příštím zasedání
+    # (hrubý odhad, v praxi závisí na průběhu výnosové křivky a FWD sazbách)
+    if spread < -0.50:
+        cut_p = min(0.92, 0.70 + abs(spread+0.50) * 0.40)
+        hold_p = 1 - cut_p; hike_p = 0.0
+    elif spread < -0.20:
+        cut_p = 0.55 + abs(spread+0.20) * 0.50
+        hold_p = 1 - cut_p; hike_p = 0.0
+    elif spread < 0.10:
+        hold_p = 0.60; cut_p = max(0, 0.35 - spread * 1.5); hike_p = max(0, 0.05 + spread * 1.5)
+    elif spread < 0.40:
+        hike_p = 0.40 + (spread - 0.10) * 0.80; hold_p = 1 - hike_p; cut_p = 0.0
+    else:
+        hike_p = min(0.90, 0.64 + (spread - 0.40) * 0.50); hold_p = 1 - hike_p; cut_p = 0.0
+    tot = cut_p + hold_p + hike_p; cut_p/=tot; hold_p/=tot; hike_p/=tot
+    print(f"  ✓ Odhad z výnosové křivky: 2Y={us2y_val:.3f}% FF={current_rate:.2f}% spread={spread:+.3f}% → cut={cut_p:.1%}")
+    return {"available":True,"source":"Odhad: 2Y Treasury vs. Fed sazba",
+            "current_rate":current_rate,"next_meeting":fomc_date,
+            "us2y_vs_ff_spread":round(spread,3),
+            "cut_probability":round(cut_p,3),"hold_probability":round(hold_p,3),"hike_probability":round(hike_p,3)}
 
-def rate_expectations(current_rate: float | None) -> dict:
-    """CME FedWatch API → ZQ Futures → Manifold Markets."""
+def rate_expectations(current_rate: float | None, market: dict | None = None) -> dict:
+    """Pravděpodobnosti pohybu sazeb na příštím FOMC.
+    Priorita: ZQ Futures (v obch. hodiny) → Odhad z 2Y výnosu (vždy).
+    """
     base = {"available": False, "current_rate": current_rate}
     if current_rate is None: return base
-    print("  Zkouším CME FedWatch API...")
-    result = _from_cme_api(current_rate)
-    if result: return result
+    fomc_date, _, _ = _next_fomc()
+    # 1. ZQ Futures (CME FedWatch metoda)
     print("  Zkouším ZQ Futures...")
     result = _from_zq_futures(current_rate)
     if result: return result
-    print("  Zkouším Manifold Markets...")
-    result = _from_manifold(current_rate)
-    if result: return result
-    print("  ⚠️ Žádný zdroj predikcí nedostupný")
-    return {**base, "next_meeting": _next_fomc()[0]}
+    # 2. Odhad z 2Y výnosu (vždy dostupné)
+    us2y = (market or {}).get("us2y", {}).get("value") if market else None
+    if us2y:
+        result = _from_yield_curve(current_rate, us2y)
+        if result: return result
+    return {**base, "next_meeting": fomc_date}
 
-# ── Main ──────────────────────────────────────────────────────────────────
 
 def main():
     print("\n📊 generate_macro.py...")
@@ -314,7 +281,7 @@ def main():
 
     print("\n🏦 CME FedWatch...")
     current_rate = fred.get("fed_funds", {}).get("value")
-    rate_exp = rate_expectations(current_rate)
+    rate_exp = rate_expectations(current_rate, market)
 
     print("\n📰 News...")
     news = fetch_news()

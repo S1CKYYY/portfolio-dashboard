@@ -69,6 +69,7 @@ export interface MacroData {
     next_meeting?: string
     current_rate?: number
     implied_rate?: number
+    us2y_vs_ff_spread?: number
     cut_probability?: number
     hold_probability?: number
     hike_probability?: number
