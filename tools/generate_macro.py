@@ -201,35 +201,81 @@ def vix_state(v: float) -> str:
 
 # ── Polymarket / Fed Futures ───────────────────────────────────────────────
 
+# FOMC zasedání 2026 (přibližně)
+FOMC_DATES_2026 = ["2026-01-28","2026-03-18","2026-04-29","2026-06-17",
+                   "2026-07-28","2026-09-15","2026-10-28","2026-12-09"]
+MONTH_CODES = {1:"F",2:"G",3:"H",4:"J",5:"K",6:"M",7:"N",8:"Q",9:"U",10:"V",11:"X",12:"Z"}
+
+def next_fomc() -> tuple[str, str]:
+    """Vrátí (datum, ZQ tiker) pro příští FOMC zasedání."""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    for d in FOMC_DATES_2026:
+        dt = datetime.strptime(d, "%Y-%m-%d")
+        if dt > now:
+            code = MONTH_CODES[dt.month]
+            yr = str(dt.year)[-2:]
+            return d, f"ZQ{code}{yr}"
+    return "", ""
+
 def rate_expectations(current_rate: float | None) -> dict:
-    try:
-        tickers_to_try = ["ZQU26.CBT", "ZQU6.CBT"]
-        price = None
-        for t in tickers_to_try:
-            try:
-                d = yf.download(t, period="5d", auto_adjust=True, progress=False)
-                if not d.empty:
-                    price = float(d["Close"].dropna().iloc[-1])
-                    break
-            except Exception:
-                continue
-        if price is None or current_rate is None:
-            return {"available": False, "current_rate": current_rate}
-        implied = round(100 - price, 3)
-        diff = implied - current_rate
-        if diff < -0.15:
-            cut_p = min(0.95, 0.5 + abs(diff) * 2); hold_p = 1 - cut_p; hike_p = 0.0
-        elif diff > 0.15:
-            hike_p = min(0.95, 0.5 + diff * 2); hold_p = 1 - hike_p; cut_p = 0.0
-        else:
-            hold_p = 0.6; cut_p = max(0, 0.4 - diff * 2); hike_p = max(0, 0.4 + diff * 2)
-            t = hold_p + cut_p + hike_p; hold_p /= t; cut_p /= t; hike_p /= t
-        return {"available": True, "current_rate": current_rate, "implied_rate": implied,
-                "cut_probability": round(cut_p, 3), "hold_probability": round(hold_p, 3),
-                "hike_probability": round(hike_p, 3)}
-    except Exception as e:
-        print(f"  ⚠️ Futures: {e}", file=sys.stderr)
-        return {"available": False, "current_rate": current_rate}
+    base = {"available": False, "current_rate": current_rate}
+    if current_rate is None:
+        return base
+    fomc_date, zq_base = next_fomc()
+    price = None
+    # Zkus různé formáty tikeru
+    for suffix in [".CBT", "=F"]:
+        t = zq_base + suffix
+        try:
+            d = yf.download(t, period="5d", auto_adjust=True, progress=False)
+            if not d.empty:
+                price = float(d["Close"].dropna().iloc[-1])
+                print(f"  ZQ futures {t}: {price:.3f}")
+                break
+        except Exception:
+            pass
+    if price is None:
+        # Fallback: zkus Manifold Markets API (veřejné, bez bloku)
+        try:
+            import urllib.request
+            url = "https://api.manifold.markets/v0/search-markets?term=fed+rate+cut+september+2026&limit=3"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                markets = json.loads(resp.read())
+                for mkt in markets:
+                    prob = mkt.get("probability")
+                    q = mkt.get("question", "").lower()
+                    if prob is not None and "cut" in q and "fed" in q:
+                        cut_p = float(prob)
+                        hold_p = max(0, 1 - cut_p - 0.05)
+                        hike_p = max(0, 1 - cut_p - hold_p)
+                        print(f"  Manifold Markets: cut={cut_p:.1%} ({mkt.get('question','')})")
+                        return {"available": True, "source": "Manifold Markets",
+                                "current_rate": current_rate, "next_meeting": fomc_date,
+                                "cut_probability": round(cut_p, 3),
+                                "hold_probability": round(hold_p, 3),
+                                "hike_probability": round(hike_p, 3)}
+        except Exception as e:
+            print(f"  ⚠️ Manifold: {e}", file=sys.stderr)
+        print("  ⚠️ Futures ani Manifold nedostupné", file=sys.stderr)
+        return {**base, "next_meeting": fomc_date}
+    # Výpočet pravděpodobností z futures ceny
+    implied = round(100 - price, 3)
+    diff = implied - current_rate
+    step = 0.25  # Fed hýbe po 25bp
+    if diff < -(step * 0.6):
+        cut_p = min(0.97, 0.5 + abs(diff) / step * 0.5)
+        hold_p = 1 - cut_p; hike_p = 0.0
+    elif diff > (step * 0.6):
+        hike_p = min(0.97, 0.5 + diff / step * 0.5)
+        hold_p = 1 - hike_p; cut_p = 0.0
+    else:
+        hold_p = 0.7; cut_p = max(0, 0.3 - diff * 2); hike_p = max(0, 0.3 + diff * 2)
+        tot = hold_p + cut_p + hike_p; hold_p /= tot; cut_p /= tot; hike_p /= tot
+    return {"available": True, "source": "CME ZQ Futures",
+            "current_rate": current_rate, "implied_rate": implied, "next_meeting": fomc_date,
+            "cut_probability": round(cut_p, 3), "hold_probability": round(hold_p, 3),
+            "hike_probability": round(hike_p, 3)}
 
 # ── Main ────────────────────────────────────────────────────────────────────
 

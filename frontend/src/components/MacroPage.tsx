@@ -234,11 +234,11 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
           <div style={{ fontSize: 9, color: '#52525b', lineHeight: 1.4 }}>
             Pravděpodobnosti odvozeny z cen Fed Funds Futures — tak se sázejí banky a hedgefondy. Snížení sazby = bullish pro akcie a dluhopisy.
           </div>
-          {exp.implied_rate != null && (
-            <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: '#3f3f46', marginTop: 4 }}>
-              Trh implikuje: {exp.implied_rate.toFixed(2)}% (nyní {rate?.toFixed(2)}%)
-            </div>
-          )}
+          <div style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)', marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {exp.implied_rate != null && <span>Implikovaná: {exp.implied_rate.toFixed(2)}% (nyní {rate?.toFixed(2)}%)</span>}
+            {exp.next_meeting && <span>Příští zasedání: {exp.next_meeting}</span>}
+            {exp.source && <span>Zdroj: {exp.source}</span>}
+          </div>
         </div>
       ) : (
         <div style={{ fontSize: 10, color: '#52525b', marginTop: 6 }}>

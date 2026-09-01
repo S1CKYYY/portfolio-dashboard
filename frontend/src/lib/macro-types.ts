@@ -65,6 +65,8 @@ export interface MacroData {
   news: NewsItem[]
   rate_expectations: {
     available: boolean
+    source?: string
+    next_meeting?: string
     current_rate?: number
     implied_rate?: number
     cut_probability?: number
