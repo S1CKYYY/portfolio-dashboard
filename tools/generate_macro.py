@@ -221,7 +221,10 @@ def rate_expectations(current_rate: float | None, market: dict | None = None) ->
     Priorita: ZQ Futures (v obch. hodiny) → Odhad z 2Y výnosu (vždy).
     """
     base = {"available": False, "current_rate": current_rate}
-    if current_rate is None: return base
+    if current_rate is None:
+        # Bez FF rate zkusíme aspoň vrátit datum příštího FOMC
+        fomc_date, _, _ = _next_fomc()
+        return {**base, "next_meeting": fomc_date}
     fomc_date, _, _ = _next_fomc()
     # 1. ZQ Futures (CME FedWatch metoda)
     print("  Zkouším ZQ Futures...")
@@ -279,8 +282,14 @@ def main():
                  "cpi_yoy":   [round(float(cpi_h.loc[d]),3)  for d in common],
                  "wages_yoy": [round(float(wage_h.loc[d]),3) for d in common]}
 
-    print("\n🏦 CME FedWatch...")
+    print("\n🏦 Rate expectations...")
     current_rate = fred.get("fed_funds", {}).get("value")
+    if current_rate is None:
+        # Fallback: 13W T-bill (^IRX) kopíruje Fed Funds Rate na ~5bp
+        irx = market.get("us2y", {}).get("value")
+        if irx:
+            current_rate = round(irx, 2)
+            print(f"  ⚠️ Fed Funds fallback z ^IRX: {current_rate:.2f}%")
     rate_exp = rate_expectations(current_rate, market)
 
     print("\n📰 News...")
