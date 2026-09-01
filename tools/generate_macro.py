@@ -277,6 +277,21 @@ def main():
         else:
             print(f"  ⚠️ {key}: žádná data")
 
+    # Fallback pro fed_funds: ^IRX (3M T-bill) z Yahoo Finance
+    if "fed_funds" not in fred and "us2y" in market:
+        irx = market["us2y"]
+        chg = irx.get("change_abs") or 0
+        fred["fed_funds"] = {
+            "value":    round(irx["value"], 3),
+            "prev":     round(irx["value"] - chg, 3),
+            "change":   round(chg, 3),
+            "date":     NOW.strftime("%Y-%m-%d"),
+            "sparkline": irx.get("sparkline", []),
+            "history":  irx.get("history", {}),
+            "note":     "^IRX (3M T-bill proxy)",
+        }
+        print(f"  fed_funds fallback ^IRX: {irx['value']:.3f}%")
+
     print("\n📉 CPI vs mzdy...")
     cpi_raw  = fetch_fred("CPIAUCSL", 60)
     wage_raw = fetch_fred("CES0500000003", 60)
