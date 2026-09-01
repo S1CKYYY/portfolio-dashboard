@@ -201,6 +201,248 @@ def vix_state(v: float) -> str:
 
 # ── Polymarket / Fed Futures ───────────────────────────────────────────────
 
+# ── CME FedWatch + fallback chain ─────────────────────────────────────────
+
+# FOMC dátumy 2026 (zdroj: federalreserve.gov)
+FOMC_DATES = {
+    2026: ["2026-01-28","2026-03-18","2026-04-29","2026-06-17",
+           "2026-07-28","2026-09-15","2026-10-28","2026-12-09"],
+    2027: ["2027-01-26","2027-03-17","2027-04-28","2027-06-15",
+           "2027-07-27","2027-09-14","2027-10-27","2027-12-08"],
+}
+MONTH_CODES = {1:"F",2:"G",3:"H",4:"J",5:"K",6:"M",
+               7:"N",8:"Q",9:"U",10:"V",11:"X",12:"Z"}
+
+def _next_fomc() -> tuple[str, int, int]:
+    """Vrátí (datum, měsíc, rok) příštího FOMC zasedání."""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    all_dates = []
+    for dates in FOMC_DATES.values():
+        all_dates.extend(dates)
+    for d in sorted(all_dates):
+        dt = datetime.strptime(d, "%Y-%m-%d")
+        if dt > now:
+            return d, dt.month, dt.year
+    return "", 0, 0
+
+def _from_cme_fedwatch(current_rate: float) -> dict | None:
+    """Stáhne pravděpodobnosti z CME FedWatch API."""
+    import urllib.request, urllib.error
+    session_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        "Accept": "application/json, */*; q=0.01",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+    url = "https://www.cmegroup.com/CmeWS/mvc/FedWatch/probability.do?venue=G&selected=FOMC"
+    try:
+        req = urllib.request.Request(url, headers=session_headers)
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read())
+        # Parsuj první meeting (příští)
+        meetings = data.get("meetings", data.get("probabilities", []))
+        if not meetings:
+            return None
+        m = meetings[0] if isinstance(meetings, list) else data
+        # CME vrací různé formáty — zkus oba
+        probs = m.get("probabilities", m)
+        fomc_date, _, _ = _next_fomc()
+        # Hledej cut/hold/hike klíče
+        cut = hold = hike = None
+        for k, v in probs.items():
+            k_lower = k.lower()
+            try:
+                pct = float(str(v).replace("%", "")) / 100
+            except Exception:
+                continue
+            if "cut" in k_lower or "down" in k_lower or "-" in k:
+                cut = pct
+            elif "hike" in k_lower or "up" in k_lower or "+" in k:
+                hike = pct
+            elif "unch" in k_lower or "hold" in k_lower or "no" in k_lower:
+                hold = pct
+        if cut is None and hold is None:
+            return None
+        cut  = cut  or 0.0
+        hike = hike or 0.0
+        hold = hold or max(0.0, 1.0 - cut - hike)
+        print(f"  ✓ CME FedWatch: cut={cut:.1%} hold={hold:.1%} hike={hike:.1%}")
+        return {"available": True, "source": "CME FedWatch",
+                "current_rate": current_rate, "next_meeting": fomc_date,
+                "cut_probability": round(cut, 3),
+                "hold_probability": round(hold, 3),
+                "hike_probability": round(hike, 3)}
+    except Exception as e:
+        print(f"  ⚠️ CME FedWatch: {e}", file=sys.stderr)
+        return None
+
+def _from_zq_futures(current_rate: float, fomc_month: int, fomc_year: int) -> dict | None:
+    """Výpočet z 30-Day Fed Funds Futures (ZQ) na CME."""
+    code = MONTH_CODES.get(fomc_month, "")
+    yr   = str(fomc_year)[-2:]
+    yr1  = str(fomc_year)[-1]
+    tickers = [
+        f"ZQ{code}{yr}.CBT",
+        f"ZQ{code}{yr}=F",
+        f"ZQ{code}{yr1}.CBT",
+        "ZQ=F",  # front-month generic
+    ]
+    for t in tickers:
+        try:
+            d = yf.download(t, period="5d", auto_adjust=True, progress=False)
+            if not d.empty:
+                price = float(d["Close"].dropna().iloc[-1])
+                implied = round(100 - price, 3)
+                diff = implied - current_rate
+                step = 0.25
+                if diff < -(step * 0.5):
+                    cut_p  = min(0.97, 0.5 + abs(diff) / step * 0.5)
+                    hold_p = 1.0 - cut_p; hike_p = 0.0
+                elif diff > (step * 0.5):
+                    hike_p = min(0.97, 0.5 + diff / step * 0.5)
+                    hold_p = 1.0 - hike_p; cut_p = 0.0
+                else:
+                    hold_p = 0.7
+                    cut_p  = max(0, 0.3 - diff * 2)
+                    hike_p = max(0, diff * 2)
+                    tot = hold_p + cut_p + hike_p
+                    hold_p /= tot; cut_p /= tot; hike_p /= tot
+                print(f"  ✓ ZQ futures {t}: price={price:.3f} implied={implied:.3f}%")
+                return {"available": True, "source": f"CME ZQ Futures ({t})",
+                        "current_rate": current_rate, "implied_rate": implied,
+                        "cut_probability": round(cut_p, 3),
+                        "hold_probability": round(hold_p, 3),
+                        "hike_probability": round(hike_p, 3)}
+        except Exception:
+            pass
+    return None
+
+def _from_manifold(current_rate: float, fomc_date: str) -> dict | None:
+    """Fallback: Manifold Markets (veřejný prediction market)."""
+    import urllib.request
+    year = fomc_date[:4] if fomc_date else ""
+    for query in [f"fed+rate+cut+{year}", "federal+reserve+rate+cut", "FOMC+rate"]:
+        try:
+            url = f"https://api.manifold.markets/v0/search-markets?term={query}&limit=5"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                markets = json.loads(resp.read())
+            for mkt in markets:
+                prob = mkt.get("probability")
+                q    = mkt.get("question", "").lower()
+                if prob is not None and "cut" in q and ("fed" in q or "fomc" in q):
+                    cut_p  = float(prob)
+                    hold_p = max(0, 1 - cut_p - 0.03)
+                    hike_p = max(0, 1 - cut_p - hold_p)
+                    print(f"  ✓ Manifold: cut={cut_p:.1%} — {mkt.get('question','')[:60]}")
+                    return {"available": True, "source": "Manifold Markets",
+                            "current_rate": current_rate, "next_meeting": fomc_date,
+                            "cut_probability": round(cut_p, 3),
+                            "hold_probability": round(hold_p, 3),
+                            "hike_probability": round(hike_p, 3)}
+        except Exception as e:
+            print(f"  ⚠️ Manifold: {e}", file=sys.stderr)
+    return None
+
+def rate_expectations(current_rate: float | None) -> dict:
+    """Pravděpodobnosti pohybu sazeb — CME FedWatch → ZQ Futures → Manifold → N/A."""
+    base = {"available": False, "current_rate": current_rate}
+    if current_rate is None:
+        return base
+    fomc_date, fomc_month, fomc_year = _next_fomc()
+    base["next_meeting"] = fomc_date
+
+    # 1. CME FedWatch (primární zdroj)
+    result = _from_cme_fedwatch(current_rate)
+    if result:
+        result["next_meeting"] = fomc_date
+        return result
+
+    # 2. ZQ Futures (sekundární)
+    result = _from_zq_futures(current_rate, fomc_month, fomc_year)
+    if result:
+        result["next_meeting"] = fomc_date
+        return result
+
+    # 3. Manifold Markets (fallback)
+    result = _from_manifold(current_rate, fomc_date)
+    if result:
+        return result
+
+    print("  ⚠️ Žádný zdroj predikcí nedostupný", file=sys.stderr)
+    return {**base, "next_meeting": fomc_date}
+
+
+def fetch_news() -> list:
+    print("  Stahuji news...")
+    seen = set()
+    items = []
+    all_tickers = PORTFOLIO_TICKERS + MARKET_TICKERS
+    for sym in all_tickers:
+        try:
+            news = yf.Ticker(sym).news or []
+            for n in news[:3]:
+                url = n.get("link") or n.get("url") or ""
+                if not url or url in seen:
+                    continue
+                seen.add(url)
+                # Rozhoduj relevanci
+                title = n.get("title", "")
+                if not title:
+                    continue
+                ts = n.get("providerPublishTime") or n.get("publish_time") or 0
+                items.append({
+                    "ticker":    sym,
+                    "title":     title,
+                    "publisher": n.get("publisher") or n.get("source") or "",
+                    "url":       url,
+                    "ts":        int(ts),
+                })
+        except Exception:
+            pass
+    # Seřaď podle času, nejnovější první
+    items.sort(key=lambda x: x["ts"], reverse=True)
+    return items[:40]
+
+# ── Yield spread ───────────────────────────────────────────────────────────
+
+def yield_spread(market: dict) -> dict | None:
+    t10 = market.get("us10y", {}).get("value")
+    t2  = market.get("us2y",  {}).get("value")
+    if t10 is None or t2 is None:
+        return None
+    spread = round(t10 - t2, 3)
+    h10 = market.get("us10y", {}).get("history", {})
+    h2  = market.get("us2y",  {}).get("history",  {})
+    # Spread history
+    dates = h10.get("dates", [])
+    v10   = h10.get("values", [])
+    v2    = h2.get("values", [])
+    if dates and len(v10) == len(v2) == len(dates):
+        spread_vals = [round(a - b, 3) for a, b in zip(v10, v2)]
+    else:
+        spread_vals = []
+    return {
+        "value":      spread,
+        "change_abs": round((market.get("us10y", {}).get("change_abs", 0) or 0) -
+                            (market.get("us2y",  {}).get("change_abs", 0) or 0), 3),
+        "change_pct": None,
+        "inverted":   spread < 0,
+        "history":    {"dates": dates, "values": spread_vals},
+    }
+
+# ── VIX stav ────────────────────────────────────────────────────────────────
+
+def vix_state(v: float) -> str:
+    if v < 15: return "Klid"
+    if v < 20: return "Mírné napětí"
+    if v < 25: return "Pozor"
+    if v < 30: return "Strach"
+    return "Panika"
+
+# ── Polymarket / Fed Futures ───────────────────────────────────────────────
+
 # FOMC zasedání 2026 (přibližně)
 FOMC_DATES_2026 = ["2026-01-28","2026-03-18","2026-04-29","2026-06-17",
                    "2026-07-28","2026-09-15","2026-10-28","2026-12-09"]
