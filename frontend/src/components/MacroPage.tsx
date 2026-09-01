@@ -403,29 +403,39 @@ export function MacroPage() {
   ]
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
-      {/* ── NEWS TICKER (vodorovný pruh nahoře) ── */}
-      {news.length > 0 && (
-        <div style={{ borderBottom: '1px solid var(--line)', padding: '6px 20px', display: 'flex', gap: 16, overflowX: 'auto', whiteSpace: 'nowrap', fontSize: 11, color: '#a1a1aa' }}>
-          <span style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', flexShrink: 0 }}>ZPRÁVY</span>
-          {news.slice(0, 8).map((item, i) => {
+      {/* ── NEWS SIDEBAR ── */}
+      <div style={{ width: 280, minWidth: 280, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
+        <div style={{ padding: '10px 12px 6px', borderBottom: '1px solid var(--line)', fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)' }}>
+          ZPRÁVY — PORTFOLIO & TRH
+        </div>
+        {news.length === 0
+          ? <div style={{ padding: 16, color: '#52525b', fontSize: 11 }}>Žádné zprávy (spusť workflow)</div>
+          : news.map((item, i) => {
             const col = TICKER_COLOR[item.ticker] ?? '#a1a1aa'
             const label = TICKER_LABELS[item.ticker] ?? item.ticker
+            const ts = item.ts ? new Date(item.ts * 1000).toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
             return (
               <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
-                style={{ color: '#a1a1aa', textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: col, fontSize: 9, fontWeight: 600, fontFamily: 'var(--font-mono)' }}>[{label}]</span>
-                <span style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</span>
+                style={{ display: 'block', textDecoration: 'none', padding: '9px 12px', borderBottom: '1px solid var(--line-faint)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-raised)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginBottom: 3 }}>
+                  <span style={{ fontSize: 8, fontWeight: 600, fontFamily: 'var(--font-mono)', color: col, background: col+'22', padding: '1px 4px', borderRadius: 2 }}>{label}</span>
+                  <span style={{ fontSize: 8, color: '#52525b', fontFamily: 'var(--font-mono)' }}>{ts}</span>
+                </div>
+                <div style={{ fontSize: 11, color: '#d4d4d8', lineHeight: 1.4 }}>{item.title}</div>
+                {item.publisher && <div style={{ fontSize: 9, color: '#52525b', marginTop: 2 }}>{item.publisher}</div>}
               </a>
             )
-          })}
-        </div>
-      )}
+          })
+        }
+      </div>
 
-      {/* ── MAKRO OBSAH (full width) ── */}
-      <div style={{ padding: '0 24px 48px' }}>
-        <div style={{ maxWidth: '100%' }}>
+      {/* ── MAKRO OBSAH ── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 40px', minWidth: 0 }}>
+        <div>
           <div style={{ padding: '6px 0 2px', fontSize: 10, color: '#52525b', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
             Aktualizováno: {ts}
           </div>
