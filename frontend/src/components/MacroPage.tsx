@@ -213,7 +213,7 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
       </div>
 
       {/* Predikce dalšího zasedání */}
-      {exp.available && exp.cut_probability != null ? (
+      {exp.available && exp.source?.includes('ZQ') && exp.cut_probability != null ? (
         <div>
           <div style={{ fontSize: 9, letterSpacing: '0.1em', color: '#52525b', marginBottom: 5 }}>
             TRHY SÁZEJÍ NA PŘÍŠTÍ ZASEDÁNÍ FOMC
@@ -241,8 +241,16 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
           </div>
         </div>
       ) : (
-        <div style={{ fontSize: 10, color: '#52525b', marginTop: 6 }}>
-          Futures predikce nedostupné — Fed Funds Rate futures (ZQ) nelze stáhnout mimo obchodní hodiny.
+        <div style={{ marginTop: 8, padding: '8px 10px', background: '#0d0d0f', borderLeft: '2px solid #3b82f6' }}>
+          <div style={{ fontSize: 10, color: '#71717a', lineHeight: 1.5, marginBottom: 6 }}>
+            CME FedWatch data vyžadují přístup k ZQ futures (30-Day Fed Funds). 
+            Tyto kontrakty nejsou dostupné přes volná API.
+          </div>
+          <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
+            target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: 11, color: '#60a5fa', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
+            → Otevřít CME FedWatch ↗
+          </a>
         </div>
       )}
     </div>
