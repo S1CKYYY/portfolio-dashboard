@@ -216,6 +216,38 @@ def _from_yield_curve(current_rate: float, us2y_val: float | None) -> dict | Non
             "us2y_vs_ff_spread":round(spread,3),
             "cut_probability":round(cut_p,3),"hold_probability":round(hold_p,3),"hike_probability":round(hike_p,3)}
 
+def _from_manifold(current_rate: float, fomc_date: str) -> dict | None:
+    """Manifold Markets — open-source prediction market, bez blokování."""
+    import urllib.request
+    for query in ["federal+reserve+rate+cut+2026", "FOMC+rate+cut", "Fed+rate"]:
+        try:
+            url = f"https://api.manifold.markets/v0/search-markets?term={query}&limit=5"
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0", "Accept": "application/json"
+            })
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                markets = json.loads(resp.read())
+            for mkt in (markets if isinstance(markets, list) else []):
+                q = mkt.get("question", "").lower()
+                if not any(k in q for k in ["fed", "fomc", "rate"]): continue
+                if not any(k in q for k in ["cut", "lower", "decrease"]): continue
+                prob = mkt.get("probability")
+                if prob is None: continue
+                cut_p = float(prob)
+                hold_p = max(0, 1 - cut_p - 0.02); hike_p = max(0, 1 - cut_p - hold_p)
+                print(f"  ✓ Manifold: {q[:60]} | cut={cut_p:.1%}")
+                return {
+                    "available": True, "source": "Manifold Markets",
+                    "market_question": mkt.get("question"),
+                    "current_rate": current_rate, "next_meeting": fomc_date,
+                    "cut_probability": round(cut_p, 3),
+                    "hold_probability": round(hold_p, 3),
+                    "hike_probability": round(hike_p, 3),
+                }
+        except Exception as e:
+            print(f"  ⚠️ Manifold: {e}", file=sys.stderr)
+    return None
+
 def _from_polymarket(current_rate: float) -> dict | None:
     """Polymarket Gamma API — prediction market bez registrace."""
     import urllib.request
@@ -272,6 +304,9 @@ def rate_expectations(current_rate: float | None, market: dict | None = None) ->
     fomc_date, _, _ = _next_fomc()
     print("  Zkouším Polymarket...")
     result = _from_polymarket(current_rate)
+    if result: return result
+    print("  Zkouším Manifold Markets...")
+    result = _from_manifold(current_rate, fomc_date)
     if result: return result
     print("  Zkouším ZQ Futures...")
     result = _from_zq_futures(current_rate)
