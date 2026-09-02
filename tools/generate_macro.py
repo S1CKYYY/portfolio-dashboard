@@ -231,7 +231,10 @@ def rate_expectations(current_rate: float | None, market: dict | None = None) ->
     result = _from_zq_futures(current_rate)
     if result: return result
     # 2. Odhad z 2Y výnosu (vždy dostupné)
-    us2y = (market or {}).get("us2y", {}).get("value") if market else None
+    # Přednostně použij FRED DGS2 (skutečný 2Y Treasury), pak Yahoo ^IRX
+    us2y = (market or {}).get("dgs2_val") if market else None  # vloženo z main()
+    if us2y is None:
+        us2y = (market or {}).get("us2y", {}).get("value") if market else None
     if us2y:
         result = _from_yield_curve(current_rate, us2y)
         if result: return result
@@ -247,6 +250,7 @@ def main():
         "eur_usd": "EURUSD=X","usd_czk": "USDCZK=X","eur_czk": "EURCZK=X",
         "brent":   "BZ=F",    "gold":    "GC=F",
         "us10y":   "^TNX",    "us2y":    "^IRX",     "us30y":   "^TYX",
+        "us3m":    "^IRX",     # 3M T-bill - proxy pro Fed sazbu
     }, period="1y")
 
     if "us10y" in market and "us2y" in market:
@@ -262,6 +266,7 @@ def main():
         "wages_yoy":    ("CES0500000003",     True,  60),
         "unemployment": ("UNRATE",            False, 24),
         "fed_funds":    ("FEDFUNDS",          False, 24),
+        "dgs2":         ("DGS2",              False, 30),  # skutečný 2Y Treasury výnos
         "gdp":          ("A191RL1Q225SBEA",   False, 16),
     }
     fred = {}
@@ -285,11 +290,15 @@ def main():
     print("\n🏦 Rate expectations...")
     current_rate = fred.get("fed_funds", {}).get("value")
     if current_rate is None:
-        # Fallback: 13W T-bill (^IRX) kopíruje Fed Funds Rate na ~5bp
-        irx = market.get("us2y", {}).get("value")
+        # Fallback: 3M T-bill (^IRX) kopíruje Fed Funds Rate na ~5bp
+        irx = market.get("us3m", {}).get("value")
         if irx:
             current_rate = round(irx, 2)
-            print(f"  ⚠️ Fed Funds fallback z ^IRX: {current_rate:.2f}%")
+            print(f"  ⚠️ Fed Funds fallback z 3M T-bill: {current_rate:.2f}%")
+    # Přidej DGS2 hodnotu přímo do market dict pro yield curve odhad
+    dgs2_card = fred.get("dgs2", {})
+    if dgs2_card:
+        market["dgs2_val"] = dgs2_card.get("value")
     rate_exp = rate_expectations(current_rate, market)
 
     print("\n📰 News...")
