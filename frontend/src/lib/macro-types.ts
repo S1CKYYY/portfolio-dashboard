@@ -70,6 +70,9 @@ export interface MacroData {
     current_rate?: number
     implied_rate?: number
     us2y_vs_ff_spread?: number
+    market_question?: string
+    volume_usd?: number
+    source_url?: string
     cut_probability?: number
     hold_probability?: number
     hike_probability?: number

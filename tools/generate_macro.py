@@ -216,17 +216,63 @@ def _from_yield_curve(current_rate: float, us2y_val: float | None) -> dict | Non
             "us2y_vs_ff_spread":round(spread,3),
             "cut_probability":round(cut_p,3),"hold_probability":round(hold_p,3),"hike_probability":round(hike_p,3)}
 
+def _from_polymarket(current_rate: float) -> dict | None:
+    """Polymarket Gamma API — prediction market bez registrace."""
+    import urllib.request
+    fomc_date, _, _ = _next_fomc()
+    for query in ["FOMC+rate+cut", "Federal+Reserve+rate+cut", "fed+funds"]:
+        try:
+            url = f"https://gamma-api.polymarket.com/markets?q={query}&limit=10&closed=false"
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+                "Accept": "application/json",
+            })
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                markets = json.loads(resp.read())
+            items = markets if isinstance(markets, list) else markets.get("markets", [])
+            for mkt in items:
+                q = (mkt.get("question") or mkt.get("title") or "").lower()
+                if not any(k in q for k in ["fed", "fomc", "federal reserve"]): continue
+                if not any(k in q for k in ["cut", "lower", "decrease"]): continue
+                prob = mkt.get("probability")
+                prices = mkt.get("outcomePrices") or mkt.get("prices")
+                outcomes = mkt.get("outcomes", [])
+                if prob is not None:
+                    cut_p = float(prob)
+                elif prices and len(prices) >= 2:
+                    try:
+                        p0 = float(prices[0])
+                        cut_p = p0 if (not outcomes or "yes" in str(outcomes[0]).lower()) else float(prices[1])
+                    except Exception: continue
+                else:
+                    continue
+                hold_p = max(0, 1 - cut_p - 0.02)
+                hike_p = max(0, 1 - cut_p - hold_p)
+                vol = float(mkt.get("volume") or mkt.get("volumeNum") or 0)
+                print(f"  ✓ Polymarket: {q[:60]} | cut={cut_p:.1%} vol=${vol:,.0f}")
+                return {
+                    "available": True, "source": "Polymarket",
+                    "market_question": mkt.get("question") or mkt.get("title"),
+                    "volume_usd": round(vol, 0),
+                    "current_rate": current_rate, "next_meeting": fomc_date,
+                    "cut_probability": round(cut_p, 3),
+                    "hold_probability": round(hold_p, 3),
+                    "hike_probability": round(hike_p, 3),
+                }
+        except Exception as e:
+            print(f"  ⚠️ Polymarket ({query}): {e}", file=sys.stderr)
+    return None
+
 def rate_expectations(current_rate: float | None, market: dict | None = None) -> dict:
-    """Pravděpodobnosti pohybu sazeb na příštím FOMC.
-    Priorita: ZQ Futures (v obch. hodiny) → Odhad z 2Y výnosu (vždy).
-    """
+    """Pravděpodobnosti pohybu sazeb: Polymarket → ZQ Futures → Yield curve."""
     base = {"available": False, "current_rate": current_rate}
     if current_rate is None:
-        # Bez FF rate zkusíme aspoň vrátit datum příštího FOMC
         fomc_date, _, _ = _next_fomc()
         return {**base, "next_meeting": fomc_date}
     fomc_date, _, _ = _next_fomc()
-    # 1. ZQ Futures (CME FedWatch metoda)
+    print("  Zkouším Polymarket...")
+    result = _from_polymarket(current_rate)
+    if result: return result
     print("  Zkouším ZQ Futures...")
     result = _from_zq_futures(current_rate)
     if result: return result
