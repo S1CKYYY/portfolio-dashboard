@@ -626,16 +626,15 @@ export function MacroPage() {
           </div>
 
           {/* ── FRED makro ── */}
-          <Sec title="MAKROEKONOMIKA USA" sub="FRED" />
+          <Sec title="MAKROEKONOMIKA USA" sub="FRED · CPI / PCE / Mzdy / Nezaměstnanost" />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 10 }}>
-            <Card label="CPI YoY"     card={f.cpi_yoy}      suffix="%" invertColor />
-            <Card label="Core CPI YoY" card={f.core_cpi_yoy} suffix="%" invertColor />
-            <Card label="PCE YoY"     card={f.pce_yoy}      suffix="%" invertColor />
-            <Card label="Mzdy YoY"    card={f.wages_yoy}    suffix="%" />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 10 }}>
+            <Card label="CPI YoY"        card={f.cpi_yoy}      suffix="%" invertColor />
+            <Card label="PCE YoY"        card={f.pce_yoy}      suffix="%" invertColor />
+            <Card label="Mzdy YoY"       card={f.wages_yoy}    suffix="%" />
             <Card label="Nezaměstnanost" card={f.unemployment} suffix="%" invertColor />
-            <Card label="HDP QoQ"        card={f.gdp}          suffix="%" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr', gap: 10 }}>
+            <div style={{ display: 'none' }} />
             <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '10px 12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <span style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)' }}>CPI vs. MZDY (YoY)</span>

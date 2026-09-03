@@ -460,15 +460,14 @@ def main():
         market["vix"]["state"] = vix_state(market["vix"]["value"])
 
     print("\n📈 FRED...")
+    # 4 klíčové série + Fed a DGS2 pro výpočty
     fred_series = {
-        "cpi_yoy":      ("CPIAUCSL",          True,  60),
-        "core_cpi_yoy": ("CPILFESL",          True,  60),
-        "pce_yoy":      ("PCEPI",             True,  60),
-        "wages_yoy":    ("CES0500000003",     True,  60),
-        "unemployment": ("UNRATE",            False, 24),
-        "fed_funds":    ("FEDFUNDS",          False, 24),
-        "dgs2":         ("DGS2",              False, 30),  # skutečný 2Y Treasury výnos
-        "gdp":          ("A191RL1Q225SBEA",   False, 16),
+        "cpi_yoy":      ("CPIAUCSL",      True,  60),
+        "pce_yoy":      ("PCEPI",         True,  60),
+        "wages_yoy":    ("CES0500000003", True,  60),
+        "unemployment": ("UNRATE",        False, 24),
+        "fed_funds":    ("FEDFUNDS",      False, 24),
+        "dgs2":         ("DGS2",          False, 30),
     }
     fred = {}
     for label, (sid, is_yoy, n) in fred_series.items():
@@ -479,6 +478,7 @@ def main():
             print(f"  {label}: {card['value']:.2f}")
         else:
             print(f"  ⚠️ {label}: žádná data")
+        time.sleep(1)  # pauza mezi requesty — sníží rate limiting
 
     print("\n📉 CPI vs mzdy...")
     cpi_h  = yoy(fetch_fred("CPIAUCSL", 60)).dropna().tail(24)
