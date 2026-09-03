@@ -244,6 +244,27 @@ def _from_yield_curve(current_rate: float, us2y_val: float | None) -> dict | Non
             "us2y_vs_ff_spread":round(spread,3),
             "cut_probability":round(cut_p,3),"hold_probability":round(hold_p,3),"hike_probability":round(hike_p,3)}
 
+def _from_cache() -> dict | None:
+    """Čte fedwatch_cache.json commitnutý lokálně přes update_fedwatch.py."""
+    cache = Path("fedwatch_cache.json")
+    if not cache.exists():
+        return None
+    try:
+        data = json.loads(cache.read_text())
+        from datetime import datetime, timezone, timedelta
+        gen = datetime.fromisoformat(data.get("generated_at", "2000-01-01"))
+        if gen.tzinfo is None:
+            gen = gen.replace(tzinfo=timezone.utc)
+        age_hours = (datetime.now(timezone.utc) - gen).total_seconds() / 3600
+        if age_hours > 48:
+            print(f"  ⚠️ FedWatch cache stará {age_hours:.0f}h — použita ale může být zastaralá")
+        else:
+            print(f"  ✓ FedWatch cache ({age_hours:.1f}h stará): {data.get('source')}")
+        return {"available": True, **data}
+    except Exception as e:
+        print(f"  ⚠️ Cache error: {e}")
+    return None
+
 def _from_manifold(current_rate: float, fomc_date: str) -> dict | None:
     """Manifold Markets — open-source prediction market, bez blokování."""
     import urllib.request
@@ -330,6 +351,9 @@ def rate_expectations(current_rate: float | None, market: dict | None = None) ->
         fomc_date, _, _ = _next_fomc()
         return {**base, "next_meeting": fomc_date}
     fomc_date, _, _ = _next_fomc()
+    # 0. Lokální cache z update_fedwatch.py
+    result = _from_cache()
+    if result: return result
     print("  Zkouším Polymarket...")
     result = _from_polymarket(current_rate)
     if result: return result
