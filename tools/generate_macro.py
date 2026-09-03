@@ -351,18 +351,16 @@ def rate_expectations(current_rate: float | None, market: dict | None = None) ->
         fomc_date, _, _ = _next_fomc()
         return {**base, "next_meeting": fomc_date}
     fomc_date, _, _ = _next_fomc()
-    # 0. Lokální cache z update_fedwatch.py
+    # 0. Lokální cache z update_fedwatch.py (python tools/update_fedwatch.py)
     result = _from_cache()
     if result: return result
-    print("  Zkouším Polymarket...")
-    result = _from_polymarket(current_rate)
-    if result: return result
-    print("  Zkouším Manifold Markets...")
-    result = _from_manifold(current_rate, fomc_date)
-    if result: return result
+    # 1. ZQ Futures přes Yahoo Finance (funguje v obchodní hodiny)
     print("  Zkouším ZQ Futures...")
     result = _from_zq_futures(current_rate)
     if result: return result
+    # Polymarket/Manifold záměrně vynechány — dávají nepřesná data
+    print("  ⚠️ Žádný spolehlivý zdroj FedWatch dat nedostupný")
+    print("  Spusť: python tools/update_fedwatch.py a commitni fedwatch_cache.json")
     # 2. Odhad z 2Y výnosu (vždy dostupné)
     # Přednostně použij FRED DGS2 (skutečný 2Y Treasury), pak Yahoo ^IRX
     us2y = (market or {}).get("dgs2_val") if market else None  # vloženo z main()
