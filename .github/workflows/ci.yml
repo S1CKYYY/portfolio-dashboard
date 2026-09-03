@@ -76,7 +76,7 @@ jobs:
           mkdir -p frontend/public
           cp snapshot.json frontend/public/snapshot.json
           # Generuj macro.json
-          python tools/generate_macro.py && cp macro.json frontend/public/macro.json || echo "⚠️ macro.json selhal, přeskakuji"
+          NASDAQ_API_KEY=${{ secrets.NASDAQ_API_KEY }} python tools/generate_macro.py && cp macro.json frontend/public/macro.json || echo "⚠️ macro.json selhal, přeskakuji"
 
       - name: Build frontend
         working-directory: frontend

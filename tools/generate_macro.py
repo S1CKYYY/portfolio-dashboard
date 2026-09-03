@@ -244,6 +244,72 @@ def _from_yield_curve(current_rate: float, us2y_val: float | None) -> dict | Non
             "us2y_vs_ff_spread":round(spread,3),
             "cut_probability":round(cut_p,3),"hold_probability":round(hold_p,3),"hike_probability":round(hike_p,3)}
 
+def _from_quandl(current_rate: float) -> dict | None:
+    """Nasdaq Data Link (Quandl) CME Fed Funds Futures — spolehlivý API.
+    Vyžaduje NASDAQ_API_KEY env proměnnou (zdarma na data.nasdaq.com).
+    Dataset: CME/ZQU2026 = September 2026 30-Day Fed Funds Futures.
+    """
+    import os, urllib.request
+    api_key = os.environ.get("NASDAQ_API_KEY", "").strip()
+    if not api_key:
+        print("  ○ NASDAQ_API_KEY není nastaven — přeskakuji Quandl")
+        return None
+
+    fomc_date, fomc_month, fomc_year = _next_fomc()
+    if not fomc_date: return None
+    import datetime as dt_mod
+    fomc_dt = dt_mod.datetime.strptime(fomc_date, "%Y-%m-%d")
+    if fomc_dt.day > 15:
+        cm = fomc_month % 12 + 1
+        cy = fomc_year + (1 if fomc_month == 12 else 0)
+    else:
+        cm, cy = fomc_month, fomc_year
+    code = MONTH_CODES.get(cm, "")
+
+    # Quandl formát: ZQU2026 (plný rok)
+    datasets_to_try = [
+        f"ZQ{code}{cy}",      # ZQU2026
+        f"ZQ{code}{cy-2000}", # ZQU26 (zkrácený rok)
+    ]
+
+    for ds in datasets_to_try:
+        url = f"https://data.nasdaq.com/api/v3/datasets/CME/{ds}/data.json?rows=3&api_key={api_key}"
+        try:
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0", "Accept": "application/json"
+            })
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                data = json.loads(resp.read())
+            rows = data.get("dataset_data", {}).get("data", [])
+            if not rows:
+                continue
+            # Quandl vrací [date, open, high, low, settle, change, volume, open_interest, prev_day_volume]
+            price = float(rows[0][4])  # settle price
+            implied = round(100 - price, 4)
+            diff = implied - current_rate; step = 0.25
+            if diff < -step/2:
+                cut_p = min(0.99, 0.5 + (-diff - step/2)/step); hold_p = 1-cut_p; hike_p = 0.0
+            elif diff > step/2:
+                hike_p = min(0.99, 0.5 + (diff - step/2)/step); hold_p = 1-hike_p; cut_p = 0.0
+            else:
+                cut_p = max(0, (step/2+diff)/step*0.5)
+                hike_p = max(0, (step/2-diff)/step*0.5)
+                hold_p = 1 - cut_p - hike_p
+            print(f"  ✓ Quandl CME/{ds}: settle={price:.4f} implied={implied:.3f}%")
+            print(f"    cut={cut_p:.1%} hold={hold_p:.1%} hike={hike_p:.1%}")
+            return {
+                "available": True, "source": "CME ZQ Futures (Nasdaq Data Link)",
+                "source_ticker": ds, "futures_price": round(price, 4),
+                "current_rate": current_rate, "implied_rate": implied,
+                "next_meeting": fomc_date,
+                "cut_probability": round(cut_p, 3),
+                "hold_probability": round(hold_p, 3),
+                "hike_probability": round(hike_p, 3),
+            }
+        except Exception as e:
+            print(f"  ⚠️ Quandl {ds}: {e}", file=sys.stderr)
+    return None
+
 def _from_cache() -> dict | None:
     """Čte fedwatch_cache.json commitnutý lokálně přes update_fedwatch.py."""
     cache = Path("fedwatch_cache.json")
@@ -351,11 +417,15 @@ def rate_expectations(current_rate: float | None, market: dict | None = None) ->
         fomc_date, _, _ = _next_fomc()
         return {**base, "next_meeting": fomc_date}
     fomc_date, _, _ = _next_fomc()
-    # 0. Lokální cache z update_fedwatch.py (python tools/update_fedwatch.py)
+    # 0. Lokální cache z update_fedwatch.py
     result = _from_cache()
     if result: return result
-    # 1. ZQ Futures přes Yahoo Finance (funguje v obchodní hodiny)
-    print("  Zkouším ZQ Futures...")
+    # 1. Quandl/Nasdaq Data Link — CME ZQ futures (NASDAQ_API_KEY secret)
+    print("  Zkouším Quandl CME futures...")
+    result = _from_quandl(current_rate)
+    if result: return result
+    # 2. ZQ Futures přes Yahoo Finance (funguje v obchodní hodiny)
+    print("  Zkouším ZQ Futures (Yahoo)...")
     result = _from_zq_futures(current_rate)
     if result: return result
     # Polymarket/Manifold záměrně vynechány — dávají nepřesná data
