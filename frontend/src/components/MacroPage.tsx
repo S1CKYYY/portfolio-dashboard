@@ -124,7 +124,7 @@ function HistoryChart({ series, height = 180, tight = false }: {
           type: 'value' as const,
           min: tight ? Math.max(0, lo - pad) : undefined,
           max: tight ? hi + pad : undefined,
-          axisLabel: { color: '#71717a', fontSize: 9 },
+          axisLabel: { color: '#71717a', fontSize: 9, formatter: (v: number) => Number(v.toFixed(3)).toString() },
           splitLine: { lineStyle: { color: '#18181b' } },
         }
       })(),
@@ -559,7 +559,7 @@ export function MacroPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 10, marginBottom: 12 }}>
 
             {/* VIX gauge + history */}
-            <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '12px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '12px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', minWidth: 0 }}>
               <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 2 }}>VIX — INDEX STRACHU</div>
               <VixGauge card={m.vix} />
               {vixHistory && (
