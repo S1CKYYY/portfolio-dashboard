@@ -68,13 +68,30 @@ def fetch_yahoo(tickers: dict, period="1y") -> dict:
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id="
 
 def fetch_fred(sid: str, n=60) -> pd.Series:
-    for attempt in range(3):
-        try:
-            df = pd.read_csv(FRED_URL + sid, parse_dates=["DATE"], index_col="DATE", timeout=15)
-            return df.iloc[:, 0].replace(".", float("nan")).astype(float).dropna().tail(n)
-        except Exception as e:
-            if attempt < 2: time.sleep(2)
-            else: print(f"  ⚠️ FRED {sid}: {e}", file=sys.stderr)
+    urls = [
+        f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}",
+        f"https://fred.stlouisfed.org/data/{sid}.txt",
+    ]
+    for url in urls:
+        for attempt in range(2):
+            try:
+                import urllib.request
+                req = urllib.request.Request(url, headers={
+                    "User-Agent": "Mozilla/5.0 (compatible; research-bot/1.0)",
+                    "Accept": "text/csv,text/plain,*/*",
+                })
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    from io import StringIO
+                    raw_text = resp.read().decode("utf-8", errors="replace")
+                df = pd.read_csv(StringIO(raw_text), parse_dates=[0], index_col=0)
+                s = df.iloc[:, 0].replace(".", float("nan")).astype(float).dropna().tail(n)
+                if not s.empty:
+                    print(f"  ✓ FRED {sid}: {len(s)} bodů")
+                    return s
+            except Exception as e:
+                if attempt == 1:
+                    print(f"  ⚠️ FRED {sid} ({url[:40]}): {e}")
+                time.sleep(1)
     return pd.Series(dtype=float)
 
 def fred_card(s: pd.Series, yoy_mode=False) -> dict | None:
