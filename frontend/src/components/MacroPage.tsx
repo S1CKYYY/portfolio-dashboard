@@ -195,67 +195,141 @@ function YieldCurve({ us2y, us10y, spread }: { us2y?: MarketCard; us10y?: Market
 // ── Rate card ─────────────────────────────────────────────────────────────
 
 function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedFunds?: FredCard }) {
-  const rate = fedFunds?.value ?? exp.current_rate
-  return (
-    <div className="macro-card" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      <span className="macro-card__label">FED FUNDS RATE</span>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 600, marginTop: 4 }}>{rate?.toFixed(2) ?? '—'}%</div>
-      {fedFunds?.prev != null && (
-        <div style={{ fontSize: 11, color: '#71717a', fontFamily: 'var(--font-mono)' }}>
-          {(rate ?? 0) < (fedFunds.prev ?? 0) ? '▼ sníženo' : (rate ?? 0) > (fedFunds.prev ?? 0) ? '▲ zvýšeno' : '→ beze změny'} z {fedFunds.prev.toFixed(2)}%
-        </div>
-      )}
-      {fedFunds?.date && <div style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)' }}>{fedFunds.date}</div>}
+  const chartRef = useRef<HTMLDivElement>(null)
+  const rate = fedFunds?.value ?? exp.current_rate ?? 3.75
 
-      {/* Vysvětlení */}
-      <div style={{ fontSize: 10, color: '#71717a', lineHeight: 1.5, margin: '8px 0 6px', padding: '5px 7px', background: '#0d0d0f', borderLeft: '2px solid #3f3f46' }}>
-        Základní sazba americké centrální banky (Fed). Ovlivňuje cenu peněz v ekonomice — čím vyšší, tím dražší úvěry, nižší ocenění akcií (zejm. growth) a silnější USD.
+  const step = 0.25
+  const lowerBound = Math.floor(rate / step) * step
+  const upperBound = lowerBound + step
+  const toBps = (r: number) => `${Math.round(r * 100)}-${Math.round((r + step) * 100)}`
+  const cutLabel  = toBps(lowerBound - step)
+  const holdLabel = toBps(lowerBound)
+  const hikeLabel = toBps(upperBound)
+
+  const cutP  = Math.round((exp.cut_probability  ?? 0) * 1000) / 10
+  const holdP = Math.round((exp.hold_probability ?? 0) * 1000) / 10
+  const hikeP = Math.round((exp.hike_probability ?? 0) * 1000) / 10
+
+  const scenarios = [
+    { label: cutLabel,  prob: cutP,  col: '#22c55e', move: '▼ Snížení' },
+    { label: holdLabel, prob: holdP, col: '#3b82f6', move: 'Beze změny' },
+    { label: hikeLabel, prob: hikeP, col: '#f59e0b', move: '▲ Zvýšení' },
+  ].filter(s => s.prob > 0)
+
+  useEffect(() => {
+    if (!chartRef.current || !exp.available || scenarios.length === 0) return
+    const chart = echarts.init(chartRef.current, 'dark')
+    chart.setOption({
+      backgroundColor: 'transparent',
+      grid: { top: 30, bottom: 40, left: 16, right: 16 },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (p: any) => `${p[0].name}<br/><b>${p[0].value}%</b>`,
+        backgroundColor: '#27272a', borderColor: '#3f3f46',
+        textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 12 },
+      },
+      xAxis: {
+        type: 'category',
+        data: scenarios.map(s => s.label),
+        axisLabel: { color: '#a1a1aa', fontSize: 11, fontFamily: 'IBM Plex Mono' },
+        axisLine: { lineStyle: { color: '#3f3f46' } },
+        axisTick: { show: false },
+        name: 'Target Rate (bps)',
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: { color: '#71717a', fontSize: 10 },
+      },
+      yAxis: {
+        type: 'value', min: 0, max: 100,
+        axisLabel: { color: '#71717a', fontSize: 10, formatter: '{value}%' },
+        splitLine: { lineStyle: { color: '#1f1f23', type: 'dashed' } },
+      },
+      series: [{
+        type: 'bar',
+        data: scenarios.map(s => ({
+          value: s.prob,
+          itemStyle: { color: s.col, borderRadius: [3, 3, 0, 0] },
+          label: { show: true, position: 'top', color: s.col, fontSize: 14, fontFamily: 'IBM Plex Mono', fontWeight: 700, formatter: '{c}%' },
+        })),
+        barMaxWidth: 80,
+      }],
+    })
+    return () => chart.dispose()
+  }, [exp])
+
+  return (
+    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 3 }}>FED FUNDS RATE</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 600 }}>{rate.toFixed(2)}%</div>
+          {fedFunds?.prev != null && (
+            <div style={{ fontSize: 11, color: '#71717a', fontFamily: 'var(--font-mono)' }}>
+              {rate < fedFunds.prev ? '▼ sníženo' : rate > fedFunds.prev ? '▲ zvýšeno' : '→'} z {fedFunds.prev.toFixed(2)}%
+            </div>
+          )}
+          {fedFunds?.date && <div style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)' }}>{fedFunds.date}</div>}
+        </div>
+        {exp.next_meeting && (
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 9, color: 'var(--text-tertiary)', letterSpacing: '0.1em' }}>PŘÍŠTÍ FOMC</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: '#a1a1aa', marginTop: 2 }}>{exp.next_meeting}</div>
+          </div>
+        )}
       </div>
 
-      {/* Predikce dalšího zasedání */}
-      {exp.available && exp.source?.includes('ZQ') && exp.cut_probability != null ? (
-        <div>
-          <div style={{ fontSize: 9, letterSpacing: '0.1em', color: '#52525b', marginBottom: 5 }}>
-            TRHY SÁZEJÍ NA PŘÍŠTÍ ZASEDÁNÍ FOMC
+      {exp.available && scenarios.length > 0 ? (
+        <>
+          <div style={{ fontSize: 10, color: '#a1a1aa', marginTop: 2 }}>
+            Target Rate Probabilities · {exp.next_meeting ?? ''} Fed Meeting
           </div>
-          <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-            {[
-              { l: 'Snížení', p: Math.round((exp.cut_probability)*100),       c: '#22c55e', desc: 'sazba klesne' },
-              { l: 'Hold',    p: Math.round((exp.hold_probability??0)*100),    c: '#a1a1aa', desc: 'beze změny' },
-              { l: 'Zvýšení', p: Math.round((exp.hike_probability??0)*100),    c: '#ef4444', desc: 'sazba roste' },
-            ].map(item => (
-              <div key={item.l} style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ height: Math.max(2, item.p * 0.4), background: item.c, borderRadius: 2, marginBottom: 3, opacity: item.p > 5 ? 1 : 0.15, transition: 'height 0.3s' }} />
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 600, color: item.c }}>{item.p}%</div>
-                <div style={{ fontSize: 8, color: '#71717a', letterSpacing: '0.06em' }}>{item.l.toUpperCase()}</div>
-              </div>
-            ))}
+          <div style={{ fontSize: 9, color: '#52525b' }}>
+            Current target rate: {Math.round(lowerBound * 100)}-{Math.round(upperBound * 100)} bps
           </div>
-          <div style={{ fontSize: 9, color: '#52525b', lineHeight: 1.4 }}>
-            Pravděpodobnosti odvozeny z cen Fed Funds Futures — tak se sázejí banky a hedgefondy. Snížení sazby = bullish pro akcie a dluhopisy.
+          <div ref={chartRef} style={{ width: '100%', height: 200 }} />
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'IBM Plex Mono', fontSize: 11 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #3f3f46' }}>
+                <th style={{ textAlign: 'left',  padding: '5px 6px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>TARGET RATE (BPS)</th>
+                <th style={{ textAlign: 'right', padding: '5px 6px', color: '#71717a', fontWeight: 400, fontSize: 9 }}>PRAVDĚPODOBNOST</th>
+                <th style={{ textAlign: 'right', padding: '5px 6px', color: '#71717a', fontWeight: 400, fontSize: 9 }}>POHYB</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scenarios.map(s => (
+                <tr key={s.label} style={{ borderBottom: '1px solid #1f1f23' }}>
+                  <td style={{ padding: '6px 6px', color: s.col, fontWeight: 500 }}>{s.label}</td>
+                  <td style={{ padding: '6px 6px', textAlign: 'right', fontWeight: 700, color: s.col }}>{s.prob}%</td>
+                  <td style={{ padding: '6px 6px', textAlign: 'right', color: '#71717a', fontSize: 10 }}>{s.move}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, fontSize: 9 }}>
+            {exp.futures_price && <span style={{ color: '#3f3f46', fontFamily: 'IBM Plex Mono' }}>ZQ: {exp.futures_price?.toFixed(4)} · implied {exp.implied_rate?.toFixed(3)}%</span>}
+            <span style={{ color: '#3f3f46' }}>Zdroj: {exp.source}</span>
+            <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
+              target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
+              → CME FedWatch (živá data) ↗
+            </a>
           </div>
-          <div style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)', marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {exp.implied_rate != null && <span>Implikovaná: {exp.implied_rate.toFixed(2)}% (nyní {rate?.toFixed(2)}%)</span>}
-            {exp.next_meeting && <span>Příští zasedání: {exp.next_meeting}</span>}
-            {exp.source && <span>Zdroj: {exp.source}</span>}
-          </div>
-        </div>
+        </>
       ) : (
-        <div style={{ marginTop: 8, padding: '8px 10px', background: '#0d0d0f', borderLeft: '2px solid #3b82f6' }}>
-          <div style={{ fontSize: 10, color: '#71717a', lineHeight: 1.5, marginBottom: 6 }}>
-            CME FedWatch data vyžadují přístup k ZQ futures (30-Day Fed Funds). 
-            Tyto kontrakty nejsou dostupné přes volná API.
+        <>
+          <div style={{ fontSize: 10, color: '#71717a', lineHeight: 1.5, padding: '6px 8px', background: '#0d0d0f', borderLeft: '2px solid #3f3f46' }}>
+            Základní sazba Fed. Spusť <code>python tools/update_fedwatch.py</code> lokálně pro predikce.
           </div>
           <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
             target="_blank" rel="noopener noreferrer"
             style={{ fontSize: 11, color: '#60a5fa', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
-            → Otevřít CME FedWatch ↗
+            → CME FedWatch ↗
           </a>
-        </div>
+        </>
       )}
     </div>
   )
 }
+
 
 // ── News sidebar ──────────────────────────────────────────────────────────
 
