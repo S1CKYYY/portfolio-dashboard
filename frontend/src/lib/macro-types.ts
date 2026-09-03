@@ -73,6 +73,8 @@ export interface MacroData {
     market_question?: string
     volume_usd?: number
     source_url?: string
+    source_ticker?: string
+    futures_price?: number
     cut_probability?: number
     hold_probability?: number
     hike_probability?: number

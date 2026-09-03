@@ -155,34 +155,62 @@ def _next_fomc():
     return "", 0, 0
 
 def _from_zq_futures(current_rate: float) -> dict | None:
-    """CME 30-Day Fed Funds Futures (ZQ) — funguje jen v obchodní hodiny."""
+    """CME 30-Day Fed Funds Futures — ZQU6 format (jednomistny rok = klicovy!).
+    Screenshot ukazuje ZQU6, cena 96.3013 -> implied 3.699%, hike 60.2%.
+    """
     fomc_date, fomc_month, fomc_year = _next_fomc()
     if not fomc_date: return None
     import datetime as dt_mod
     fomc_dt = dt_mod.datetime.strptime(fomc_date, "%Y-%m-%d")
-    contract_month = (fomc_month % 12 + 1) if fomc_dt.day > 15 else fomc_month
-    contract_year  = fomc_year + (1 if fomc_month == 12 and fomc_dt.day > 15 else 0)
+    if fomc_dt.day > 15:
+        contract_month = fomc_month % 12 + 1
+        contract_year  = fomc_year + (1 if fomc_month == 12 else 0)
+    else:
+        contract_month, contract_year = fomc_month, fomc_year
     code = MONTH_CODES.get(contract_month, "")
-    yr   = str(contract_year)[-2:]
-    for t in [f"ZQ{code}{yr}.CBT", f"ZQ{code}{yr}=F", "ZQ=F"]:
+    yr1 = str(contract_year)[-1:]   # 6 pro 2026
+    yr2 = str(contract_year)[-2:]   # 26 pro 2026
+    tickers = [
+        f"ZQ{code}{yr1}.CBT",  # ZQU6.CBT — format z CME FedWatch!
+        f"ZQ{code}{yr2}.CBT",  # ZQU26.CBT
+        f"ZQ{code}{yr1}=F",    # ZQU6=F
+        f"ZQ{code}{yr2}=F",    # ZQU26=F
+        "ZQ=F",
+    ]
+    for t in tickers:
         try:
             d = yf.download(t, period="5d", auto_adjust=True, progress=False)
             if not d.empty:
-                price = float(d["Close"].dropna().iloc[-1])
-                implied = round(100 - price, 3)
-                diff = implied - current_rate; step = 0.25
-                if diff < -(step * 0.4):
-                    cut_p = min(0.97, 0.5 + abs(diff)/step*0.5); hold_p = 1-cut_p; hike_p = 0.0
-                elif diff > (step * 0.4):
-                    hike_p = min(0.97, 0.5 + diff/step*0.5); hold_p = 1-hike_p; cut_p = 0.0
-                else:
-                    hold_p=0.75; cut_p=max(0,0.25-diff*2); hike_p=max(0,diff*2)
-                    tot=hold_p+cut_p+hike_p; hold_p/=tot; cut_p/=tot; hike_p/=tot
-                print(f"  ✓ ZQ {t}: {price:.3f} → implied {implied:.2f}%")
-                return {"available":True,"source":f"CME ZQ Futures ({t})",
-                        "current_rate":current_rate,"implied_rate":implied,"next_meeting":fomc_date,
-                        "cut_probability":round(cut_p,3),"hold_probability":round(hold_p,3),"hike_probability":round(hike_p,3)}
-        except Exception: pass
+                price   = float(d["Close"].dropna().iloc[-1])
+                implied = round(100 - price, 4)
+                # FedWatch metoda: porovnej implied rate s cílovými pásmy (25bp kroky)
+                step = 0.25
+                mid  = current_rate  # střed aktuálního cílového pásma
+                diff = implied - mid
+                if diff < -step / 2:   # implied < dolni hranice -> cut
+                    cut_p  = min(0.99, 0.5 + (-diff - step/2) / step)
+                    hold_p = 1 - cut_p; hike_p = 0.0
+                elif diff > step / 2:  # implied > horni hranice -> hike
+                    hike_p = min(0.99, 0.5 + (diff - step/2) / step)
+                    hold_p = 1 - hike_p; cut_p = 0.0
+                else:                  # uvnitr pasma -> predevsim hold
+                    dist_up = step/2 - diff; dist_dn = step/2 + diff
+                    hike_p = max(0, (step/2 - dist_up) / step)
+                    cut_p  = max(0, (step/2 - dist_dn) / step)
+                    hold_p = 1 - cut_p - hike_p
+                print(f"  ✓ ZQ Futures {t}: price={price:.4f} implied={implied:.3f}%")
+                print(f"    cut={cut_p:.1%} hold={hold_p:.1%} hike={hike_p:.1%}")
+                return {
+                    "available": True, "source": "CME ZQ Futures",
+                    "source_ticker": t, "futures_price": round(price, 4),
+                    "current_rate": current_rate, "implied_rate": implied,
+                    "next_meeting": fomc_date,
+                    "cut_probability":  round(cut_p,  3),
+                    "hold_probability": round(hold_p, 3),
+                    "hike_probability": round(hike_p, 3),
+                }
+        except Exception as e:
+            print(f"  o {t}: {e}", file=sys.stderr)
     return None
 
 def _from_yield_curve(current_rate: float, us2y_val: float | None) -> dict | None:
