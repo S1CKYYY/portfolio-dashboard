@@ -556,7 +556,7 @@ export function MacroPage() {
 
           {/* ── SENTIMENT & DLUHOPISY ── */}
           <Sec title="SENTIMENT & DLUHOPISY" />
-          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr 240px', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 10, marginBottom: 12 }}>
 
             {/* VIX gauge + history */}
             <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '12px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -569,24 +569,24 @@ export function MacroPage() {
               )}
             </div>
 
-            {/* Výnosy karty + graf */}
+            {/* Výnosy karty + Fed Rate + graf přes celou šířku */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+              {/* 5 karet v řadě: 2Y, 10Y, 30Y, Spread, Fed Rate */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
                 <Card label="US 2Y výnos"  card={m.us2y}  suffix="%" decimals={3} />
                 <Card label="US 10Y výnos" card={m.us10y} suffix="%" decimals={3} />
                 <Card label="US 30Y výnos" card={m.us30y} suffix="%" decimals={3} />
                 <YieldCurve us2y={m.us2y} us10y={m.us10y} spread={m.yield_spread} />
+                <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
               </div>
+              {/* Graf přes celou šířku, vyšší */}
               {bondSeries.length > 0 && (
                 <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '8px 12px', flex: 1 }}>
                   <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', marginBottom: 4 }}>VÝNOSY 2Y · 10Y · 30Y — 1 ROK</div>
-                  <HistoryChart series={bondSeries} height={200} tight={true} />
+                  <HistoryChart series={bondSeries} height={280} tight={true} />
                 </div>
               )}
             </div>
-
-            {/* Fed Funds Rate */}
-            <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
           </div>
 
           {/* ── KURZOVÉ VLIVY NA PORTFOLIO ── */}
