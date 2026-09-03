@@ -71,12 +71,6 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Scrape CME FedWatch (Playwright)
-        run: |
-          pip install playwright --break-system-packages -q
-          playwright install chromium --with-deps 2>/dev/null || true
-          python tools/scrape_fedwatch.py && echo "FedWatch OK" || echo "FedWatch selhal - bude použita cache nebo bez dat"
-
       - name: Copy snapshot to frontend
         run: |
           mkdir -p frontend/public
