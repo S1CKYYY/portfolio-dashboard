@@ -351,14 +351,11 @@ function CpiWages({ data }: { data: MacroData['cpi_wages_history'] }) {
     if (!ref.current || !data.dates.length) return
     const chart = echarts.init(ref.current, 'dark')
     const series: any[] = [
-      { name: 'CPI YoY', type: 'line', yAxisIndex: 0, data: data.cpi_yoy, smooth: true, lineStyle: { color: '#f59e0b', width: 2 }, itemStyle: { color: '#f59e0b' }, symbol: 'none', areaStyle: { color: 'rgba(245,158,11,0.06)' } },
-      { name: 'Mzdy YoY', type: 'line', yAxisIndex: 0, data: data.wages_yoy, smooth: true, lineStyle: { color: '#22c55e', width: 2 }, itemStyle: { color: '#22c55e' }, symbol: 'none', areaStyle: { color: 'rgba(34,197,94,0.06)' } },
+      { name: 'CPI YoY', type: 'line', data: data.cpi_yoy, smooth: true, lineStyle: { color: '#f59e0b', width: 2 }, itemStyle: { color: '#f59e0b' }, symbol: 'none', areaStyle: { color: 'rgba(245,158,11,0.06)' } },
+      { name: 'Mzdy YoY', type: 'line', data: data.wages_yoy, smooth: true, lineStyle: { color: '#22c55e', width: 2 }, itemStyle: { color: '#22c55e' }, symbol: 'none', areaStyle: { color: 'rgba(34,197,94,0.06)' } },
     ]
-    if (data.fed_funds?.some(Boolean)) series.push({ name: 'Fed Rate', type: 'line', yAxisIndex: 0, data: data.fed_funds, smooth: false, lineStyle: { color: '#818cf8', width: 1.5, type: 'dashed' }, itemStyle: { color: '#818cf8' }, symbol: 'none' })
-    if (data.oil_yoy?.some(Boolean))  series.push({ name: 'Ropa YoY', type: 'line', yAxisIndex: 0, data: data.oil_yoy, smooth: true, lineStyle: { color: '#f97316', width: 1.5 }, itemStyle: { color: '#f97316' }, symbol: 'none' })
-    if (data.gold_yoy?.some(Boolean)) series.push({ name: 'Zlato YoY', type: 'line', yAxisIndex: 0, data: data.gold_yoy, smooth: true, lineStyle: { color: '#eab308', width: 1.5, type: 'dotted' }, itemStyle: { color: '#eab308' }, symbol: 'none' })
-    if (data.unemployment?.some(Boolean)) series.push({ name: 'Nezaměstnanost', type: 'line', yAxisIndex: 0, data: data.unemployment, smooth: true, lineStyle: { color: '#94a3b8', width: 1.5, type: 'dashed' }, itemStyle: { color: '#94a3b8' }, symbol: 'none' })
-    if (data.sp500?.some(Boolean)) series.push({ name: 'S&P 500', type: 'line', yAxisIndex: 1, data: data.sp500, smooth: true, lineStyle: { color: '#475569', width: 1.5 }, itemStyle: { color: '#475569' }, symbol: 'none' })
+    if (data.fed_funds?.some(Boolean)) series.push({ name: 'Fed Rate', type: 'line', data: data.fed_funds, smooth: false, lineStyle: { color: '#818cf8', width: 2, type: 'dashed' }, itemStyle: { color: '#818cf8' }, symbol: 'none' })
+    if (data.unemployment?.some(Boolean)) series.push({ name: 'Nezaměstnanost', type: 'line', data: data.unemployment, smooth: true, lineStyle: { color: '#fb923c', width: 2.5 }, itemStyle: { color: '#fb923c' }, symbol: 'circle', symbolSize: 3, showSymbol: false })
 
     chart.setOption({
       backgroundColor: 'transparent',
@@ -380,13 +377,9 @@ function CpiWages({ data }: { data: MacroData['cpi_wages_history'] }) {
         data: series.map(s => s.name), top: 4,
         textStyle: { color: '#a1a1aa', fontSize: 10 },
         inactiveColor: '#3f3f46',
-        selected: { 'Ropa YoY': false, 'Zlato YoY': false, 'Nezaměstnanost': false },
       },
       xAxis: { type: 'category', data: data.dates, axisLabel: { color: '#52525b', fontSize: 9 }, axisLine: { lineStyle: { color: '#27272a' } } },
-      yAxis: [
-        { type: 'value', axisLabel: { color: '#71717a', fontSize: 9, formatter: '{value}%' }, splitLine: { lineStyle: { color: '#18181b' } }, scale: true },
-        { type: 'value', position: 'right', axisLabel: { color: '#475569', fontSize: 8, formatter: (v: number) => v >= 1000 ? (v/1000).toFixed(0)+'k' : String(v) }, splitLine: { show: false }, scale: true },
-      ],
+      yAxis: { type: 'value', axisLabel: { color: '#71717a', fontSize: 9, formatter: '{value}%' }, splitLine: { lineStyle: { color: '#18181b' } }, scale: true },
       series,
     })
     const resize = () => chart.resize()
