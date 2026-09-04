@@ -504,13 +504,9 @@ def main():
         "eur_usd": "EURUSD=X","usd_czk": "USDCZK=X","eur_czk": "EURCZK=X",
         "brent":   "BZ=F",    "gold":    "GC=F",
         "us10y":   "^TNX",    "us2y":    "^IRX",     "us30y":   "^TYX",
-        "us3m":    "^IRX",     # 3M T-bill - proxy pro Fed sazbu
-    }, period="1y")
-
-    # S&P 500 zvlášť s 10letou historií
-    print("  S&P 500 (10 let)...")
-    sp10y = fetch_yahoo({"sp500_10y": "^GSPC"}, period="10y")
-    market.update(sp10y)
+        "us3m":    "^IRX",    # 3M T-bill
+        "sp500":   "^GSPC",   # pro CPI/mzdy graf (2y)
+    }, period="2y")  # 2y = dostatek pro YoY výpočty
 
     if "us10y" in market and "us2y" in market:
         market["yield_spread"] = yield_spread(market)
@@ -582,35 +578,31 @@ def main():
         except Exception as e:
             print(f"  ⚠️ {label}: {e}"); return {}
 
-    # Stáhni rozšířená data v jednom bulk downloadu
-    print("  Rozšířená data (S&P 500, ropa, zlato) — 5 let...")
-    sp500_monthly = {}; oil_yoy_monthly = {}; gold_yoy_monthly = {}
-    try:
-        bulk = yf.download(["^GSPC", "BZ=F", "GC=F"], start="2015-01-01",
-                           auto_adjust=True, progress=False)
-        if not bulk.empty:
-            closes_bulk = bulk["Close"] if isinstance(bulk.columns, pd.MultiIndex) else bulk
-            for ticker, key_name in [("^GSPC", "sp500"), ("BZ=F", "oil"), ("GC=F", "gold")]:
-                if ticker not in closes_bulk.columns:
-                    continue
-                s = closes_bulk[ticker].dropna()
-                monthly = s.resample("MS").last().dropna()
-                if key_name == "sp500":
-                    sp500_monthly = {ts.strftime("%Y-%m"): round(float(v), 2)
-                                     for ts, v in monthly.items()}
-                    print(f"  S&P 500: {len(sp500_monthly)} bodů")
-                else:
-                    yoy_s = ((monthly / monthly.shift(12)) - 1) * 100
-                    result = {ts.strftime("%Y-%m"): round(float(v), 2)
-                              for ts, v in yoy_s.dropna().items()}
-                    if key_name == "oil":
-                        oil_yoy_monthly = result
-                        print(f"  Brent YoY: {len(result)} bodů")
-                    else:
-                        gold_yoy_monthly = result
-                        print(f"  Zlato YoY: {len(result)} bodů")
-    except Exception as e:
-        print(f"  ⚠️ Bulk download: {e}")
+    # Extrahuj S&P 500, ropu a zlato z již stažených market dat (period=2y)
+    def market_to_monthly_yoy(key: str, label: str) -> dict:
+        hist = market.get(key, {}).get("history", {})
+        dates_h = hist.get("dates", [])
+        vals_h  = hist.get("values", [])
+        if not dates_h: return {}
+        s = pd.Series(vals_h, index=pd.to_datetime(dates_h)).dropna()
+        monthly = s.resample("MS").last().dropna()
+        yoy_s = ((monthly / monthly.shift(12)) - 1) * 100
+        result = {ts.strftime("%Y-%m"): round(float(v), 2) for ts, v in yoy_s.dropna().items()}
+        print(f"  {label}: {len(result)} YoY bodů"); return result
+
+    def market_to_monthly_price(key: str, label: str) -> dict:
+        hist = market.get(key, {}).get("history", {})
+        dates_h = hist.get("dates", [])
+        vals_h  = hist.get("values", [])
+        if not dates_h: return {}
+        s = pd.Series(vals_h, index=pd.to_datetime(dates_h)).dropna()
+        monthly = s.resample("MS").last().dropna()
+        result = {ts.strftime("%Y-%m"): round(float(v), 2) for ts, v in monthly.items()}
+        print(f"  {label}: {len(result)} bodů"); return result
+
+    sp500_monthly    = market_to_monthly_price("sp500",  "S&P 500")
+    oil_yoy_monthly  = market_to_monthly_yoy  ("brent",  "Brent YoY")
+    gold_yoy_monthly = market_to_monthly_yoy  ("gold",   "Zlato YoY")
     # Nezaměstnanost z FRED (dlouhá historie)
     unemp_raw = fetch_fred_long("UNRATE", 2015)
     unemp_monthly = {d.strftime("%Y-%m"): round(float(v), 2)
