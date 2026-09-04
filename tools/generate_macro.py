@@ -503,7 +503,6 @@ def main():
         "vix":     "^VIX",    "dxy":     "DX-Y.NYB",
         "eur_usd": "EURUSD=X","usd_czk": "USDCZK=X","eur_czk": "EURCZK=X",
         "brent":   "BZ=F",    "gold":    "GC=F",
-        "uso":     "USO",      "gld":     "GLD",  # ETF pro YoY histogram
         "us10y":   "^TNX",    "us2y":    "^IRX",     "us30y":   "^TYX",
         "us3m":    "^IRX",    # 3M T-bill
         "sp500":   "^GSPC",   # pro CPI/mzdy graf (2y)
