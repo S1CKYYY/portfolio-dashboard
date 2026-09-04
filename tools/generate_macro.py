@@ -30,7 +30,7 @@ def sparkline(s: pd.Series, n=30) -> list:
 def yoy(s: pd.Series) -> pd.Series:
     return ((s / s.shift(12)) - 1) * 100
 
-def history_data(s: pd.Series, n=252) -> dict:
+def history_data(s: pd.Series, n: int = 252) -> dict:
     sl = s.dropna().tail(n)
     return {"dates": [d.strftime("%Y-%m-%d") for d in sl.index],
             "values": [round(float(v), 4) for v in sl]}
@@ -56,10 +56,11 @@ def fetch_yahoo(tickers: dict, period="1y") -> dict:
         val = safe_float(s.iloc[-1]); prev = safe_float(s.iloc[-2])
         if val is None: continue
         chg_pct = round((val / prev - 1) * 100, 3) if prev and prev != 0 else 0.0
+        n_hist = 2520 if key == "sp500_10y" else 252
         result[key] = {
             "value": round(val, 4), "change_pct": chg_pct,
             "change_abs": round(val - prev, 4) if prev is not None else 0.0,
-            "sparkline": sparkline(s), "history": history_data(s),
+            "sparkline": sparkline(s), "history": history_data(s, n_hist),
         }
     return result
 
@@ -547,20 +548,15 @@ def main():
         else:
             ff_aligned.append(None)
 
-    # S&P 500 měsíční close z dlouhé stahovaní přes fetch_yahoo s delším periodem
+    # S&P 500 měsíční close z market (staženo s 10y periodem)
     sp500_monthly = {}
     try:
-        sp_data = fetch_yahoo({"sp500": "^GSPC"}, period="10y")
-        sp_hist = sp_data.get("sp500", {}).get("history", {})
+        sp_hist = market.get("sp500_10y", {}).get("history", {})
         dates_sp = sp_hist.get("dates", [])
         vals_sp  = sp_hist.get("values", [])
-        # Převod na měsíční (poslední hodnota každého měsíce)
-        monthly = {}
         for d_str, v in zip(dates_sp, vals_sp):
-            month_key = d_str[:7]  # YYYY-MM
-            monthly[month_key] = round(float(v), 2)  # přepíše = zůstane poslední
-        sp500_monthly = monthly
-        print(f"  S&P 500: {len(sp500_monthly)} měsíčních bodů")
+            sp500_monthly[d_str[:7]] = round(float(v), 2)
+        print(f"  S&P 500: {len(sp500_monthly)} denních→měsíčních bodů")
     except Exception as e:
         print(f"  ⚠️ S&P 500: {e}")
 
