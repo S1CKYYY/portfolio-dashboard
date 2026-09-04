@@ -360,6 +360,7 @@ function CpiWages({ data }: { data: MacroData['cpi_wages_history'] }) {
       series: [
         { name: 'CPI', type: 'line', data: data.cpi_yoy, smooth: true, lineStyle: { color: '#f59e0b', width: 2 }, itemStyle: { color: '#f59e0b' }, symbol: 'none', areaStyle: { color: 'rgba(245,158,11,0.07)' } },
         { name: 'Mzdy', type: 'line', data: data.wages_yoy, smooth: true, lineStyle: { color: '#22c55e', width: 2 }, itemStyle: { color: '#22c55e' }, symbol: 'none', areaStyle: { color: 'rgba(34,197,94,0.07)' } },
+        ...(data.fed_funds?.length ? [{ name: 'Fed Rate', type: 'line', data: data.fed_funds, smooth: false, lineStyle: { color: '#818cf8', width: 1.5, type: 'dashed' }, itemStyle: { color: '#818cf8' }, symbol: 'none' }] : []),
       ],
     })
     const resize = () => chart.resize()

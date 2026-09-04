@@ -61,6 +61,7 @@ export interface MacroData {
     dates: string[]
     cpi_yoy: number[]
     wages_yoy: number[]
+    fed_funds: (number | null)[]
   }
   news: NewsItem[]
   rate_expectations: {
