@@ -356,11 +356,15 @@ function CpiWages({ data }: { data: MacroData['cpi_wages_history'] }) {
       tooltip: { trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46', textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 11 } },
       legend: { data: ['CPI', 'Mzdy'], top: 2, textStyle: { color: '#a1a1aa', fontSize: 10 } },
       xAxis: { type: 'category', data: data.dates, axisLabel: { color: '#52525b', fontSize: 9, rotate: 30 }, axisLine: { lineStyle: { color: '#27272a' } } },
-      yAxis: { type: 'value', axisLabel: { color: '#71717a', fontSize: 9, formatter: '{value}%' }, splitLine: { lineStyle: { color: '#18181b' } } },
+      yAxis: [
+        { type: 'value', name: '%', axisLabel: { color: '#71717a', fontSize: 9, formatter: '{value}%' }, splitLine: { lineStyle: { color: '#18181b' } }, scale: true },
+        { type: 'value', name: 'S&P 500', position: 'right', axisLabel: { color: '#64748b', fontSize: 8, formatter: (v: number) => v >= 1000 ? (v/1000).toFixed(1)+'k' : String(v) }, splitLine: { show: false }, scale: true },
+      ],
       series: [
-        { name: 'CPI', type: 'line', data: data.cpi_yoy, smooth: true, lineStyle: { color: '#f59e0b', width: 2 }, itemStyle: { color: '#f59e0b' }, symbol: 'none', areaStyle: { color: 'rgba(245,158,11,0.07)' } },
-        { name: 'Mzdy', type: 'line', data: data.wages_yoy, smooth: true, lineStyle: { color: '#22c55e', width: 2 }, itemStyle: { color: '#22c55e' }, symbol: 'none', areaStyle: { color: 'rgba(34,197,94,0.07)' } },
-        ...(data.fed_funds?.length ? [{ name: 'Fed Rate', type: 'line', data: data.fed_funds, smooth: false, lineStyle: { color: '#818cf8', width: 1.5, type: 'dashed' }, itemStyle: { color: '#818cf8' }, symbol: 'none' }] : []),
+        { name: 'CPI', type: 'line', yAxisIndex: 0, data: data.cpi_yoy, smooth: true, lineStyle: { color: '#f59e0b', width: 2 }, itemStyle: { color: '#f59e0b' }, symbol: 'none', areaStyle: { color: 'rgba(245,158,11,0.07)' } },
+        { name: 'Mzdy', type: 'line', yAxisIndex: 0, data: data.wages_yoy, smooth: true, lineStyle: { color: '#22c55e', width: 2 }, itemStyle: { color: '#22c55e' }, symbol: 'none', areaStyle: { color: 'rgba(34,197,94,0.07)' } },
+        ...(data.fed_funds?.length ? [{ name: 'Fed Rate', type: 'line', yAxisIndex: 0, data: data.fed_funds, smooth: false, lineStyle: { color: '#818cf8', width: 1.5, type: 'dashed' }, itemStyle: { color: '#818cf8' }, symbol: 'none' }] : []),
+        ...(data.sp500?.length ? [{ name: 'S&P 500', type: 'line', yAxisIndex: 1, data: data.sp500, smooth: true, lineStyle: { color: '#64748b', width: 1.5, opacity: 0.7 }, itemStyle: { color: '#64748b' }, symbol: 'none' }] : []),
       ],
     })
     const resize = () => chart.resize()

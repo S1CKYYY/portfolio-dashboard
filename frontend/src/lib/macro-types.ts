@@ -62,6 +62,7 @@ export interface MacroData {
     cpi_yoy: number[]
     wages_yoy: number[]
     fed_funds: (number | null)[]
+    sp500?: (number | null)[]
   }
   news: NewsItem[]
   rate_expectations: {

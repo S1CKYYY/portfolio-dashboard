@@ -542,16 +542,29 @@ def main():
         if not ff_h.empty and d in ff_h.index:
             ff_aligned.append(round(float(ff_h.loc[d]), 3))
         elif not ff_h.empty:
-            # Interpoluj — Fed Funds se mění méně často
             closest = ff_h.index[ff_h.index <= d]
             ff_aligned.append(round(float(ff_h.loc[closest[-1]]), 3) if len(closest) else None)
         else:
             ff_aligned.append(None)
+
+    # S&P 500 měsíční close (již stažen v market dict, ale potřebujeme delší historii)
+    sp500_monthly = {}
+    try:
+        import yfinance as yf
+        sp_raw = yf.download("^GSPC", start="2014-01-01", auto_adjust=True, progress=False)
+        if not sp_raw.empty:
+            sp_close = sp_raw["Close"].resample("MS").last().dropna()
+            sp500_monthly = {d.strftime("%Y-%m"): round(float(v), 2) for d, v in sp_close.items()}
+            print(f"  S&P 500: {len(sp500_monthly)} měsíčních bodů")
+    except Exception as e:
+        print(f"  ⚠️ S&P 500: {e}")
+
     cpi_wages = {
         "dates":     [d.strftime("%Y-%m") for d in common],
         "cpi_yoy":   [round(float(cpi_h.loc[d]), 3) for d in common],
         "wages_yoy": [round(float(wage_h.loc[d]), 3) for d in common],
         "fed_funds": ff_aligned,
+        "sp500":     [sp500_monthly.get(d.strftime("%Y-%m")) for d in common],
     }
     print(f"  Historie: {len(common)} měsíců od {common[0].strftime('%Y-%m') if len(common) else '?'}")
 
