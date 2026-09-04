@@ -532,13 +532,28 @@ def main():
             print(f"  ⚠️ {label}: žádná data")
         time.sleep(1)  # pauza mezi requesty — sníží rate limiting
 
-    print("\n📉 CPI vs mzdy...")
-    cpi_h  = yoy(fetch_fred("CPIAUCSL", 60)).dropna().tail(24)
-    wage_h = yoy(fetch_fred("CES0500000003", 60)).dropna().tail(24)
+    print("\n📉 CPI vs mzdy vs Fed Funds (10 let)...")
+    cpi_h  = yoy(fetch_fred_long("CPIAUCSL",      2014)).dropna().tail(120)
+    wage_h = yoy(fetch_fred_long("CES0500000003", 2014)).dropna().tail(120)
+    ff_h   = fetch_fred_long("FEDFUNDS", 2014)
     common = cpi_h.index.intersection(wage_h.index)
-    cpi_wages = {"dates": [d.strftime("%Y-%m") for d in common],
-                 "cpi_yoy":   [round(float(cpi_h.loc[d]),3)  for d in common],
-                 "wages_yoy": [round(float(wage_h.loc[d]),3) for d in common]}
+    ff_aligned = []
+    for d in common:
+        if not ff_h.empty and d in ff_h.index:
+            ff_aligned.append(round(float(ff_h.loc[d]), 3))
+        elif not ff_h.empty:
+            # Interpoluj — Fed Funds se mění méně často
+            closest = ff_h.index[ff_h.index <= d]
+            ff_aligned.append(round(float(ff_h.loc[closest[-1]]), 3) if len(closest) else None)
+        else:
+            ff_aligned.append(None)
+    cpi_wages = {
+        "dates":     [d.strftime("%Y-%m") for d in common],
+        "cpi_yoy":   [round(float(cpi_h.loc[d]), 3) for d in common],
+        "wages_yoy": [round(float(wage_h.loc[d]), 3) for d in common],
+        "fed_funds": ff_aligned,
+    }
+    print(f"  Historie: {len(common)} měsíců od {common[0].strftime('%Y-%m') if len(common) else '?'}")
 
     print("\n🏦 Rate expectations...")
     current_rate = fred.get("fed_funds", {}).get("value")
