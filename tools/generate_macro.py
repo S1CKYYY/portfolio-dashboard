@@ -553,15 +553,17 @@ def main():
         else:
             ff_aligned.append(None)
 
-    # S&P 500 měsíční close z market (staženo s 10y periodem)
+    # S&P 500 měsíční close — stahuj přímo s start datem
     sp500_monthly = {}
     try:
-        sp_hist = market.get("sp500_10y", {}).get("history", {})
-        dates_sp = sp_hist.get("dates", [])
-        vals_sp  = sp_hist.get("values", [])
-        for d_str, v in zip(dates_sp, vals_sp):
-            sp500_monthly[d_str[:7]] = round(float(v), 2)
-        print(f"  S&P 500: {len(sp500_monthly)} denních→měsíčních bodů")
+        sp_raw = yf.download("^GSPC", start="2015-01-01",
+                              auto_adjust=True, progress=False)
+        if not sp_raw.empty:
+            closes_col = sp_raw["Close"] if "Close" in sp_raw else sp_raw.iloc[:, 0]
+            for ts, val in closes_col.dropna().items():
+                mk = ts.strftime("%Y-%m")
+                sp500_monthly[mk] = round(float(val), 2)
+            print(f"  S&P 500: {len(sp500_monthly)} měsíčních bodů")
     except Exception as e:
         print(f"  ⚠️ S&P 500: {e}")
 
