@@ -68,9 +68,11 @@ def fetch_yahoo(tickers: dict, period="1y") -> dict:
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id="
 
 def fetch_fred(sid: str, n=60) -> pd.Series:
+    from datetime import datetime, timedelta
+    start = (datetime.now() - timedelta(days=n*40)).strftime("%Y-%m-%d")
     urls = [
+        f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}&cosd={start}",
         f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}",
-        f"https://fred.stlouisfed.org/data/{sid}.txt",
     ]
     for url in urls:
         for attempt in range(2):
