@@ -582,10 +582,35 @@ def main():
         except Exception as e:
             print(f"  ⚠️ {label}: {e}"); return {}
 
-    print("  Stahuji rozšířená data...")
-    sp500_monthly     = download_monthly_price("^GSPC",  "S&P 500")
-    oil_yoy_monthly   = download_monthly_yoy  ("BZ=F",   "Brent YoY")
-    gold_yoy_monthly  = download_monthly_yoy  ("GC=F",   "Zlato YoY")
+    # Stáhni rozšířená data v jednom bulk downloadu
+    print("  Rozšířená data (S&P 500, ropa, zlato) — 5 let...")
+    sp500_monthly = {}; oil_yoy_monthly = {}; gold_yoy_monthly = {}
+    try:
+        bulk = yf.download(["^GSPC", "BZ=F", "GC=F"], start="2015-01-01",
+                           auto_adjust=True, progress=False)
+        if not bulk.empty:
+            closes_bulk = bulk["Close"] if isinstance(bulk.columns, pd.MultiIndex) else bulk
+            for ticker, key_name in [("^GSPC", "sp500"), ("BZ=F", "oil"), ("GC=F", "gold")]:
+                if ticker not in closes_bulk.columns:
+                    continue
+                s = closes_bulk[ticker].dropna()
+                monthly = s.resample("MS").last().dropna()
+                if key_name == "sp500":
+                    sp500_monthly = {ts.strftime("%Y-%m"): round(float(v), 2)
+                                     for ts, v in monthly.items()}
+                    print(f"  S&P 500: {len(sp500_monthly)} bodů")
+                else:
+                    yoy_s = ((monthly / monthly.shift(12)) - 1) * 100
+                    result = {ts.strftime("%Y-%m"): round(float(v), 2)
+                              for ts, v in yoy_s.dropna().items()}
+                    if key_name == "oil":
+                        oil_yoy_monthly = result
+                        print(f"  Brent YoY: {len(result)} bodů")
+                    else:
+                        gold_yoy_monthly = result
+                        print(f"  Zlato YoY: {len(result)} bodů")
+    except Exception as e:
+        print(f"  ⚠️ Bulk download: {e}")
     # Nezaměstnanost z FRED (dlouhá historie)
     unemp_raw = fetch_fred_long("UNRATE", 2015)
     unemp_monthly = {d.strftime("%Y-%m"): round(float(v), 2)
