@@ -547,15 +547,20 @@ def main():
         else:
             ff_aligned.append(None)
 
-    # S&P 500 měsíční close (již stažen v market dict, ale potřebujeme delší historii)
+    # S&P 500 měsíční close z dlouhé stahovaní přes fetch_yahoo s delším periodem
     sp500_monthly = {}
     try:
-        import yfinance as yf
-        sp_raw = yf.download("^GSPC", start="2014-01-01", auto_adjust=True, progress=False)
-        if not sp_raw.empty:
-            sp_close = sp_raw["Close"].resample("MS").last().dropna()
-            sp500_monthly = {d.strftime("%Y-%m"): round(float(v), 2) for d, v in sp_close.items()}
-            print(f"  S&P 500: {len(sp500_monthly)} měsíčních bodů")
+        sp_data = fetch_yahoo({"sp500": "^GSPC"}, period="10y")
+        sp_hist = sp_data.get("sp500", {}).get("history", {})
+        dates_sp = sp_hist.get("dates", [])
+        vals_sp  = sp_hist.get("values", [])
+        # Převod na měsíční (poslední hodnota každého měsíce)
+        monthly = {}
+        for d_str, v in zip(dates_sp, vals_sp):
+            month_key = d_str[:7]  # YYYY-MM
+            monthly[month_key] = round(float(v), 2)  # přepíše = zůstane poslední
+        sp500_monthly = monthly
+        print(f"  S&P 500: {len(sp500_monthly)} měsíčních bodů")
     except Exception as e:
         print(f"  ⚠️ S&P 500: {e}")
 
