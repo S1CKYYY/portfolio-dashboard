@@ -96,6 +96,36 @@ def fetch_fred(sid: str, n=60) -> pd.Series:
                 time.sleep(1)
     return pd.Series(dtype=float)
 
+def fetch_fred_long(sid: str, start_year: int = 2014) -> pd.Series:
+    """Stáhne dlouhou historii z FRED s pevným start datem."""
+    start = f"{start_year}-01-01"
+    urls = [
+        f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}&cosd={start}&vintage_date=&transformation=&units=lin",
+        f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}&cosd={start}",
+        f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}",
+    ]
+    for url in urls:
+        try:
+            import urllib.request
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (compatible; research-bot/1.0)",
+                "Accept": "text/csv,text/plain,*/*",
+            })
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                from io import StringIO
+                raw = resp.read().decode("utf-8", errors="replace")
+            df = pd.read_csv(StringIO(raw), parse_dates=[0], index_col=0)
+            s = df.iloc[:, 0].replace(".", float("nan")).astype(float).dropna()
+            # Ořízni na start_year ručně
+            s = s[s.index.year >= start_year]
+            if len(s) > 12:
+                print(f"  ✓ FRED long {sid}: {len(s)} bodů od {s.index[0].strftime('%Y-%m')}")
+                return s
+        except Exception as e:
+            print(f"  ⚠️ FRED long {sid}: {e}")
+            time.sleep(1)
+    return pd.Series(dtype=float)
+
 def fred_card(s: pd.Series, yoy_mode=False) -> dict | None:
     if s.empty or len(s) < 2: return None
     if yoy_mode: s = yoy(s).dropna()
