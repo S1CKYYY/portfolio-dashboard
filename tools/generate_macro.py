@@ -553,26 +553,57 @@ def main():
         else:
             ff_aligned.append(None)
 
-    # S&P 500 měsíční close — stahuj přímo s start datem
-    sp500_monthly = {}
-    try:
-        sp_raw = yf.download("^GSPC", start="2015-01-01",
-                              auto_adjust=True, progress=False)
-        if not sp_raw.empty:
-            closes_col = sp_raw["Close"] if "Close" in sp_raw else sp_raw.iloc[:, 0]
-            for ts, val in closes_col.dropna().items():
-                mk = ts.strftime("%Y-%m")
-                sp500_monthly[mk] = round(float(val), 2)
-            print(f"  S&P 500: {len(sp500_monthly)} měsíčních bodů")
-    except Exception as e:
-        print(f"  ⚠️ S&P 500: {e}")
+    # Stáhni dlouhá data pro S&P 500, Ropu (Brent) a Zlato
+    def download_monthly_yoy(ticker: str, label: str) -> dict:
+        """Stáhne 10let dat, resample na měsíční, spočítá YoY%."""
+        try:
+            raw = yf.download(ticker, start="2015-01-01", auto_adjust=True, progress=False)
+            if raw.empty: return {}
+            closes = (raw["Close"] if "Close" in raw else raw.iloc[:, 0]).dropna()
+            monthly = closes.resample("MS").last().dropna()
+            yoy_pct = ((monthly / monthly.shift(12)) - 1) * 100
+            result = {ts.strftime("%Y-%m"): round(float(v), 2)
+                      for ts, v in yoy_pct.dropna().items()}
+            print(f"  {label}: {len(result)} YoY bodů")
+            return result
+        except Exception as e:
+            print(f"  ⚠️ {label}: {e}"); return {}
+
+    def download_monthly_price(ticker: str, label: str) -> dict:
+        """Stáhne 10let dat, resample na měsíční, vrátí cenu."""
+        try:
+            raw = yf.download(ticker, start="2015-01-01", auto_adjust=True, progress=False)
+            if raw.empty: return {}
+            closes = (raw["Close"] if "Close" in raw else raw.iloc[:, 0]).dropna()
+            monthly = closes.resample("MS").last().dropna()
+            result = {ts.strftime("%Y-%m"): round(float(v), 2) for ts, v in monthly.items()}
+            print(f"  {label}: {len(result)} bodů")
+            return result
+        except Exception as e:
+            print(f"  ⚠️ {label}: {e}"); return {}
+
+    print("  Stahuji rozšířená data...")
+    sp500_monthly     = download_monthly_price("^GSPC",  "S&P 500")
+    oil_yoy_monthly   = download_monthly_yoy  ("BZ=F",   "Brent YoY")
+    gold_yoy_monthly  = download_monthly_yoy  ("GC=F",   "Zlato YoY")
+    # Nezaměstnanost z FRED (dlouhá historie)
+    unemp_raw = fetch_fred_long("UNRATE", 2015)
+    unemp_monthly = {d.strftime("%Y-%m"): round(float(v), 2)
+                     for d, v in unemp_raw.items()} if not unemp_raw.empty else {}
+    print(f"  Nezaměstnanost: {len(unemp_monthly)} bodů")
+
+    def get_series(monthly_dict: dict) -> list:
+        return [monthly_dict.get(d.strftime("%Y-%m")) for d in common]
 
     cpi_wages = {
-        "dates":     [d.strftime("%Y-%m") for d in common],
-        "cpi_yoy":   [round(float(cpi_h.loc[d]), 3) for d in common],
-        "wages_yoy": [round(float(wage_h.loc[d]), 3) for d in common],
-        "fed_funds": ff_aligned,
-        "sp500":     [sp500_monthly.get(d.strftime("%Y-%m")) for d in common],
+        "dates":        [d.strftime("%Y-%m") for d in common],
+        "cpi_yoy":      [round(float(cpi_h.loc[d]), 3) for d in common],
+        "wages_yoy":    [round(float(wage_h.loc[d]), 3) for d in common],
+        "fed_funds":    ff_aligned,
+        "sp500":        get_series(sp500_monthly),
+        "oil_yoy":      get_series(oil_yoy_monthly),
+        "gold_yoy":     get_series(gold_yoy_monthly),
+        "unemployment": get_series(unemp_monthly),
     }
     print(f"  Historie: {len(common)} měsíců od {common[0].strftime('%Y-%m') if len(common) else '?'}")
 

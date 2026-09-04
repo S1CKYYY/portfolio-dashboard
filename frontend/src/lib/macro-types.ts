@@ -63,6 +63,9 @@ export interface MacroData {
     wages_yoy: number[]
     fed_funds: (number | null)[]
     sp500?: (number | null)[]
+    oil_yoy?: (number | null)[]
+    gold_yoy?: (number | null)[]
+    unemployment?: (number | null)[]
   }
   news: NewsItem[]
   rate_expectations: {

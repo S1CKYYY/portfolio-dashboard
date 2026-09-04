@@ -350,28 +350,50 @@ function CpiWages({ data }: { data: MacroData['cpi_wages_history'] }) {
   useEffect(() => {
     if (!ref.current || !data.dates.length) return
     const chart = echarts.init(ref.current, 'dark')
+    const series: any[] = [
+      { name: 'CPI YoY', type: 'line', yAxisIndex: 0, data: data.cpi_yoy, smooth: true, lineStyle: { color: '#f59e0b', width: 2 }, itemStyle: { color: '#f59e0b' }, symbol: 'none', areaStyle: { color: 'rgba(245,158,11,0.06)' } },
+      { name: 'Mzdy YoY', type: 'line', yAxisIndex: 0, data: data.wages_yoy, smooth: true, lineStyle: { color: '#22c55e', width: 2 }, itemStyle: { color: '#22c55e' }, symbol: 'none', areaStyle: { color: 'rgba(34,197,94,0.06)' } },
+    ]
+    if (data.fed_funds?.some(Boolean)) series.push({ name: 'Fed Rate', type: 'line', yAxisIndex: 0, data: data.fed_funds, smooth: false, lineStyle: { color: '#818cf8', width: 1.5, type: 'dashed' }, itemStyle: { color: '#818cf8' }, symbol: 'none' })
+    if (data.oil_yoy?.some(Boolean))  series.push({ name: 'Ropa YoY', type: 'line', yAxisIndex: 0, data: data.oil_yoy, smooth: true, lineStyle: { color: '#f97316', width: 1.5 }, itemStyle: { color: '#f97316' }, symbol: 'none' })
+    if (data.gold_yoy?.some(Boolean)) series.push({ name: 'Zlato YoY', type: 'line', yAxisIndex: 0, data: data.gold_yoy, smooth: true, lineStyle: { color: '#eab308', width: 1.5, type: 'dotted' }, itemStyle: { color: '#eab308' }, symbol: 'none' })
+    if (data.unemployment?.some(Boolean)) series.push({ name: 'Nezaměstnanost', type: 'line', yAxisIndex: 0, data: data.unemployment, smooth: true, lineStyle: { color: '#94a3b8', width: 1.5, type: 'dashed' }, itemStyle: { color: '#94a3b8' }, symbol: 'none' })
+    if (data.sp500?.some(Boolean)) series.push({ name: 'S&P 500', type: 'line', yAxisIndex: 1, data: data.sp500, smooth: true, lineStyle: { color: '#475569', width: 1.5 }, itemStyle: { color: '#475569' }, symbol: 'none' })
+
     chart.setOption({
       backgroundColor: 'transparent',
-      grid: { top: 24, bottom: 30, left: 44, right: 12 },
-      tooltip: { trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46', textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 11 } },
-      legend: { data: ['CPI', 'Mzdy'], top: 2, textStyle: { color: '#a1a1aa', fontSize: 10 } },
-      xAxis: { type: 'category', data: data.dates, axisLabel: { color: '#52525b', fontSize: 9, rotate: 30 }, axisLine: { lineStyle: { color: '#27272a' } } },
+      grid: { top: 48, bottom: 32, left: 46, right: 60 },
+      tooltip: {
+        trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46',
+        textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 11 },
+        formatter: (params: any[]) => {
+          const hdr = params[0]?.axisValue || ''
+          const rows = params.map((p: any) => {
+            const isPrice = p.seriesName === 'S&P 500'
+            const val = p.value != null ? (isPrice ? p.value.toLocaleString('cs-CZ', {maximumFractionDigits:0}) : p.value.toFixed(2)+'%') : '—'
+            return `<span style="color:${p.color}">${p.seriesName}</span>: <b>${val}</b>`
+          }).join('<br/>')
+          return `${hdr}<br/>${rows}`
+        }
+      },
+      legend: {
+        data: series.map(s => s.name), top: 4,
+        textStyle: { color: '#a1a1aa', fontSize: 10 },
+        inactiveColor: '#3f3f46',
+        selected: { 'Ropa YoY': false, 'Zlato YoY': false, 'Nezaměstnanost': false },
+      },
+      xAxis: { type: 'category', data: data.dates, axisLabel: { color: '#52525b', fontSize: 9 }, axisLine: { lineStyle: { color: '#27272a' } } },
       yAxis: [
-        { type: 'value', name: '%', axisLabel: { color: '#71717a', fontSize: 9, formatter: '{value}%' }, splitLine: { lineStyle: { color: '#18181b' } }, scale: true },
-        { type: 'value', name: 'S&P 500', position: 'right', axisLabel: { color: '#64748b', fontSize: 8, formatter: (v: number) => v >= 1000 ? (v/1000).toFixed(1)+'k' : String(v) }, splitLine: { show: false }, scale: true },
+        { type: 'value', axisLabel: { color: '#71717a', fontSize: 9, formatter: '{value}%' }, splitLine: { lineStyle: { color: '#18181b' } }, scale: true },
+        { type: 'value', position: 'right', axisLabel: { color: '#475569', fontSize: 8, formatter: (v: number) => v >= 1000 ? (v/1000).toFixed(0)+'k' : String(v) }, splitLine: { show: false }, scale: true },
       ],
-      series: [
-        { name: 'CPI', type: 'line', yAxisIndex: 0, data: data.cpi_yoy, smooth: true, lineStyle: { color: '#f59e0b', width: 2 }, itemStyle: { color: '#f59e0b' }, symbol: 'none', areaStyle: { color: 'rgba(245,158,11,0.07)' } },
-        { name: 'Mzdy', type: 'line', yAxisIndex: 0, data: data.wages_yoy, smooth: true, lineStyle: { color: '#22c55e', width: 2 }, itemStyle: { color: '#22c55e' }, symbol: 'none', areaStyle: { color: 'rgba(34,197,94,0.07)' } },
-        ...(data.fed_funds?.length ? [{ name: 'Fed Rate', type: 'line', yAxisIndex: 0, data: data.fed_funds, smooth: false, lineStyle: { color: '#818cf8', width: 1.5, type: 'dashed' }, itemStyle: { color: '#818cf8' }, symbol: 'none' }] : []),
-        ...(data.sp500?.length ? [{ name: 'S&P 500', type: 'line', yAxisIndex: 1, data: data.sp500, smooth: true, lineStyle: { color: '#64748b', width: 1.5, opacity: 0.7 }, itemStyle: { color: '#64748b' }, symbol: 'none' }] : []),
-      ],
+      series,
     })
     const resize = () => chart.resize()
     window.addEventListener('resize', resize)
     return () => { window.removeEventListener('resize', resize); chart.dispose() }
   }, [data])
-  return <div ref={ref} style={{ width: '100%', height: 240 }} />
+  return <div ref={ref} style={{ width: '100%', height: 360 }} />
 }
 
 // ── Sec header ────────────────────────────────────────────────────────────
