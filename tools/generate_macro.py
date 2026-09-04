@@ -601,8 +601,17 @@ def main():
         print(f"  {label}: {len(result)} bodů"); return result
 
     sp500_monthly    = market_to_monthly_price("sp500",  "S&P 500")
-    oil_yoy_monthly  = market_to_monthly_yoy  ("brent",  "Brent YoY")
-    gold_yoy_monthly = market_to_monthly_yoy  ("gold",   "Zlato YoY")
+    # Ropa a zlato z FRED mesicnich serii (spolehlivejsi nez Yahoo futures)
+    def fred_to_monthly_yoy(sid: str, label: str) -> dict:
+        raw = fetch_fred_long(sid, 2014)
+        if raw.empty: return {}
+        monthly = raw.resample("MS").last().dropna()
+        yoy_s = ((monthly / monthly.shift(12)) - 1) * 100
+        result = {ts.strftime("%Y-%m"): round(float(v), 2) for ts, v in yoy_s.dropna().items()}
+        print(f"  {label}: {len(result)} YoY bodů"); return result
+
+    oil_yoy_monthly  = fred_to_monthly_yoy("MCOILBRENTEU",      "Brent YoY (mesicni)")
+    gold_yoy_monthly = fred_to_monthly_yoy("GOLDAMGBD228NLBM",  "Zlato YoY (mesicni)")
     # Nezaměstnanost z FRED (dlouhá historie)
     unemp_raw = fetch_fred_long("UNRATE", 2015)
     unemp_monthly = {d.strftime("%Y-%m"): round(float(v), 2)
