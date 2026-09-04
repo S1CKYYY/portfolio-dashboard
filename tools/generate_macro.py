@@ -117,7 +117,7 @@ def fetch_fred_long(sid: str, start_year: int = 2014) -> pd.Series:
                 txt_lines = raw.splitlines()
                 data_start = next((i for i, l in enumerate(txt_lines) if l.strip().startswith("DATE")), 0)
                 data_text = "\n".join(txt_lines[data_start:])
-                df = pd.read_csv(StringIO(data_text), delim_whitespace=True, parse_dates=["DATE"], index_col="DATE")
+                df = pd.read_csv(StringIO(data_text), sep=r'\s+', parse_dates=["DATE"], index_col="DATE", engine="python")
             else:
                 df = pd.read_csv(StringIO(raw), parse_dates=[0], index_col=0)
             s = df.iloc[:, 0].replace(".", float("nan")).astype(float).dropna()
