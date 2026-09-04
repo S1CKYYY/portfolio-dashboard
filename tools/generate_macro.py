@@ -507,6 +507,11 @@ def main():
         "us3m":    "^IRX",     # 3M T-bill - proxy pro Fed sazbu
     }, period="1y")
 
+    # S&P 500 zvlášť s 10letou historií
+    print("  S&P 500 (10 let)...")
+    sp10y = fetch_yahoo({"sp500_10y": "^GSPC"}, period="10y")
+    market.update(sp10y)
+
     if "us10y" in market and "us2y" in market:
         market["yield_spread"] = yield_spread(market)
     if "vix" in market:
