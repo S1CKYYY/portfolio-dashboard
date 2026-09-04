@@ -56,7 +56,7 @@ def fetch_yahoo(tickers: dict, period="1y") -> dict:
         val = safe_float(s.iloc[-1]); prev = safe_float(s.iloc[-2])
         if val is None: continue
         chg_pct = round((val / prev - 1) * 100, 3) if prev and prev != 0 else 0.0
-        n_hist = 2520 if key == "sp500_10y" else 520 if key in ("brent", "gold", "sp500") else 252
+        n_hist = 2520 if key == "sp500_10y" else 520 if key in ("brent", "gold", "sp500", "uso", "gld") else 252
         result[key] = {
             "value": round(val, 4), "change_pct": chg_pct,
             "change_abs": round(val - prev, 4) if prev is not None else 0.0,
@@ -503,6 +503,7 @@ def main():
         "vix":     "^VIX",    "dxy":     "DX-Y.NYB",
         "eur_usd": "EURUSD=X","usd_czk": "USDCZK=X","eur_czk": "EURCZK=X",
         "brent":   "BZ=F",    "gold":    "GC=F",
+        "uso":     "USO",      "gld":     "GLD",  # ETF pro YoY histogram
         "us10y":   "^TNX",    "us2y":    "^IRX",     "us30y":   "^TYX",
         "us3m":    "^IRX",    # 3M T-bill
         "sp500":   "^GSPC",   # pro CPI/mzdy graf (2y)
