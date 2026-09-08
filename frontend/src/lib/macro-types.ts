@@ -3,6 +3,29 @@ export interface HistoryData {
   values: number[]
 }
 
+
+export interface EconomicEvent {
+  date: string
+  time: string
+  event: string
+  detail: string
+  consensus: string
+  prev: string
+  impact: 1 | 2 | 3
+  sentiment: 'neutral' | 'bearish_risk' | 'bullish_potential' | 'watch' | 'max_volatility'
+  category: 'macro' | 'fed' | 'earnings'
+}
+
+export interface MarketBrief {
+  generated_at: string | null
+  session: string | null
+  headline: string | null
+  summary_html: string | null
+  key_points: Array<{ icon: string; text: string; color?: string }>
+  market_session: string | null
+  author: string
+}
+
 export interface NewsItem {
   ticker: string
   title: string
@@ -84,4 +107,5 @@ export interface MacroData {
     hold_probability?: number
     hike_probability?: number
   }
+  economic_calendar?: EconomicEvent[]
 }

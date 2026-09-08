@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { MacroData, MarketCard, FredCard, NewsItem as NewsItemType } from '../lib/macro-types'
+import type { MacroData, MarketCard, FredCard, NewsItem as NewsItemType, EconomicEvent } from '../lib/macro-types'
 import * as echarts from 'echarts'
 
 async function fetchMacro(): Promise<MacroData | null> {
@@ -193,6 +193,58 @@ function YieldCurve({ us2y, us10y, spread }: { us2y?: MarketCard; us10y?: Market
 }
 
 // ── Rate card ─────────────────────────────────────────────────────────────
+
+
+function BriefBlock() {
+  const [brief, setBrief] = useState<{
+    generated_at?: string | null; session?: string | null; headline?: string | null;
+    summary_html?: string | null; key_points?: Array<{ icon: string; text: string; color?: string }>; market_session?: string | null;
+  } | null>(null)
+
+  useEffect(() => {
+    fetch('./brief.json').then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.generated_at) setBrief(d)
+    }).catch(() => {})
+  }, [])
+
+  if (!brief) return null
+
+  return (
+    <div style={{ background: 'linear-gradient(135deg,#0f1629 0%,#0a0f1a 100%)', border: '1px solid #1e3a5f', borderLeft: '3px solid #60a5fa', borderRadius: 3, marginBottom: 16, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', borderBottom: '1px solid #1e3a5f' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.18em', color: '#60a5fa' }}>MANAŽERSKÉ SHRNUTÍ</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {brief.market_session && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#fb923c', background: '#1c0a00', border: '1px solid #7c2d12', padding: '2px 8px', borderRadius: 2 }}>{brief.market_session}</span>
+          )}
+          {brief.generated_at && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#3f3f46' }}>
+              {new Date(brief.generated_at).toLocaleString('cs-CZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+        </div>
+      </div>
+      <div style={{ padding: '12px 14px' }}>
+        {brief.headline && (
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginBottom: 10, lineHeight: 1.4 }}>{brief.headline}</div>
+        )}
+        {brief.key_points && brief.key_points.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {brief.key_points.map((p, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, lineHeight: 1.55, color: '#94a3b8' }}>
+                <span style={{ flexShrink: 0, color: p.color ?? '#60a5fa' }}>{p.icon}</span>
+                <span dangerouslySetInnerHTML={{ __html: p.text }} />
+              </div>
+            ))}
+          </div>
+        )}
+        {brief.summary_html && !brief.key_points?.length && (
+          <div style={{ fontSize: 12, lineHeight: 1.7, color: '#94a3b8' }} dangerouslySetInnerHTML={{ __html: brief.summary_html }} />
+        )}
+      </div>
+    </div>
+  )
+}
 
 function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedFunds?: FredCard }) {
   const chartRef = useRef<HTMLDivElement>(null)
@@ -539,32 +591,76 @@ export function MacroPage() {
   return (
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
-      {/* ── NEWS SIDEBAR ── */}
+      {/* ── EKONOMICKÝ KALENDÁŘ + NEWS SIDEBAR ── */}
       <div style={{ width: 280, minWidth: 280, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
+
+        {/* Ekonomický kalendář */}
         <div style={{ padding: '10px 12px 6px', borderBottom: '1px solid var(--line)', fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)' }}>
-          ZPRÁVY — PORTFOLIO & TRH
+          EKONOMICKÝ KALENDÁŘ
         </div>
-        {news.length === 0
-          ? <div style={{ padding: 16, color: '#52525b', fontSize: 11 }}>Žádné zprávy (spusť workflow)</div>
-          : news.map((item, i) => {
-            const col = TICKER_COLOR[item.ticker] ?? '#a1a1aa'
-            const label = TICKER_LABELS[item.ticker] ?? item.ticker
-            const ts = item.ts ? new Date(item.ts * 1000).toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
+        {(data.economic_calendar ?? []).length === 0
+          ? <div style={{ padding: 16, color: '#52525b', fontSize: 11 }}>Žádné události</div>
+          : (data.economic_calendar ?? []).map((ev: EconomicEvent, i: number) => {
+            const today = new Date().toISOString().slice(0, 10)
+            const isPast = ev.date < today
+            const isToday = ev.date === today
+            const impColor = ev.impact === 3 ? '#ef4444' : ev.impact === 2 ? '#f59e0b' : '#3f3f46'
+            const catIcon = ev.category === 'fed' ? '🏦' : ev.category === 'earnings' ? '📊' : '📈'
+            const dateObj = new Date(ev.date)
+            const dateStr = dateObj.toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', weekday: 'short' })
             return (
-              <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'block', textDecoration: 'none', padding: '9px 12px', borderBottom: '1px solid var(--line-faint)' }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-raised)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginBottom: 3 }}>
-                  <span style={{ fontSize: 8, fontWeight: 600, fontFamily: 'var(--font-mono)', color: col, background: col+'22', padding: '1px 4px', borderRadius: 2 }}>{label}</span>
-                  <span style={{ fontSize: 8, color: '#52525b', fontFamily: 'var(--font-mono)' }}>{ts}</span>
+              <div key={i} style={{ padding: '9px 12px', borderBottom: '1px solid var(--line-faint)', opacity: isPast ? 0.45 : 1, background: isToday ? '#1a1a0a' : 'transparent' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                    <span style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: isToday ? '#f59e0b' : '#52525b' }}>{dateStr}</span>
+                    {ev.time !== '—' && <span style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: '#3f3f46' }}>{ev.time}</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: 3 }}>
+                    {[1,2,3].map(n => (
+                      <div key={n} style={{ width: 5, height: 5, borderRadius: 1, background: n <= ev.impact ? impColor : '#27272a' }} />
+                    ))}
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: '#d4d4d8', lineHeight: 1.4 }}>{item.title}</div>
-                {item.publisher && <div style={{ fontSize: 9, color: '#52525b', marginTop: 2 }}>{item.publisher}</div>}
-              </a>
+                <div style={{ fontSize: 11, fontWeight: 600, color: ev.impact === 3 ? '#fca5a5' : '#d4d4d8', lineHeight: 1.3, marginBottom: 2 }}>
+                  {catIcon} {ev.event}
+                </div>
+                <div style={{ fontSize: 10, color: '#52525b', lineHeight: 1.35 }}>{ev.detail}</div>
+                {ev.consensus && (
+                  <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: '#3f3f46', marginTop: 3 }}>
+                    oček: {ev.consensus}
+                  </div>
+                )}
+              </div>
             )
           })
         }
+
+        {/* News sekce */}
+        {news.length > 0 && (
+          <>
+            <div style={{ padding: '10px 12px 6px', borderBottom: '1px solid var(--line)', borderTop: '1px solid var(--line)', fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginTop: 4 }}>
+              ZPRÁVY
+            </div>
+            {news.slice(0, 20).map((item, i) => {
+              const col = TICKER_COLOR[item.ticker] ?? '#a1a1aa'
+              const label = TICKER_LABELS[item.ticker] ?? item.ticker
+              const ts2 = item.ts ? new Date(item.ts * 1000).toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
+              return (
+                <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'block', textDecoration: 'none', padding: '9px 12px', borderBottom: '1px solid var(--line-faint)' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-raised)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginBottom: 3 }}>
+                    <span style={{ fontSize: 8, fontWeight: 600, fontFamily: 'var(--font-mono)', color: col, background: col+'22', padding: '1px 4px', borderRadius: 2 }}>{label}</span>
+                    <span style={{ fontSize: 8, color: '#52525b', fontFamily: 'var(--font-mono)' }}>{ts2}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#d4d4d8', lineHeight: 1.4 }}>{item.title}</div>
+                  {item.publisher && <div style={{ fontSize: 9, color: '#52525b', marginTop: 2 }}>{item.publisher}</div>}
+                </a>
+              )
+            })}
+          </>
+        )}
       </div>
 
       {/* ── MAKRO OBSAH ── */}
@@ -573,6 +669,9 @@ export function MacroPage() {
           <div style={{ padding: '6px 0 2px', fontSize: 10, color: '#52525b', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
             Aktualizováno: {ts}
           </div>
+
+          {/* ── MANAŽERSKÉ SHRNUTÍ (brief.json) ── */}
+          <BriefBlock />
 
           {/* ── SENTIMENT & DLUHOPISY ── */}
           <Sec title="SENTIMENT & DLUHOPISY" />

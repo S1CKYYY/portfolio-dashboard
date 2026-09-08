@@ -77,6 +77,7 @@ jobs:
           cp snapshot.json frontend/public/snapshot.json
           # Generuj macro.json
           NASDAQ_API_KEY=${{ secrets.NASDAQ_API_KEY }} python tools/generate_macro.py && cp macro.json frontend/public/macro.json || echo "⚠️ macro.json selhal, přeskakuji"
+          cp brief.json frontend/public/brief.json 2>/dev/null || echo "brief.json neexistuje, přeskakuji"
 
       - name: Build frontend
         working-directory: frontend
