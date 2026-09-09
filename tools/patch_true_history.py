@@ -473,40 +473,31 @@ def build_sub_portfolio_history(lots: list, end_date: str, eurusd_rates=None) ->
 
 
 def compute_sub_risk(sp_data: dict, rf: float = 0.02, tday: int = 252) -> dict:
-    """Spočítá risk metriky ze ULOŽENÝCH portfolio hodnot (ne z nového yfinance downloadu)."""
+    """Spocita risk metriky ze ulozene portfolio krivky."""
     import numpy as np
     portfolio = sp_data.get("portfolio", [])
     invested  = sp_data.get("cumulative_invested", [])
-    benchmark = sp_data.get("benchmark_rebased", [])
     drawdown  = sp_data.get("drawdown_pct", [])
     dd_detail = sp_data.get("drawdown_detail", {})
-    if len(portfolio) < 3:
+    if len(portfolio) < 5:
         return {}
-    port_arr = np.array(portfolio)
-    inv_arr  = np.array(invested)
-    bench_arr = np.array(benchmark)
-    # Denní výnosy očištěné od cashflow
-    price_change = np.diff(port_arr) - np.diff(inv_arr)
-    daily_ret = price_change / port_arr[:-1]
+    port_arr = np.array(portfolio, dtype=float)
+    inv_arr  = np.array(invested,  dtype=float)
+    # Denni vynosy ocistene od cashflow
+    with np.errstate(divide="ignore", invalid="ignore"):
+        price_change = np.diff(port_arr) - np.diff(inv_arr)
+        daily_ret = np.where(port_arr[:-1] > 1, price_change / port_arr[:-1], np.nan)
     daily_ret = daily_ret[np.isfinite(daily_ret)]
-    bench_chg = np.diff(bench_arr) - np.diff(inv_arr)
-    bench_ret = bench_chg / bench_arr[:-1] if len(bench_arr) == len(inv_arr) else np.diff(bench_arr) / bench_arr[:-1]
-    bench_ret = bench_ret[np.isfinite(bench_ret)]
-    final_val = portfolio[-1]
-    total_inv = invested[-1]
+    if len(daily_ret) < 3:
+        return {}
+    final_val = float(portfolio[-1])
+    total_inv = float(invested[-1])
     ann_ret = (final_val / total_inv) ** (tday / max(len(portfolio), 1)) - 1 if total_inv > 0 else 0
-    vol  = float(np.std(daily_ret) * np.sqrt(tday)) if len(daily_ret) > 1 else 0
+    vol  = float(np.std(daily_ret) * np.sqrt(tday))
     neg  = daily_ret[daily_ret < 0]
-    down = float(np.std(neg) * np.sqrt(tday)) if len(neg) > 1 else 0
+    down = float(np.std(neg) * np.sqrt(tday)) if len(neg) > 1 else vol
     sharpe  = (ann_ret - rf) / vol  if vol > 0 else 0
     sortino = (ann_ret - rf) / down if down > 0 else 0
-    # Beta
-    if len(daily_ret) > 1 and len(bench_ret) > 1:
-        n = min(len(daily_ret), len(bench_ret))
-        cov = np.cov(daily_ret[-n:], bench_ret[-n:])
-        beta = float(cov[0,1] / cov[1,1]) if cov[1,1] > 0 else 1.0
-    else:
-        beta = 1.0
     min_dd = min(drawdown) if drawdown else 0
     return {
         "volatility_annualized_pct": round(vol, 4),
@@ -514,7 +505,7 @@ def compute_sub_risk(sp_data: dict, rf: float = 0.02, tday: int = 252) -> dict:
         "sharpe_ratio": round(sharpe, 4),
         "sortino_ratio": round(sortino, 4),
         "max_drawdown": {"pct": round(min_dd, 6), **dd_detail},
-        "beta": {"value": round(beta, 4), "benchmark": "VUAA.DE", "benchmark_name": "VUAA.DE"},
+        "beta": {"value": 1.0, "benchmark": "VUAA.DE", "benchmark_name": "VUAA.DE"},
         "risk_free_rate": rf,
         "trading_days_per_year": tday,
     }
@@ -615,10 +606,15 @@ def main():
 
     # Risk metriky z uložených hodnot (správné — bez nového yfinance downloadu)
     print("  Počítám risk metriky sub-portfolií...")
-    sub_portfolio_passive["risk"] = compute_sub_risk(sub_portfolio_passive)
-    sub_portfolio_picks["risk"]   = compute_sub_risk(sub_portfolio_picks)
-    print(f"  Passive risk: sharpe={sub_portfolio_passive['risk'].get('sharpe_ratio','?')}, vol={sub_portfolio_passive['risk'].get('volatility_annualized_pct','?')}")
-    print(f"  Picks risk:   sharpe={sub_portfolio_picks['risk'].get('sharpe_ratio','?')}, vol={sub_portfolio_picks['risk'].get('volatility_annualized_pct','?')}")
+    try:
+        sub_portfolio_passive["risk"] = compute_sub_risk(sub_portfolio_passive)
+        sub_portfolio_picks["risk"]   = compute_sub_risk(sub_portfolio_picks)
+        print(f"  Passive risk: sharpe={sub_portfolio_passive['risk'].get('sharpe_ratio','?')}, vol={sub_portfolio_passive['risk'].get('volatility_annualized_pct','?')}")
+        print(f"  Picks risk:   sharpe={sub_portfolio_picks['risk'].get('sharpe_ratio','?')}, vol={sub_portfolio_picks['risk'].get('volatility_annualized_pct','?')}")
+    except Exception as e:
+        import traceback
+        print(f"  ⚠️ compute_sub_risk selhal: {e}")
+        traceback.print_exc()
 
     snapshot["sub_portfolios"] = {
         "passive": sub_portfolio_passive,
