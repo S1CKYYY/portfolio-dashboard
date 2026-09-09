@@ -430,6 +430,29 @@ def compute_region_allocation(holdings_data: list[dict]) -> list[dict]:
     )
 
 
+def build_sub_portfolio_history(lots: list, end_date: str, eurusd_rates=None) -> dict:
+    """Spočítá equity křivku, invested a metriky pro podmnožinu lotů."""
+    if not lots:
+        return {}
+    dates, portfolio, benchmark, invested, _ = build_history(lots, end_date)
+    if not dates:
+        return {}
+    drawdown = compute_drawdown(portfolio)
+    final_val = portfolio[-1] if portfolio else 0
+    total_invested = invested[-1] if invested else 0
+    total_return = (final_val - total_invested) / total_invested if total_invested > 0 else 0
+    return {
+        "dates": dates,
+        "portfolio": [round(v, 2) for v in portfolio],
+        "drawdown_pct": [round(v, 6) for v in drawdown],
+        "cumulative_invested": [round(v, 2) for v in invested],
+        "current_value_eur": round(final_val, 2),
+        "total_invested_eur": round(total_invested, 2),
+        "total_return_pct": round(total_return, 6),
+        "max_drawdown_pct": round(min(drawdown), 6) if drawdown else 0,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("files", nargs="+", type=Path)
@@ -471,6 +494,17 @@ def main():
 
     drawdown = compute_drawdown(portfolio)
 
+    # ── Sub-portfolia: Pasivní (EUR/ETF) vs. Stock Picks (USD) ──────────
+    print("\n📊 Počítám sub-portfolia...")
+    passive_lots = [l for l in all_lots if not l["is_usd"]]
+    picks_lots   = [l for l in all_lots if l["is_usd"]]
+    print(f"  Pasivní ETF: {len(passive_lots)} lotů ({len(set(l['yahoo_ticker'] for l in passive_lots))} tickerů)")
+    print(f"  Stock Picks: {len(picks_lots)} lotů ({len(set(l['yahoo_ticker'] for l in picks_lots))} tickerů)")
+    sub_portfolio_passive = build_sub_portfolio_history(passive_lots, end_date)
+    sub_portfolio_picks   = build_sub_portfolio_history(picks_lots,   end_date)
+    print(f"  Pasivní: {sub_portfolio_passive.get('current_value_eur',0):,.0f} EUR ({sub_portfolio_passive.get('total_return_pct',0)*100:+.2f}%)")
+    print(f"  Picks:   {sub_portfolio_picks.get('current_value_eur',0):,.0f} EUR ({sub_portfolio_picks.get('total_return_pct',0)*100:+.2f}%)")
+
     print("\n💾 Aktualizuji snapshot.json...")
     if "endpoints" in snapshot and "/portfolio/history" in snapshot["endpoints"]:
         target = snapshot["endpoints"]["/portfolio/history"]
@@ -492,6 +526,13 @@ def main():
     target["benchmark_rebased"] = [round(v, 2) for v in benchmark]
     target["drawdown_pct"] = [round(v, 6) for v in drawdown]
     target["cumulative_invested"] = [round(v, 2) for v in invested]
+
+    # Sub-portfolia
+    snapshot["sub_portfolios"] = {
+        "passive": sub_portfolio_passive,
+        "picks":   sub_portfolio_picks,
+    }
+    print(f"  Sub-portfolia přidána do snapshotu")
 
     # Přidej aktuální kurz EUR/CZK do snapshotu
     print("\n💱 Stahuji kurz EUR/CZK...")

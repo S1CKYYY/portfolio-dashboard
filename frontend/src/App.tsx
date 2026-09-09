@@ -3,6 +3,7 @@
  * dense, hairline-separated grid.
  */
 import { useState } from 'react'
+import { usePortfolio } from './lib/portfolio-context'
 import { AllocationPanel } from './components/AllocationPanel'
 import { CorrelationPanel } from './components/CorrelationPanel'
 import { DrawdownPanel } from './components/DrawdownPanel'
@@ -59,6 +60,28 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
   }
   const { health, holdings, summary, history, returns, risk, montecarlo } = data
   const currency = summary.base_currency
+  const { view } = usePortfolio()
+
+  // Filtruj holdings podle vybraného view
+  const filteredHoldings = view === 'all'
+    ? holdings.holdings
+    : holdings.holdings.filter((h: any) => h.portfolio_type === view)
+
+  // Sub-portfolio data ze snapshotu (pokud existuje)
+  const subData = (data as any).sub_portfolios?.[view]
+
+  // Přepočítej celkovou hodnotu filtered holdings
+  const filteredTotalValue = view === 'all'
+    ? holdings.total_value
+    : filteredHoldings.reduce((sum: number, h: any) => sum + (h.value_eur ?? h.current_value ?? 0), 0)
+
+  // History pro vybraný view
+  const viewHistory = view === 'all' ? history : subData
+    ? { ...history, portfolio: subData.portfolio, dates: subData.dates, drawdown_pct: subData.drawdown_pct, cumulative_invested: subData.cumulative_invested }
+    : history
+
+  // Badge pro current view
+  const viewLabel = view === 'all' ? null : view === 'passive' ? '🌱 Pasivní ETF' : '🎯 Stock Picks'
 
   const czkRate = summary.czk_rate ?? 25.3
 
@@ -73,7 +96,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
         <KpiStrip risk={risk} montecarlo={montecarlo} summary={summary} currency={currency} />
         <div className="row row--overview">
           <PerformancePanel
-            history={history}
+            history={viewHistory}
             summary={summary}
             returns={returns}
             currency={currency}
@@ -87,13 +110,23 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           />
         </div>
         <div className="row row--analytics">
-          <DrawdownPanel history={history} risk={risk} />
+          <DrawdownPanel history={viewHistory} risk={risk} />
           <MonteCarloPanel montecarlo={montecarlo} currency={currency} />
           <OutcomeDistributionPanel montecarlo={montecarlo} currency={currency} />
         </div>
+        {viewLabel && (
+          <div style={{ padding: '4px 0 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: '0.12em' }}>{viewLabel}</span>
+            {subData && (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: subData.total_return_pct >= 0 ? 'var(--positive)' : 'var(--negative)' }}>
+                {(subData.total_return_pct * 100 >= 0 ? '+' : '')}{(subData.total_return_pct * 100).toFixed(2)}% celkem
+              </span>
+            )}
+          </div>
+        )}
         <HoldingsPanel
-          holdings={holdings.holdings}
-          totalValue={holdings.total_value}
+          holdings={filteredHoldings}
+          totalValue={filteredTotalValue}
           currency={currency}
         />
         <div className="row row--risk">

@@ -6,6 +6,7 @@ import type { DataConfig } from '../lib/api'
 import type { Health, SummaryPayload } from '../lib/types'
 import { AnimatedNumber } from './AnimatedNumber'
 import { useCurrency } from '../lib/currency'
+import { usePortfolio, type PortfolioView } from '../lib/portfolio-context'
 import { Sparkline } from './Sparkline'
 
 interface TopBarProps {
@@ -42,6 +43,38 @@ function Delta({ label, absolute, percent, delay }: DeltaProps) {
   )
 }
 
+
+function PortfolioSelector() {
+  const { view, setView } = usePortfolio()
+  const options: { value: PortfolioView; label: string; short: string }[] = [
+    { value: 'all',     label: 'Celé portfolio',   short: 'Celé' },
+    { value: 'passive', label: 'Pasivní ETF',       short: 'ETF' },
+    { value: 'picks',   label: 'Stock Picks',       short: 'Picks' },
+  ]
+  return (
+    <div style={{ display: 'flex', gap: 2, padding: '2px', background: 'var(--surface-raised)', borderRadius: 3, border: '1px solid var(--line)' }}>
+      {options.map(o => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => setView(o.value)}
+          style={{
+            background: view === o.value ? 'var(--accent)' : 'transparent',
+            color: view === o.value ? '#000' : 'var(--text-secondary)',
+            border: 'none', cursor: 'pointer', padding: '3px 10px',
+            fontSize: '11px', fontFamily: 'inherit', fontWeight: view === o.value ? 600 : 400,
+            borderRadius: 2, letterSpacing: '0.04em', transition: 'all 0.15s',
+            whiteSpace: 'nowrap',
+          }}
+          title={o.label}
+        >
+          {o.short}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function TopBar({ summary, health, config, page = 'dashboard', onNavigate }: TopBarProps) {
   const { displayCurrency, multiplier, toggle } = useCurrency()
   const today = summary.changes.day
@@ -66,6 +99,8 @@ export function TopBar({ summary, health, config, page = 'dashboard', onNavigate
             <button type="button" className="segmented__option" style={{ opacity: page === 'dashboard' ? 1 : 0.5 }} onClick={() => onNavigate?.('dashboard')}>Portfolio</button>
             <button type="button" className="segmented__option" style={{ opacity: page === 'macro' ? 1 : 0.5 }} onClick={() => onNavigate?.('macro')}>Makro</button>
           </div>
+          {/* Portfolio split selector */}
+          {page === 'dashboard' && <PortfolioSelector />}
           <button
             type="button"
             className="segmented__option"
