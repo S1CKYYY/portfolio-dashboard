@@ -527,12 +527,41 @@ def main():
     target["drawdown_pct"] = [round(v, 6) for v in drawdown]
     target["cumulative_invested"] = [round(v, 2) for v in invested]
 
-    # Sub-portfolia
+    # Injektuj portfolio_type do každého holdingu v snapshotu
+    holdings_list = snapshot.get("endpoints", {}).get("/holdings", {}).get("holdings", [])
+    for h in holdings_list:
+        ticker = h.get("ticker", "")
+        # USD tickers = stock picks, ostatní = pasivní ETF
+        h["portfolio_type"] = "picks" if any(
+            lot["yahoo_ticker"] == ticker and lot["is_usd"]
+            for lot in all_lots
+        ) else "passive"
+    print(f"  portfolio_type přidán do {len(holdings_list)} holdings")
+
+    # Přidej sub-portfolio summary (value a P&L z holdings)
+    def sub_summary(h_list: list) -> dict:
+        total_val   = sum(h.get("current_value",  h.get("value_eur", 0)) or 0 for h in h_list)
+        total_cost  = sum(h.get("cost_basis_eur", h.get("cost_basis", 0)) or 0 for h in h_list)
+        pnl_abs     = total_val - total_cost
+        pnl_pct     = pnl_abs / total_cost if total_cost > 0 else 0
+        return {
+            "total_value_eur":       round(total_val,  2),
+            "total_cost_eur":        round(total_cost, 2),
+            "total_pnl_abs_eur":     round(pnl_abs,    2),
+            "total_pnl_pct":         round(pnl_pct,    6),
+            "holdings_count":        len(h_list),
+        }
+
+    passive_holdings = [h for h in holdings_list if h.get("portfolio_type") == "passive"]
+    picks_holdings   = [h for h in holdings_list if h.get("portfolio_type") == "picks"]
+    sub_portfolio_passive.update(sub_summary(passive_holdings))
+    sub_portfolio_picks.update(sub_summary(picks_holdings))
+
     snapshot["sub_portfolios"] = {
         "passive": sub_portfolio_passive,
         "picks":   sub_portfolio_picks,
     }
-    print(f"  Sub-portfolia přidána do snapshotu")
+    print(f"  Sub-portfolia: passive {sub_portfolio_passive.get('total_value_eur',0):,.0f} EUR, picks {sub_portfolio_picks.get('total_value_eur',0):,.0f} EUR")
 
     # Přidej aktuální kurz EUR/CZK do snapshotu
     print("\n💱 Stahuji kurz EUR/CZK...")

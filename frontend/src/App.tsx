@@ -61,51 +61,72 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
   const { health, holdings, summary, history, returns, risk, montecarlo } = data
   const currency = summary.base_currency
   const { view } = usePortfolio()
+  const subPortfolios = (data as any).sub_portfolios ?? {}
+  const subData = view !== 'all' ? subPortfolios[view] : null
 
-  // Filtruj holdings podle vybraného view
   const filteredHoldings = view === 'all'
     ? holdings.holdings
     : holdings.holdings.filter((h: any) => h.portfolio_type === view)
 
-  // Sub-portfolio data ze snapshotu (pokud existuje)
-  const subData = (data as any).sub_portfolios?.[view]
+  const filteredTotalValue = subData?.total_value_eur
+    ?? filteredHoldings.reduce((s: number, h: any) => s + (h.current_value ?? h.value_eur ?? 0), 0)
 
-  // Přepočítej celkovou hodnotu filtered holdings
-  const filteredTotalValue = view === 'all'
-    ? holdings.total_value
-    : filteredHoldings.reduce((sum: number, h: any) => sum + (h.value_eur ?? h.current_value ?? 0), 0)
-
-  // History pro vybraný view
-  const viewHistory = view === 'all' ? history : subData
+  const viewHistory = subData?.dates?.length
     ? { ...history, portfolio: subData.portfolio, dates: subData.dates, drawdown_pct: subData.drawdown_pct, cumulative_invested: subData.cumulative_invested }
     : history
 
-  // Badge pro current view
-  const viewLabel = view === 'all' ? null : view === 'passive' ? '🌱 Pasivní ETF' : '🎯 Stock Picks'
+  function recomputeAlloc(hs: any[], key: string) {
+    const total = hs.reduce((s: number, h: any) => s + (h.current_value ?? 0), 0)
+    const groups: Record<string, number> = {}
+    for (const h of hs) {
+      const k = h[key] ?? 'Ostatní'
+      groups[k] = (groups[k] ?? 0) + (h.current_value ?? 0)
+    }
+    return Object.entries(groups).map(([k, v]) => ({
+      key: k, label: k, value_eur: v,
+      allocation_pct: total > 0 ? v / total : 0,
+    })).sort((a, b) => b.value_eur - a.value_eur)
+  }
+
+  const viewSummary = (view === 'all' ? summary : {
+    ...summary,
+    total_value: subData?.total_value_eur ?? filteredTotalValue,
+    total_unrealized_pnl: subData?.total_pnl_abs_eur ?? summary.total_unrealized_pnl,
+    total_unrealized_pnl_pct: subData?.total_pnl_pct ?? summary.total_unrealized_pnl_pct,
+    holdings_count: filteredHoldings.length,
+    allocation_by_class: recomputeAlloc(filteredHoldings, 'asset_class'),
+    allocation_by_region: recomputeAlloc(filteredHoldings, 'region'),
+    allocation_by_sector: recomputeAlloc(filteredHoldings, 'sector'),
+    allocation_by_currency: recomputeAlloc(filteredHoldings, 'currency'),
+    benchmark_return_pct: subData?.total_return_pct,
+    sparkline: { values: (subData?.portfolio ?? []).slice(-60) },
+  }) as typeof summary
+
+  const viewLabel = view === 'passive' ? '🌱 Pasivní ETF' : view === 'picks' ? '🎯 Stock Picks' : null
 
   const czkRate = summary.czk_rate ?? 25.3
 
   return (
     <CurrencyProvider czkRate={czkRate}>
     <div className="app">
-      <TopBar summary={summary} health={health} config={config} page={page} onNavigate={navigate} />
+      <TopBar summary={viewSummary} health={health} config={config} page={page} onNavigate={navigate} />
       {page === 'macro' ? (
         <MacroPage />
       ) : (
       <main className="app__main">
-        <KpiStrip risk={risk} montecarlo={montecarlo} summary={summary} currency={currency} />
+        <KpiStrip risk={risk} montecarlo={montecarlo} summary={viewSummary} currency={currency} />
         <div className="row row--overview">
           <PerformancePanel
             history={viewHistory}
-            summary={summary}
+            summary={viewSummary}
             returns={returns}
             currency={currency}
           />
           <AllocationPanel
-            byClass={summary.allocation_by_class}
-            byRegion={summary.allocation_by_region}
-            bySector={summary.allocation_by_sector}
-            byCurrency={summary.allocation_by_currency}
+            byClass={viewSummary.allocation_by_class}
+            byRegion={viewSummary.allocation_by_region}
+            bySector={viewSummary.allocation_by_sector}
+            byCurrency={viewSummary.allocation_by_currency}
             currency={currency}
           />
         </div>
@@ -141,7 +162,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
         </span>
         <span>
           TradingView Lightweight Charts + Apache ECharts · vygenerováno{' '}
-          {formatTimestamp(summary.generated_at)}
+          {formatTimestamp(viewSummary.generated_at)}
         </span>
       </footer>
     </div>
