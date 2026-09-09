@@ -600,10 +600,10 @@ export function MacroPage() {
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
       {/* ── EKONOMICKÝ KALENDÁŘ + NEWS SIDEBAR ── */}
-      <div style={{ width: 320, minWidth: 320, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
+      <div style={{ width: 380, minWidth: 380, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
 
         {/* Ekonomický kalendář */}
-        <div style={{ padding: '10px 12px 6px', borderBottom: '1px solid var(--line)', fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)' }}>
+        <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid var(--line)', fontSize: 10, letterSpacing: '0.16em', color: 'var(--text-tertiary)' }}>
           EKONOMICKÝ KALENDÁŘ
         </div>
         {(data.economic_calendar ?? []).length === 0
@@ -617,11 +617,11 @@ export function MacroPage() {
             const dateObj = new Date(ev.date)
             const dateStr = dateObj.toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', weekday: 'short' })
             return (
-              <div key={i} style={{ padding: '9px 12px', borderBottom: '1px solid var(--line-faint)', opacity: isPast ? 0.45 : 1, background: isToday ? '#1a1a0a' : 'transparent' }}>
+              <div key={i} style={{ padding: '12px 14px', borderBottom: '1px solid var(--line-faint)', opacity: isPast ? 0.45 : 1, background: isToday ? '#1a1a0a' : 'transparent' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <span style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: isToday ? '#f59e0b' : '#52525b' }}>{dateStr}</span>
-                    {ev.time !== '—' && <span style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: '#3f3f46' }}>{ev.time}</span>}
+                    <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: isToday ? '#f59e0b' : '#52525b' }}>{dateStr}</span>
+                    {ev.time !== '—' && <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: '#3f3f46' }}>{ev.time}</span>}
                   </div>
                   <div style={{ display: 'flex', gap: 3 }}>
                     {[1,2,3].map(n => (
@@ -629,12 +629,12 @@ export function MacroPage() {
                     ))}
                   </div>
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: ev.impact === 3 ? '#fca5a5' : '#d4d4d8', lineHeight: 1.3, marginBottom: 2 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: ev.impact === 3 ? '#fca5a5' : '#d4d4d8', lineHeight: 1.3, marginBottom: 2 }}>
                   {catIcon} {ev.event}
                 </div>
-                <div style={{ fontSize: 10, color: '#52525b', lineHeight: 1.35 }}>{ev.detail}</div>
+                <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.45 }}>{ev.detail}</div>
                 {ev.consensus && (
-                  <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: '#3f3f46', marginTop: 3 }}>
+                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: '#52525b', marginTop: 4 }}>
                     oček: {ev.consensus}
                   </div>
                 )}
@@ -672,7 +672,7 @@ export function MacroPage() {
       </div>
 
       {/* ── MAKRO OBSAH ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 40px', minWidth: 0 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 10px 40px', minWidth: 0 }}>
         <div>
           <div style={{ padding: '6px 0 2px', fontSize: 10, color: '#52525b', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
             Aktualizováno: {ts}
