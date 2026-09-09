@@ -104,11 +104,11 @@
   /* Carbon type scale, trimmed to what this dashboard actually uses. */
   --size-micro: 10px;
   --size-label: 11px;
-  --size-caption: 12px;
-  --size-body: 13px;
-  --size-data: 14px;
-  --size-heading: 16px;
-  --size-large: 20px;
+  --size-caption: 13px;
+  --size-body: 14px;
+  --size-data: 15px;
+  --size-heading: 17px;
+  --size-large: 21px;
   --size-display: 34px;
 
   --weight-regular: 400;

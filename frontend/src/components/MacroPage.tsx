@@ -261,19 +261,22 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
   const cutP  = Math.round((exp.cut_probability  ?? 0) * 1000) / 10
   const holdP = Math.round((exp.hold_probability ?? 0) * 1000) / 10
   const hikeP = Math.round((exp.hike_probability ?? 0) * 1000) / 10
+  const hasProb = exp.available && (cutP + holdP + hikeP) > 0
 
+  // Vždy zobraz scénáře — s pravděpodobnostmi nebo bez
   const scenarios = [
-    { label: cutLabel,  prob: cutP,  col: '#22c55e', move: '▼ Snížení' },
-    { label: holdLabel, prob: holdP, col: '#3b82f6', move: 'Beze změny' },
-    { label: hikeLabel, prob: hikeP, col: '#f59e0b', move: '▲ Zvýšení' },
-  ].filter(s => s.prob > 0)
+    { label: cutLabel,  prob: hasProb ? cutP  : null, col: '#22c55e', move: '▼ Snížení' },
+    { label: holdLabel, prob: hasProb ? holdP : null, col: '#3b82f6', move: 'Beze změny', current: true },
+    { label: hikeLabel, prob: hasProb ? hikeP : null, col: '#f59e0b', move: '▲ Zvýšení' },
+  ]
 
   useEffect(() => {
-    if (!chartRef.current || !exp.available || scenarios.length === 0) return
+    if (!chartRef.current || !hasProb) return
     const chart = echarts.init(chartRef.current, 'dark')
+    const chartScenarios = scenarios.filter(s => (s.prob ?? 0) > 0)
     chart.setOption({
       backgroundColor: 'transparent',
-      grid: { top: 30, bottom: 40, left: 16, right: 16 },
+      grid: { top: 28, bottom: 38, left: 16, right: 16 },
       tooltip: {
         trigger: 'axis',
         formatter: (p: any) => `${p[0].name}<br/><b>${p[0].value}%</b>`,
@@ -282,13 +285,11 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
       },
       xAxis: {
         type: 'category',
-        data: scenarios.map(s => s.label),
+        data: chartScenarios.map(s => s.label),
         axisLabel: { color: '#a1a1aa', fontSize: 11, fontFamily: 'IBM Plex Mono' },
         axisLine: { lineStyle: { color: '#3f3f46' } },
         axisTick: { show: false },
-        name: 'Target Rate (bps)',
-        nameLocation: 'middle',
-        nameGap: 28,
+        name: 'Target Rate (bps)', nameLocation: 'middle', nameGap: 28,
         nameTextStyle: { color: '#71717a', fontSize: 10 },
       },
       yAxis: {
@@ -298,7 +299,7 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
       },
       series: [{
         type: 'bar',
-        data: scenarios.map(s => ({
+        data: chartScenarios.map(s => ({
           value: s.prob,
           itemStyle: { color: s.col, borderRadius: [3, 3, 0, 0] },
           label: { show: true, position: 'top', color: s.col, fontSize: 14, fontFamily: 'IBM Plex Mono', fontWeight: 700, formatter: '{c}%' },
@@ -310,7 +311,8 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
   }, [exp])
 
   return (
-    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, gridColumn: 'span 5' }}>
+      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 3 }}>FED FUNDS RATE</div>
@@ -330,57 +332,63 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
         )}
       </div>
 
-      {exp.available && scenarios.length > 0 ? (
-        <>
-          <div style={{ fontSize: 10, color: '#a1a1aa', marginTop: 2 }}>
-            Target Rate Probabilities · {exp.next_meeting ?? ''} Fed Meeting
-          </div>
-          <div style={{ fontSize: 9, color: '#52525b' }}>
-            Current target rate: {Math.round(lowerBound * 100)}-{Math.round(upperBound * 100)} bps
-          </div>
-          <div ref={chartRef} style={{ width: '100%', height: 200 }} />
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'IBM Plex Mono', fontSize: 11 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid #3f3f46' }}>
-                <th style={{ textAlign: 'left',  padding: '5px 6px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>TARGET RATE (BPS)</th>
-                <th style={{ textAlign: 'right', padding: '5px 6px', color: '#71717a', fontWeight: 400, fontSize: 9 }}>PRAVDĚPODOBNOST</th>
-                <th style={{ textAlign: 'right', padding: '5px 6px', color: '#71717a', fontWeight: 400, fontSize: 9 }}>POHYB</th>
-              </tr>
-            </thead>
-            <tbody>
-              {scenarios.map(s => (
-                <tr key={s.label} style={{ borderBottom: '1px solid #1f1f23' }}>
-                  <td style={{ padding: '6px 6px', color: s.col, fontWeight: 500 }}>{s.label}</td>
-                  <td style={{ padding: '6px 6px', textAlign: 'right', fontWeight: 700, color: s.col }}>{s.prob}%</td>
-                  <td style={{ padding: '6px 6px', textAlign: 'right', color: '#71717a', fontSize: 10 }}>{s.move}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, fontSize: 9 }}>
-            {exp.futures_price && <span style={{ color: '#3f3f46', fontFamily: 'IBM Plex Mono' }}>ZQ: {exp.futures_price?.toFixed(4)} · implied {exp.implied_rate?.toFixed(3)}%</span>}
-            <span style={{ color: '#3f3f46' }}>Zdroj: {exp.source}</span>
-            <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
-              target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
-              → CME FedWatch (živá data) ↗
-            </a>
-          </div>
-        </>
-      ) : (
-        <>
-          <div style={{ fontSize: 10, color: '#71717a', lineHeight: 1.5, padding: '6px 8px', background: '#0d0d0f', borderLeft: '2px solid #3f3f46' }}>
-            Základní sazba Fed. Spusť <code>python tools/update_fedwatch.py</code> lokálně pro predikce.
-          </div>
-          <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
-            target="_blank" rel="noopener noreferrer"
-            style={{ fontSize: 11, color: '#60a5fa', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
-            → CME FedWatch ↗
-          </a>
-        </>
-      )}
+      {/* Podnadpis */}
+      <div style={{ fontSize: 11, color: '#a1a1aa', marginTop: 2 }}>
+        Target Rate Probabilities · {exp.next_meeting ?? ''} Fed Meeting
+      </div>
+      <div style={{ fontSize: 10, color: '#52525b' }}>
+        Current target rate: {Math.round(lowerBound * 100)}-{Math.round(upperBound * 100)} bps
+      </div>
+
+      {/* Graf — jen pokud máme pravděpodobnosti */}
+      {hasProb && <div ref={chartRef} style={{ width: '100%', height: 180 }} />}
+
+      {/* Tabulka — VŽDY zobrazena */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'IBM Plex Mono', fontSize: 12, marginTop: hasProb ? 0 : 8 }}>
+        <thead>
+          <tr style={{ borderBottom: '1px solid #3f3f46' }}>
+            <th style={{ textAlign: 'left',  padding: '5px 8px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>TARGET RATE (BPS)</th>
+            <th style={{ textAlign: 'right', padding: '5px 8px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>EASE</th>
+            <th style={{ textAlign: 'right', padding: '5px 8px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>NO CHANGE</th>
+            <th style={{ textAlign: 'right', padding: '5px 8px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>HIKE</th>
+          </tr>
+        </thead>
+        <tbody>
+          {scenarios.map((s, idx) => (
+            <tr key={s.label} style={{ borderBottom: '1px solid #1f1f23', background: s.current ? '#0a100a' : 'transparent' }}>
+              <td style={{ padding: '7px 8px', color: s.col, fontWeight: s.current ? 600 : 400 }}>
+                {s.label}{s.current ? ' (Current)' : ''}
+              </td>
+              {/* EASE — zelená */}
+              <td style={{ padding: '7px 8px', textAlign: 'right', color: idx === 0 && hasProb ? '#22c55e' : '#3f3f46', fontWeight: idx === 0 && hasProb ? 700 : 400 }}>
+                {idx === 0 ? (hasProb ? `${s.prob}%` : '—') : ''}
+              </td>
+              {/* NO CHANGE — modrá */}
+              <td style={{ padding: '7px 8px', textAlign: 'right', color: idx === 1 && hasProb ? '#3b82f6' : '#3f3f46', fontWeight: idx === 1 && hasProb ? 700 : 400 }}>
+                {idx === 1 ? (hasProb ? `${s.prob}%` : '—') : ''}
+              </td>
+              {/* HIKE — žlutá */}
+              <td style={{ padding: '7px 8px', textAlign: 'right', color: idx === 2 && hasProb ? '#f59e0b' : '#3f3f46', fontWeight: idx === 2 && hasProb ? 700 : 400 }}>
+                {idx === 2 ? (hasProb ? `${s.prob}%` : '—') : ''}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Metadata */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, fontSize: 9 }}>
+        {hasProb && exp.futures_price && <span style={{ color: '#3f3f46', fontFamily: 'IBM Plex Mono' }}>ZQ: {exp.futures_price.toFixed(4)} · implied {exp.implied_rate?.toFixed(3)}%</span>}
+        <span style={{ color: '#3f3f46' }}>Zdroj: {hasProb ? exp.source : 'Živá data na CME FedWatch'}</span>
+        <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
+          target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
+          → CME FedWatch (živá data) ↗
+        </a>
+      </div>
     </div>
   )
 }
+
 
 
 // ── News sidebar ──────────────────────────────────────────────────────────
@@ -592,7 +600,7 @@ export function MacroPage() {
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
       {/* ── EKONOMICKÝ KALENDÁŘ + NEWS SIDEBAR ── */}
-      <div style={{ width: 280, minWidth: 280, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
+      <div style={{ width: 320, minWidth: 320, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
 
         {/* Ekonomický kalendář */}
         <div style={{ padding: '10px 12px 6px', borderBottom: '1px solid var(--line)', fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)' }}>
@@ -690,13 +698,12 @@ export function MacroPage() {
 
             {/* Výnosy karty + Fed Rate + graf přes celou šířku */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {/* 5 karet v řadě: 2Y, 10Y, 30Y, Spread, Fed Rate */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+              {/* Výnosy karty */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 <Card label="US 2Y výnos"  card={m.us2y}  suffix="%" decimals={3} />
                 <Card label="US 10Y výnos" card={m.us10y} suffix="%" decimals={3} />
                 <Card label="US 30Y výnos" card={m.us30y} suffix="%" decimals={3} />
                 <YieldCurve us2y={m.us2y} us10y={m.us10y} spread={m.yield_spread} />
-                <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
               </div>
               {/* Graf přes celou šířku, vyšší */}
               {bondSeries.length > 0 && (
@@ -705,6 +712,8 @@ export function MacroPage() {
                   <HistoryChart series={bondSeries} height={280} tight={true} />
                 </div>
               )}
+              {/* Fed Funds Rate tabulka — přes celou šířku */}
+              <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
             </div>
           </div>
 
