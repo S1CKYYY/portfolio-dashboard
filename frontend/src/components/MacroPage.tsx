@@ -246,7 +246,11 @@ function BriefBlock() {
   )
 }
 
-function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedFunds?: FredCard }) {
+function RateCard({ exp, fedFunds, brief }: {
+  exp: MacroData['rate_expectations']
+  fedFunds?: FredCard
+  brief?: { rate_probabilities?: { cut: number; hold: number; hike: number; source?: string; next_meeting?: string; futures_price?: number; implied_rate?: number } } | null
+}) {
   const chartRef = useRef<HTMLDivElement>(null)
   const rate = fedFunds?.value ?? exp.current_rate ?? 3.75
 
@@ -258,118 +262,131 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
   const holdLabel = toBps(lowerBound)
   const hikeLabel = toBps(upperBound)
 
-  const cutP  = Math.round((exp.cut_probability  ?? 0) * 1000) / 10
-  const holdP = Math.round((exp.hold_probability ?? 0) * 1000) / 10
-  const hikeP = Math.round((exp.hike_probability ?? 0) * 1000) / 10
-  const hasProb = exp.available && (cutP + holdP + hikeP) > 0
+  // Pravděpodobnosti: brief.json má přednost (daily push), pak exp z macro.json
+  const bp = brief?.rate_probabilities
+  const rawCut  = bp?.cut  ?? exp.cut_probability  ?? 0
+  const rawHold = bp?.hold ?? exp.hold_probability ?? 0
+  const rawHike = bp?.hike ?? exp.hike_probability ?? 0
+  const source  = bp?.source ?? exp.source
+  const nextMtg = bp?.next_meeting ?? exp.next_meeting
+  const fprice  = bp?.futures_price ?? exp.futures_price
+  const irate   = bp?.implied_rate ?? exp.implied_rate
 
-  // Vždy zobraz scénáře — s pravděpodobnostmi nebo bez
+  const cutP  = Math.round(rawCut  * 1000) / 10
+  const holdP = Math.round(rawHold * 1000) / 10
+  const hikeP = Math.round(rawHike * 1000) / 10
+  const hasProb = (cutP + holdP + hikeP) > 0
+
   const scenarios = [
-    { label: cutLabel,  prob: hasProb ? cutP  : null, col: '#22c55e', move: '▼ Snížení' },
-    { label: holdLabel, prob: hasProb ? holdP : null, col: '#3b82f6', move: 'Beze změny', current: true },
-    { label: hikeLabel, prob: hasProb ? hikeP : null, col: '#f59e0b', move: '▲ Zvýšení' },
+    { label: cutLabel,  prob: hasProb ? cutP  : null, col: '#22c55e', ease: true,  noChange: false, hike: false, move: '▼ Snížení' },
+    { label: holdLabel, prob: hasProb ? holdP : null, col: '#3b82f6', ease: false, noChange: true,  hike: false, move: 'Beze změny', current: true },
+    { label: hikeLabel, prob: hasProb ? hikeP : null, col: '#f59e0b', ease: false, noChange: false, hike: true,  move: '▲ Zvýšení' },
   ]
 
   useEffect(() => {
     if (!chartRef.current || !hasProb) return
     const chart = echarts.init(chartRef.current, 'dark')
-    const chartScenarios = scenarios.filter(s => (s.prob ?? 0) > 0)
+    const vis = scenarios.filter(s => (s.prob ?? 0) > 0)
     chart.setOption({
       backgroundColor: 'transparent',
       grid: { top: 28, bottom: 38, left: 16, right: 16 },
       tooltip: {
         trigger: 'axis',
         formatter: (p: any) => `${p[0].name}<br/><b>${p[0].value}%</b>`,
-        backgroundColor: '#27272a', borderColor: '#3f3f46',
-        textStyle: { color: '#fafafa', fontFamily: 'JetBrains Mono', fontSize: 12 },
+        backgroundColor: '#1a1c20', borderColor: '#292c32',
+        textStyle: { color: '#e9ebee', fontFamily: 'JetBrains Mono', fontSize: 12 },
       },
       xAxis: {
-        type: 'category',
-        data: chartScenarios.map(s => s.label),
-        axisLabel: { color: '#a1a1aa', fontSize: 11, fontFamily: 'JetBrains Mono' },
-        axisLine: { lineStyle: { color: '#3f3f46' } },
-        axisTick: { show: false },
+        type: 'category', data: vis.map(s => s.label),
+        axisLabel: { color: '#6a7280', fontSize: 11, fontFamily: 'JetBrains Mono' },
+        axisLine: { lineStyle: { color: '#292c32' } }, axisTick: { show: false },
         name: 'Target Rate (bps)', nameLocation: 'middle', nameGap: 28,
-        nameTextStyle: { color: '#71717a', fontSize: 10 },
+        nameTextStyle: { color: '#6a7280', fontSize: 10 },
       },
       yAxis: {
         type: 'value', min: 0, max: 100,
-        axisLabel: { color: '#71717a', fontSize: 10, formatter: '{value}%' },
-        splitLine: { lineStyle: { color: '#1f1f23', type: 'dashed' } },
+        axisLabel: { color: '#6a7280', fontSize: 10, formatter: '{value}%' },
+        splitLine: { lineStyle: { color: '#1a1c20', type: 'dashed' } },
       },
       series: [{
         type: 'bar',
-        data: chartScenarios.map(s => ({
+        data: vis.map(s => ({
           value: s.prob,
           itemStyle: { color: s.col, borderRadius: [3, 3, 0, 0] },
-          label: { show: true, position: 'top', color: s.col, fontSize: 14, fontFamily: 'JetBrains Mono', fontWeight: 700, formatter: '{c}%' },
+          label: { show: true, position: 'top', color: s.col, fontSize: 15, fontFamily: 'JetBrains Mono', fontWeight: 700, formatter: '{c}%' },
         })),
         barMaxWidth: 80,
       }],
     })
     return () => chart.dispose()
-  }, [exp])
+  }, [exp, brief])
 
   return (
-    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, height: '100%' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 3 }}>FED FUNDS RATE</div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 600 }}>{rate.toFixed(2)}%</div>
           {fedFunds?.prev != null && (
-            <div style={{ fontSize: 11, color: '#71717a', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
               {rate < fedFunds.prev ? '▼ sníženo' : rate > fedFunds.prev ? '▲ zvýšeno' : '→'} z {fedFunds.prev.toFixed(2)}%
             </div>
           )}
-          {fedFunds?.date && <div style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--font-mono)' }}>{fedFunds.date}</div>}
+          {fedFunds?.date && <div style={{ fontSize: 9, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{fedFunds.date}</div>}
         </div>
-        {exp.next_meeting && (
+        {nextMtg && (
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 9, color: 'var(--text-tertiary)', letterSpacing: '0.1em' }}>PŘÍŠTÍ FOMC</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: '#a1a1aa', marginTop: 2 }}>{exp.next_meeting}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{nextMtg}</div>
           </div>
         )}
       </div>
 
-      {/* Podnadpis */}
-      <div style={{ fontSize: 11, color: '#a1a1aa', marginTop: 2 }}>
-        Target Rate Probabilities · {exp.next_meeting ?? ''} Fed Meeting
-      </div>
-      <div style={{ fontSize: 10, color: '#52525b' }}>
-        Current target rate: {Math.round(lowerBound * 100)}-{Math.round(upperBound * 100)} bps
-      </div>
+      <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Target Rate Probabilities · {nextMtg ?? ''} Fed Meeting</div>
+      <div style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>Current target rate: {Math.round(lowerBound * 100)}-{Math.round(upperBound * 100)} bps</div>
 
-      {/* Graf — jen pokud máme pravděpodobnosti */}
-      {hasProb && <div ref={chartRef} style={{ width: '100%', height: 140 }} />}
+      {/* Bar chart — jen s daty */}
+      {hasProb
+        ? <div ref={chartRef} style={{ width: '100%', height: 140 }} />
+        : (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 6, padding: '16px 0' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.6 }}>
+              Pravděpodobnosti budou dostupné<br/>po pushnutí morning briefe
+            </div>
+            <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
+              target="_blank" rel="noopener noreferrer"
+              style={{ fontSize: 10, color: 'var(--accent)', marginTop: 4 }}>
+              → CME FedWatch ↗
+            </a>
+          </div>
+        )
+      }
 
-      {/* Tabulka — VŽDY zobrazena */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'JetBrains Mono', fontSize: 12, marginTop: hasProb ? 0 : 8 }}>
+      {/* Tabulka — VŽDY */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'JetBrains Mono', fontSize: 12 }}>
         <thead>
-          <tr style={{ borderBottom: '1px solid #3f3f46' }}>
-            <th style={{ textAlign: 'left',  padding: '5px 8px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>TARGET RATE (BPS)</th>
-            <th style={{ textAlign: 'right', padding: '5px 8px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>EASE</th>
-            <th style={{ textAlign: 'right', padding: '5px 8px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>NO CHANGE</th>
-            <th style={{ textAlign: 'right', padding: '5px 8px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>HIKE</th>
+          <tr style={{ borderBottom: '1px solid var(--line-strong)' }}>
+            <th style={{ textAlign: 'left',  padding: '5px 8px', color: 'var(--text-tertiary)', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>TARGET RATE (BPS)</th>
+            <th style={{ textAlign: 'right', padding: '5px 8px', color: '#22c55e',             fontWeight: 500, fontSize: 9, letterSpacing: '0.1em' }}>EASE</th>
+            <th style={{ textAlign: 'right', padding: '5px 8px', color: '#3b82f6',             fontWeight: 500, fontSize: 9, letterSpacing: '0.1em' }}>NO CHANGE</th>
+            <th style={{ textAlign: 'right', padding: '5px 8px', color: '#f59e0b',             fontWeight: 500, fontSize: 9, letterSpacing: '0.1em' }}>HIKE</th>
           </tr>
         </thead>
         <tbody>
-          {scenarios.map((s, idx) => (
-            <tr key={s.label} style={{ borderBottom: '1px solid #1f1f23', background: s.current ? '#0a100a' : 'transparent' }}>
-              <td style={{ padding: '7px 8px', color: s.col, fontWeight: s.current ? 600 : 400 }}>
-                {s.label}{s.current ? ' (Current)' : ''}
+          {scenarios.map(s => (
+            <tr key={s.label} style={{ borderBottom: '1px solid var(--line-faint)', background: s.current ? '#0a100a' : 'transparent' }}>
+              <td style={{ padding: '8px 8px', color: s.col, fontWeight: s.current ? 600 : 400 }}>
+                {s.label}{s.current ? '\u00a0(Current)' : ''}
               </td>
-              {/* EASE — zelená */}
-              <td style={{ padding: '7px 8px', textAlign: 'right', color: idx === 0 && hasProb ? '#22c55e' : '#3f3f46', fontWeight: idx === 0 && hasProb ? 700 : 400 }}>
-                {idx === 0 ? (hasProb ? `${s.prob}%` : '—') : ''}
+              <td style={{ padding: '8px 8px', textAlign: 'right', color: s.ease && hasProb ? '#22c55e' : 'var(--text-disabled)', fontWeight: s.ease && hasProb ? 700 : 400 }}>
+                {s.ease ? (hasProb ? `${s.prob}%` : '—') : ''}
               </td>
-              {/* NO CHANGE — modrá */}
-              <td style={{ padding: '7px 8px', textAlign: 'right', color: idx === 1 && hasProb ? '#3b82f6' : '#3f3f46', fontWeight: idx === 1 && hasProb ? 700 : 400 }}>
-                {idx === 1 ? (hasProb ? `${s.prob}%` : '—') : ''}
+              <td style={{ padding: '8px 8px', textAlign: 'right', color: s.noChange && hasProb ? '#3b82f6' : 'var(--text-disabled)', fontWeight: s.noChange && hasProb ? 700 : 400 }}>
+                {s.noChange ? (hasProb ? `${s.prob}%` : '—') : ''}
               </td>
-              {/* HIKE — žlutá */}
-              <td style={{ padding: '7px 8px', textAlign: 'right', color: idx === 2 && hasProb ? '#f59e0b' : '#3f3f46', fontWeight: idx === 2 && hasProb ? 700 : 400 }}>
-                {idx === 2 ? (hasProb ? `${s.prob}%` : '—') : ''}
+              <td style={{ padding: '8px 8px', textAlign: 'right', color: s.hike && hasProb ? '#f59e0b' : 'var(--text-disabled)', fontWeight: s.hike && hasProb ? 700 : 400 }}>
+                {s.hike ? (hasProb ? `${s.prob}%` : '—') : ''}
               </td>
             </tr>
           ))}
@@ -377,17 +394,18 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
       </table>
 
       {/* Metadata */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, fontSize: 9 }}>
-        {hasProb && exp.futures_price && <span style={{ color: '#3f3f46', fontFamily: 'JetBrains Mono' }}>ZQ: {exp.futures_price.toFixed(4)} · implied {exp.implied_rate?.toFixed(3)}%</span>}
-        <span style={{ color: '#3f3f46' }}>Zdroj: {hasProb ? exp.source : 'Živá data na CME FedWatch'}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 'auto', paddingTop: 8, fontSize: 9 }}>
+        {fprice && <span style={{ color: 'var(--text-disabled)', fontFamily: 'JetBrains Mono' }}>ZQ: {fprice.toFixed(4)} · implied {irate?.toFixed(3)}%</span>}
+        {source && <span style={{ color: 'var(--text-disabled)' }}>Zdroj: {source}</span>}
         <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
-          target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
+          target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', marginTop: 2 }}>
           → CME FedWatch (živá data) ↗
         </a>
       </div>
     </div>
   )
 }
+
 
 
 
@@ -574,6 +592,9 @@ function CurrencyImpact({ title, card, portfolioShare, favorableHigh, explanatio
 
 export function MacroPage() {
   const [data, setData] = useState<MacroData | null>(null)
+  const [briefData, _setBriefData] = useState<{
+    rate_probabilities?: { cut: number; hold: number; hike: number; source?: string; next_meeting?: string; futures_price?: number; implied_rate?: number }
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => { fetchMacro().then(d => { setData(d); setLoading(false) }) }, [])
 
@@ -686,7 +707,7 @@ export function MacroPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 10, marginBottom: 12 }}>
 
             {/* LEVÝ SLOUPEC: VIX + Target Rate */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignSelf: 'stretch' }}>
               {/* VIX gauge + history */}
               <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '12px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden' }}>
                 <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 2 }}>VIX — INDEX STRACHU</div>
@@ -697,8 +718,10 @@ export function MacroPage() {
                   </div>
                 )}
               </div>
-              {/* Target Rate tabulka pod VIX */}
-              <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
+              {/* Target Rate tabulka pod VIX — roztažená na zbytek výšky */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} brief={briefData} />
+              </div>
             </div>
 
             {/* PRAVÝ SLOUPEC: Výnosy karty + graf výnosů + Fed Funds Rate graf */}
