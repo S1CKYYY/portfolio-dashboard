@@ -520,10 +520,18 @@ def main():
         "vix":     "^VIX",    "dxy":     "DX-Y.NYB",
         "eur_usd": "EURUSD=X","usd_czk": "USDCZK=X","eur_czk": "EURCZK=X",
         "brent":   "BZ=F",    "gold":    "GC=F",
-        "us10y":   "^TNX",    "us2y":    "^IRX",     "us30y":   "^TYX",
+        "us10y":   "^TNX",    "us2y":    "^IRX",     "us30y":   "^TYX",  # ^TNX = 10Y Treasury yield
         "us3m":    "^IRX",    # 3M T-bill
         "sp500":   "^GSPC",   # pro CPI/mzdy graf (2y)
     }, period="2y")  # 2y = dostatek pro YoY výpočty
+
+    # Retry us10y pokud chybí (^TNX někdy selže při prvním downloadu)
+    if not market.get('us10y', {}).get('history', {}).get('dates', []):
+        print("  Retrying us10y ^TNX...")
+        retry = fetch_yahoo({"us10y": "^TNX"}, period="2y")
+        if retry.get("us10y", {}).get("history", {}).get("dates", []):
+            market["us10y"] = retry["us10y"]
+            print(f"  us10y retry OK: {len(retry['us10y']['history']['dates'])} bodů")
 
     if "us10y" in market and "us2y" in market:
         market["yield_spread"] = yield_spread(market)

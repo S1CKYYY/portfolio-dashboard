@@ -195,51 +195,51 @@ function YieldCurve({ us2y, us10y, spread }: { us2y?: MarketCard; us10y?: Market
 // ── Rate card ─────────────────────────────────────────────────────────────
 
 
-function BriefBlock() {
-  const [brief, setBrief] = useState<{
-    generated_at?: string | null; session?: string | null; headline?: string | null;
-    summary_html?: string | null; key_points?: Array<{ icon: string; text: string; color?: string }>; market_session?: string | null;
-  } | null>(null)
-
-  useEffect(() => {
-    fetch('./brief.json').then(r => r.ok ? r.json() : null).then(d => {
-      if (d?.generated_at) setBrief(d)
-    }).catch(() => {})
-  }, [])
-
-  if (!brief) return null
+function BriefBlock({ data }: { data: { generated_at?: string | null; session?: string | null; headline?: string | null; summary_html?: string | null; key_points?: Array<{ icon: string; text: string; color?: string }>; market_session?: string | null } | null }) {
+  if (!data?.generated_at) return (
+    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', padding: '14px 18px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.18em', color: 'var(--text-tertiary)', marginBottom: 4 }}>MANAŽERSKÉ SHRNUTÍ</div>
+        <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Čeká se na morning brief — bude pushnut automaticky ráno</div>
+      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-disabled)', whiteSpace: 'nowrap' }}>brief.json · prázdný</div>
+    </div>
+  )
 
   return (
-    <div style={{ background: 'linear-gradient(135deg,#0f1629 0%,#0a0f1a 100%)', border: '1px solid #1e3a5f', borderLeft: '3px solid #60a5fa', borderRadius: 3, marginBottom: 16, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', borderBottom: '1px solid #1e3a5f' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.18em', color: '#60a5fa' }}>MANAŽERSKÉ SHRNUTÍ</span>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {brief.market_session && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#fb923c', background: '#1c0a00', border: '1px solid #7c2d12', padding: '2px 8px', borderRadius: 2 }}>{brief.market_session}</span>
-          )}
-          {brief.generated_at && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#3f3f46' }}>
-              {new Date(brief.generated_at).toLocaleString('cs-CZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-            </span>
+    <div style={{ background: 'linear-gradient(135deg,#0a0f1c 0%,#08090e 100%)', border: '1px solid #1e3a5f', borderLeft: '3px solid var(--accent)', marginBottom: 14, overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 18px', borderBottom: '1px solid #1a2840' }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.18em', color: 'var(--accent)' }}>MANAŽERSKÉ SHRNUTÍ</span>
+          {data.market_session && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#fb923c', background: '#1c0a00', border: '1px solid #7c2d12', padding: '2px 8px', borderRadius: 2 }}>{data.market_session}</span>
           )}
         </div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-disabled)' }}>
+          {data.generated_at ? new Date(data.generated_at).toLocaleString('cs-CZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+        </div>
       </div>
-      <div style={{ padding: '12px 14px' }}>
-        {brief.headline && (
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginBottom: 10, lineHeight: 1.4 }}>{brief.headline}</div>
-        )}
-        {brief.key_points && brief.key_points.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {brief.key_points.map((p, i) => (
-              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, lineHeight: 1.55, color: '#94a3b8' }}>
-                <span style={{ flexShrink: 0, color: p.color ?? '#60a5fa' }}>{p.icon}</span>
+
+      {/* Body */}
+      <div style={{ padding: '14px 18px', display: 'grid', gridTemplateColumns: (data.key_points?.length ?? 0) > 0 ? '1fr 1fr' : '1fr', gap: 16 }}>
+        <div>
+          {data.headline && (
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', marginBottom: 10, lineHeight: 1.4 }}>{data.headline}</div>
+          )}
+          {data.summary_html && (
+            <div style={{ fontSize: 13, lineHeight: 1.7, color: '#94a3b8' }} dangerouslySetInnerHTML={{ __html: data.summary_html }} />
+          )}
+        </div>
+        {(data.key_points?.length ?? 0) > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, borderLeft: '1px solid #1a2840', paddingLeft: 16 }}>
+            {(data.key_points ?? []).map((p: { icon: string; text: string; color?: string }, i: number) => (
+              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55, color: '#94a3b8' }}>
+                <span style={{ flexShrink: 0, color: p.color ?? 'var(--accent)' }}>{p.icon}</span>
                 <span dangerouslySetInnerHTML={{ __html: p.text }} />
               </div>
             ))}
           </div>
-        )}
-        {brief.summary_html && !brief.key_points?.length && (
-          <div style={{ fontSize: 12, lineHeight: 1.7, color: '#94a3b8' }} dangerouslySetInnerHTML={{ __html: brief.summary_html }} />
         )}
       </div>
     </div>
@@ -593,6 +593,9 @@ function CurrencyImpact({ title, card, portfolioShare, favorableHigh, explanatio
 export function MacroPage() {
   const [data, setData] = useState<MacroData | null>(null)
   const [briefData, _setBriefData] = useState<{
+    generated_at?: string | null; session?: string | null; headline?: string | null;
+    summary_html?: string | null; key_points?: Array<{ icon: string; text: string; color?: string }>;
+    market_session?: string | null;
     rate_probabilities?: { cut: number; hold: number; hike: number; source?: string; next_meeting?: string; futures_price?: number; implied_rate?: number }
   } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -700,7 +703,7 @@ export function MacroPage() {
           </div>
 
           {/* ── MANAŽERSKÉ SHRNUTÍ (brief.json) ── */}
-          <BriefBlock />
+          <BriefBlock data={briefData} />
 
           {/* ── SENTIMENT & DLUHOPISY ── */}
           <Sec title="SENTIMENT & DLUHOPISY" />
