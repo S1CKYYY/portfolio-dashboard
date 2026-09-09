@@ -441,17 +441,71 @@ def build_sub_portfolio_history(lots: list, end_date: str, eurusd_rates=None) ->
     final_val = portfolio[-1] if portfolio else 0
     total_invested = invested[-1] if invested else 0
     total_return = (final_val - total_invested) / total_invested if total_invested > 0 else 0
+    import numpy as np
+    port_arr = np.array(portfolio)
+    bench_arr = np.array(benchmark)
+    tday = 252
+    rf = 0.02
+
+    # Denní výnosy
+    daily_ret = np.diff(port_arr) / port_arr[:-1]
+    bench_ret = np.diff(bench_arr) / bench_arr[:-1]
+
+    # Roční výnos a volatilita
+    ann_ret = (final_val / total_invested) ** (tday / max(len(portfolio), 1)) - 1 if total_invested > 0 else 0
+    vol = float(np.std(daily_ret) * np.sqrt(tday)) if len(daily_ret) > 1 else 0
+    down = float(np.std(daily_ret[daily_ret < 0]) * np.sqrt(tday)) if len(daily_ret[daily_ret < 0]) > 1 else 0
+    sharpe  = (ann_ret - rf) / vol  if vol > 0 else 0
+    sortino = (ann_ret - rf) / down if down > 0 else 0
+
+    # Beta vs benchmark
+    if len(daily_ret) > 1 and len(bench_ret) > 1:
+        min_len = min(len(daily_ret), len(bench_ret))
+        cov = np.cov(daily_ret[-min_len:], bench_ret[-min_len:])
+        beta = float(cov[0,1] / cov[1,1]) if cov[1,1] > 0 else 1.0
+    else:
+        beta = 1.0
+
+    # Max drawdown detail
+    min_dd = min(drawdown) if drawdown else 0
+    min_idx = drawdown.index(min_dd) if drawdown else 0
+    peak_idx = max(range(min_idx + 1), key=lambda i: portfolio[i]) if min_idx > 0 and portfolio else 0
+    recovery_idx = None
+    if portfolio and peak_idx < len(portfolio):
+        peak_v = portfolio[peak_idx]
+        for i in range(min_idx + 1, len(portfolio)):
+            if portfolio[i] >= peak_v:
+                recovery_idx = i; break
+
     return {
         "dates": dates,
         "portfolio": [round(v, 2) for v in portfolio],
-        "benchmark_rebased": [round(v, 2) for v in benchmark],  # cash-flow matched na toto sub-ptf
+        "benchmark_rebased": [round(v, 2) for v in benchmark],
         "drawdown_pct": [round(v, 6) for v in drawdown],
         "cumulative_invested": [round(v, 2) for v in invested],
         "current_value_eur": round(final_val, 2),
         "total_invested_eur": round(total_invested, 2),
         "total_return_pct": round(total_return, 6),
-        "max_drawdown_pct": round(min(drawdown), 6) if drawdown else 0,
+        "max_drawdown_pct": round(min_dd, 6),
         "benchmark_return_pct": round((benchmark[-1] - total_invested) / total_invested, 6) if total_invested > 0 and benchmark else 0,
+        # Risk metriky pro sub-portfolio
+        "risk": {
+            "volatility_annualized_pct": round(vol, 4),
+            "downside_deviation_pct": round(down, 4),
+            "sharpe_ratio": round(sharpe, 4),
+            "sortino_ratio": round(sortino, 4),
+            "max_drawdown": {
+                "pct": round(min_dd, 6),
+                "peak_date": dates[peak_idx] if peak_idx < len(dates) else None,
+                "trough_date": dates[min_idx] if min_idx < len(dates) else None,
+                "peak_value": round(portfolio[peak_idx], 2) if peak_idx < len(portfolio) else None,
+                "trough_value": round(portfolio[min_idx], 2) if min_idx < len(portfolio) else None,
+                "recovery_date": dates[recovery_idx] if recovery_idx and recovery_idx < len(dates) else None,
+            },
+            "beta": {"value": round(beta, 4), "benchmark": "VUAA.DE", "benchmark_name": "VUAA.DE"},
+            "risk_free_rate": rf,
+            "trading_days_per_year": tday,
+        },
     }
 
 

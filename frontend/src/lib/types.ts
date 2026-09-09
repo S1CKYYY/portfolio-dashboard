@@ -226,6 +226,16 @@ export interface SubPortfolioData {
   total_return_pct: number
   max_drawdown_pct: number
   benchmark_return_pct: number
+  risk?: {
+    volatility_annualized_pct: number
+    downside_deviation_pct: number
+    sharpe_ratio: number
+    sortino_ratio: number
+    max_drawdown: { pct: number; peak_date: string | null; trough_date: string | null; peak_value: number | null; trough_value: number | null; recovery_date: string | null }
+    beta: { value: number; benchmark: string; benchmark_name: string }
+    risk_free_rate: number
+    trading_days_per_year: number
+  }
 }
 
 export interface Analytics {

@@ -102,6 +102,11 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
     sparkline: { values: (subData?.portfolio ?? []).slice(-60) },
   }) as typeof summary
 
+  // Přepočítané risk metriky pro sub-portfolio
+  const viewRisk = (view !== 'all' && subData?.risk)
+    ? { ...risk, ...subData.risk, max_drawdown: subData.risk.max_drawdown }
+    : risk
+
   const viewLabel = view === 'passive' ? '🌱 Pasivní ETF' : view === 'picks' ? '🎯 Stock Picks' : null
 
   const czkRate = summary.czk_rate ?? 25.3
@@ -114,7 +119,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
         <MacroPage />
       ) : (
       <main className="app__main">
-        <KpiStrip risk={risk} montecarlo={montecarlo} summary={viewSummary} currency={currency} />
+        <KpiStrip risk={viewRisk} montecarlo={montecarlo} summary={viewSummary} currency={currency} />
         <div className="row row--overview">
           <PerformancePanel
             history={viewHistory}
@@ -131,7 +136,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           />
         </div>
         <div className="row row--analytics">
-          <DrawdownPanel history={viewHistory} risk={risk} />
+          <DrawdownPanel history={viewHistory} risk={viewRisk} />
           <MonteCarloPanel montecarlo={montecarlo} currency={currency} />
           <OutcomeDistributionPanel montecarlo={montecarlo} currency={currency} />
         </div>
@@ -151,7 +156,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           currency={currency}
         />
         <div className="row row--risk">
-          <RiskPanel risk={risk} currency={currency} />
+          <RiskPanel risk={viewRisk} currency={currency} />
           <CorrelationPanel correlation={risk.correlation} />
         </div>
       </main>
