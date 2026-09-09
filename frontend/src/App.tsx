@@ -72,7 +72,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
     ?? filteredHoldings.reduce((s: number, h: any) => s + (h.value_base ?? 0), 0)
 
   const viewHistory = subData?.dates?.length
-    ? { ...history, portfolio: subData.portfolio, dates: subData.dates, drawdown_pct: subData.drawdown_pct, cumulative_invested: subData.cumulative_invested }
+    ? { ...history, portfolio: subData.portfolio, dates: subData.dates, drawdown_pct: subData.drawdown_pct, cumulative_invested: subData.cumulative_invested, benchmark_rebased: subData.benchmark_rebased ?? [] }
     : history
 
   function recomputeAlloc(hs: any[], key: string) {
@@ -90,15 +90,15 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
 
   const viewSummary = (view === 'all' ? summary : {
     ...summary,
-    total_value: subData?.total_value_eur ?? filteredTotalValue,
-    total_unrealized_pnl: subData?.total_pnl_abs_eur ?? summary.total_unrealized_pnl,
-    total_unrealized_pnl_pct: subData?.total_pnl_pct ?? summary.total_unrealized_pnl_pct,
+    total_value: subData?.current_value_eur ?? filteredTotalValue,
+    total_unrealized_pnl: subData ? (subData.current_value_eur - subData.total_invested_eur) : summary.total_unrealized_pnl,
+    total_unrealized_pnl_pct: subData?.total_return_pct ?? summary.total_unrealized_pnl_pct,
     holdings_count: filteredHoldings.length,
     allocation_by_class: recomputeAlloc(filteredHoldings, 'asset_class'),
     allocation_by_region: recomputeAlloc(filteredHoldings, 'region'),
     allocation_by_sector: recomputeAlloc(filteredHoldings, 'sector'),
     allocation_by_currency: recomputeAlloc(filteredHoldings, 'currency'),
-    benchmark_return_pct: subData?.total_return_pct,
+    benchmark_return_pct: subData?.benchmark_return_pct,
     sparkline: { values: (subData?.portfolio ?? []).slice(-60) },
   }) as typeof summary
 
