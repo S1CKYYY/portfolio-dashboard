@@ -3,7 +3,7 @@
  * dense, hairline-separated grid.
  */
 import { useState } from 'react'
-import { usePortfolio } from './lib/portfolio-context'
+import { usePortfolio, PortfolioProvider } from './lib/portfolio-context'
 import { AllocationPanel } from './components/AllocationPanel'
 import { CorrelationPanel } from './components/CorrelationPanel'
 import { DrawdownPanel } from './components/DrawdownPanel'
@@ -47,7 +47,7 @@ export default function App() {
   if (loading) return <LoadingState />
   if (error) return <ErrorState error={error} onRetry={reload} />
   if (!data) return null
-  return <AppInner data={data} config={config} />
+  return <PortfolioProvider><AppInner data={data} config={config} /></PortfolioProvider>
 }
 
 function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAnalytics>['data']>; config: ReturnType<typeof useAnalytics>['config'] }) {
