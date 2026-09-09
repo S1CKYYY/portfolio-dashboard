@@ -102,6 +102,7 @@ async function loadFromSnapshot(url: string, signal?: AbortSignal): Promise<Anal
     returns: endpoints[ROUTES.returns],
     risk: endpoints[ROUTES.risk],
     montecarlo: endpoints[ROUTES.montecarlo],
+    sub_portfolios: snapshot.sub_portfolios,
   }
 }
 

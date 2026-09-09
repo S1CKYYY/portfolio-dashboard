@@ -215,6 +215,17 @@ export interface MonteCarloPayload extends Envelope {
 }
 
 /** Every payload the dashboard needs, loaded together. */
+export interface SubPortfolioData {
+  dates: string[]
+  portfolio: number[]
+  drawdown_pct: number[]
+  cumulative_invested: number[]
+  current_value_eur: number
+  total_invested_eur: number
+  total_return_pct: number
+  max_drawdown_pct: number
+}
+
 export interface Analytics {
   health: Health
   holdings: HoldingsPayload
@@ -223,6 +234,7 @@ export interface Analytics {
   returns: ReturnsPayload
   risk: RiskPayload
   montecarlo: MonteCarloPayload
+  sub_portfolios?: { passive?: SubPortfolioData; picks?: SubPortfolioData }
 }
 
 /** Shape of the committed `snapshot.json`. */
@@ -230,6 +242,7 @@ export interface Snapshot {
   generated_at: string
   as_of: string
   base_currency: string
+  sub_portfolios?: { passive?: SubPortfolioData; picks?: SubPortfolioData }
   endpoints: {
     '/health': Health
     '/holdings': HoldingsPayload
