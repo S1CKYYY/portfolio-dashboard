@@ -218,12 +218,14 @@ export interface MonteCarloPayload extends Envelope {
 export interface SubPortfolioData {
   dates: string[]
   portfolio: number[]
+  benchmark_rebased: number[]
   drawdown_pct: number[]
   cumulative_invested: number[]
   current_value_eur: number
   total_invested_eur: number
   total_return_pct: number
   max_drawdown_pct: number
+  benchmark_return_pct: number
 }
 
 export interface Analytics {

@@ -444,12 +444,14 @@ def build_sub_portfolio_history(lots: list, end_date: str, eurusd_rates=None) ->
     return {
         "dates": dates,
         "portfolio": [round(v, 2) for v in portfolio],
+        "benchmark_rebased": [round(v, 2) for v in benchmark],  # cash-flow matched na toto sub-ptf
         "drawdown_pct": [round(v, 6) for v in drawdown],
         "cumulative_invested": [round(v, 2) for v in invested],
         "current_value_eur": round(final_val, 2),
         "total_invested_eur": round(total_invested, 2),
         "total_return_pct": round(total_return, 6),
         "max_drawdown_pct": round(min(drawdown), 6) if drawdown else 0,
+        "benchmark_return_pct": round((benchmark[-1] - total_invested) / total_invested, 6) if total_invested > 0 and benchmark else 0,
     }
 
 
