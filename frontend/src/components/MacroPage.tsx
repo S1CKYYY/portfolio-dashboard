@@ -322,7 +322,7 @@ function RateCard({ exp, fedFunds, brief }: {
   }, [exp, brief])
 
   return (
-    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, height: '100%' }}>
+    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, height: '100%', boxSizing: 'border-box' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
@@ -704,10 +704,10 @@ export function MacroPage() {
 
           {/* ── SENTIMENT & DLUHOPISY ── */}
           <Sec title="SENTIMENT & DLUHOPISY" />
-          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 10, marginBottom: 12, alignItems: 'stretch' }}>
 
             {/* LEVÝ SLOUPEC: VIX + Target Rate */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignSelf: 'stretch' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {/* VIX gauge + history */}
               <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '12px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden' }}>
                 <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 2 }}>VIX — INDEX STRACHU</div>
@@ -718,8 +718,8 @@ export function MacroPage() {
                   </div>
                 )}
               </div>
-              {/* Target Rate tabulka pod VIX — roztažená na zbytek výšky */}
-              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              {/* Target Rate — flex:1 aby vyplnil zbytek výšky levého sloupce */}
+              <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
                 <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} brief={briefData} />
               </div>
             </div>
