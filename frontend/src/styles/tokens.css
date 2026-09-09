@@ -98,8 +98,8 @@
   /* ---------------------------------------------------------------- *
    * Typography                                                        *
    * ---------------------------------------------------------------- */
-  --font-sans: 'IBM Plex Sans', Arial, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Carbon type scale, trimmed to what this dashboard actually uses. */
   --size-micro: 10px;

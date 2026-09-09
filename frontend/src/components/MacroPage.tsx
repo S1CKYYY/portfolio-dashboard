@@ -114,7 +114,7 @@ function HistoryChart({ series, height = 180, tight = false }: {
     chart.setOption({
       backgroundColor: 'transparent',
       grid: { top: 24, bottom: 30, left: 48, right: 12 },
-      tooltip: { trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46', textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 11 } },
+      tooltip: { trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46', textStyle: { color: '#fafafa', fontFamily: 'JetBrains Mono', fontSize: 11 } },
       legend: series.length > 1 ? { data: series.map(s=>s.name), top: 2, textStyle: { color: '#a1a1aa', fontSize: 10 } } : undefined,
       xAxis: { type: 'category', data: series[0]?.dates ?? [], axisLabel: { color: '#52525b', fontSize: 9 }, axisLine: { lineStyle: { color: '#27272a' } } },
       yAxis: (() => {
@@ -281,12 +281,12 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
         trigger: 'axis',
         formatter: (p: any) => `${p[0].name}<br/><b>${p[0].value}%</b>`,
         backgroundColor: '#27272a', borderColor: '#3f3f46',
-        textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 12 },
+        textStyle: { color: '#fafafa', fontFamily: 'JetBrains Mono', fontSize: 12 },
       },
       xAxis: {
         type: 'category',
         data: chartScenarios.map(s => s.label),
-        axisLabel: { color: '#a1a1aa', fontSize: 11, fontFamily: 'IBM Plex Mono' },
+        axisLabel: { color: '#a1a1aa', fontSize: 11, fontFamily: 'JetBrains Mono' },
         axisLine: { lineStyle: { color: '#3f3f46' } },
         axisTick: { show: false },
         name: 'Target Rate (bps)', nameLocation: 'middle', nameGap: 28,
@@ -302,7 +302,7 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
         data: chartScenarios.map(s => ({
           value: s.prob,
           itemStyle: { color: s.col, borderRadius: [3, 3, 0, 0] },
-          label: { show: true, position: 'top', color: s.col, fontSize: 14, fontFamily: 'IBM Plex Mono', fontWeight: 700, formatter: '{c}%' },
+          label: { show: true, position: 'top', color: s.col, fontSize: 14, fontFamily: 'JetBrains Mono', fontWeight: 700, formatter: '{c}%' },
         })),
         barMaxWidth: 80,
       }],
@@ -311,7 +311,7 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
   }, [exp])
 
   return (
-    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, gridColumn: 'span 5' }}>
+    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
@@ -341,10 +341,10 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
       </div>
 
       {/* Graf — jen pokud máme pravděpodobnosti */}
-      {hasProb && <div ref={chartRef} style={{ width: '100%', height: 180 }} />}
+      {hasProb && <div ref={chartRef} style={{ width: '100%', height: 140 }} />}
 
       {/* Tabulka — VŽDY zobrazena */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'IBM Plex Mono', fontSize: 12, marginTop: hasProb ? 0 : 8 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'JetBrains Mono', fontSize: 12, marginTop: hasProb ? 0 : 8 }}>
         <thead>
           <tr style={{ borderBottom: '1px solid #3f3f46' }}>
             <th style={{ textAlign: 'left',  padding: '5px 8px', color: '#71717a', fontWeight: 400, fontSize: 9, letterSpacing: '0.1em' }}>TARGET RATE (BPS)</th>
@@ -378,7 +378,7 @@ function RateCard({ exp, fedFunds }: { exp: MacroData['rate_expectations']; fedF
 
       {/* Metadata */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, fontSize: 9 }}>
-        {hasProb && exp.futures_price && <span style={{ color: '#3f3f46', fontFamily: 'IBM Plex Mono' }}>ZQ: {exp.futures_price.toFixed(4)} · implied {exp.implied_rate?.toFixed(3)}%</span>}
+        {hasProb && exp.futures_price && <span style={{ color: '#3f3f46', fontFamily: 'JetBrains Mono' }}>ZQ: {exp.futures_price.toFixed(4)} · implied {exp.implied_rate?.toFixed(3)}%</span>}
         <span style={{ color: '#3f3f46' }}>Zdroj: {hasProb ? exp.source : 'Živá data na CME FedWatch'}</span>
         <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
           target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
@@ -422,7 +422,7 @@ function CpiWages({ data }: { data: MacroData['cpi_wages_history'] }) {
       grid: { top: 48, bottom: 32, left: 46, right: 60 },
       tooltip: {
         trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46',
-        textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 11 },
+        textStyle: { color: '#fafafa', fontFamily: 'JetBrains Mono', fontSize: 11 },
         formatter: (params: any[]) => {
           const hdr = params[0]?.axisValue || ''
           const rows = params.map((p: any) => {
@@ -505,7 +505,7 @@ function CurrencyZoneChart({ dates, values, label, favorableHigh = true, height 
     chart.setOption({
       backgroundColor: 'transparent',
       grid: { top: 12, bottom: 28, left: 50, right: 8 },
-      tooltip: { trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46', textStyle: { color: '#fafafa', fontFamily: 'IBM Plex Mono', fontSize: 11 } },
+      tooltip: { trigger: 'axis', backgroundColor: '#27272a', borderColor: '#3f3f46', textStyle: { color: '#fafafa', fontFamily: 'JetBrains Mono', fontSize: 11 } },
       xAxis: { type: 'category', data: dates, axisLabel: { color: '#52525b', fontSize: 9 }, axisLine: { lineStyle: { color: '#27272a' } } },
       yAxis: { type: 'value', min: mn - rng*0.05, max: mx + rng*0.05, axisLabel: { color: '#71717a', fontSize: 9 }, splitLine: { lineStyle: { color: '#18181b' } } },
       series: [{
@@ -685,18 +685,23 @@ export function MacroPage() {
           <Sec title="SENTIMENT & DLUHOPISY" />
           <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 10, marginBottom: 12 }}>
 
-            {/* VIX gauge + history */}
-            <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '12px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', minWidth: 0 }}>
-              <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 2 }}>VIX — INDEX STRACHU</div>
-              <VixGauge card={m.vix} />
-              {vixHistory && (
-                <div style={{ width: '100%', marginTop: 4 }}>
-                  <HistoryChart series={[{ name: 'VIX', dates: vixHistory.dates, values: vixHistory.values, color: '#f59e0b' }]} height={130} />
-                </div>
-              )}
+            {/* LEVÝ SLOUPEC: VIX + Target Rate */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* VIX gauge + history */}
+              <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '12px 8px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden' }}>
+                <div style={{ fontSize: 9, letterSpacing: '0.16em', color: 'var(--text-tertiary)', marginBottom: 2 }}>VIX — INDEX STRACHU</div>
+                <VixGauge card={m.vix} />
+                {vixHistory && (
+                  <div style={{ width: '100%', marginTop: 4 }}>
+                    <HistoryChart series={[{ name: 'VIX', dates: vixHistory.dates, values: vixHistory.values, color: '#f59e0b' }]} height={110} />
+                  </div>
+                )}
+              </div>
+              {/* Target Rate tabulka pod VIX */}
+              <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
             </div>
 
-            {/* Výnosy karty + Fed Rate + graf přes celou šířku */}
+            {/* PRAVÝ SLOUPEC: Výnosy karty + graf výnosů + Fed Funds Rate graf */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {/* Výnosy karty */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
@@ -705,15 +710,29 @@ export function MacroPage() {
                 <Card label="US 30Y výnos" card={m.us30y} suffix="%" decimals={3} />
                 <YieldCurve us2y={m.us2y} us10y={m.us10y} spread={m.yield_spread} />
               </div>
-              {/* Graf přes celou šířku, vyšší */}
+              {/* Graf výnosů */}
               {bondSeries.length > 0 && (
-                <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '8px 12px', flex: 1 }}>
+                <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '8px 12px' }}>
                   <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', marginBottom: 4 }}>VÝNOSY 2Y · 10Y · 30Y — 1 ROK</div>
-                  <HistoryChart series={bondSeries} height={280} tight={true} />
+                  <HistoryChart series={bondSeries} height={200} tight={true} />
                 </div>
               )}
-              {/* Fed Funds Rate tabulka — přes celou šířku */}
-              <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
+              {/* Fed Funds Rate historický graf */}
+              {f.fed_funds?.history && (
+                <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)' }}>FED FUNDS RATE — VÝVOJ SAZEB</div>
+                    {f.fed_funds?.value != null && (
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: '#818cf8' }}>{f.fed_funds.value.toFixed(2)}%</div>
+                    )}
+                  </div>
+                  <HistoryChart
+                    series={[{ name: 'Fed Rate', dates: f.fed_funds.history.dates, values: f.fed_funds.history.values, color: '#818cf8' }]}
+                    height={160}
+                    tight={true}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

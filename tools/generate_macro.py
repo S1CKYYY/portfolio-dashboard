@@ -537,7 +537,7 @@ def main():
         "pce_yoy":      ("PCEPI",         True,  60),
         "wages_yoy":    ("CES0500000003", True,  60),
         "unemployment": ("UNRATE",        False, 24),
-        "fed_funds":    ("FEDFUNDS",      False, 24),
+        "fed_funds":    ("FEDFUNDS",      False, 120),  # 10 let pro graf
         "dgs2":         ("DGS2",          False, 30),
     }
     fred = {}
