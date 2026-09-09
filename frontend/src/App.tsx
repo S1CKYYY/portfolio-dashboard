@@ -69,18 +69,18 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
     : holdings.holdings.filter((h: any) => h.portfolio_type === view)
 
   const filteredTotalValue = subData?.total_value_eur
-    ?? filteredHoldings.reduce((s: number, h: any) => s + (h.current_value ?? h.value_eur ?? 0), 0)
+    ?? filteredHoldings.reduce((s: number, h: any) => s + (h.value_base ?? 0), 0)
 
   const viewHistory = subData?.dates?.length
     ? { ...history, portfolio: subData.portfolio, dates: subData.dates, drawdown_pct: subData.drawdown_pct, cumulative_invested: subData.cumulative_invested }
     : history
 
   function recomputeAlloc(hs: any[], key: string) {
-    const total = hs.reduce((s: number, h: any) => s + (h.current_value ?? 0), 0)
+    const total = hs.reduce((s: number, h: any) => s + (h.value_base ?? 0), 0)
     const groups: Record<string, number> = {}
     for (const h of hs) {
       const k = h[key] ?? 'Ostatní'
-      groups[k] = (groups[k] ?? 0) + (h.current_value ?? 0)
+      groups[k] = (groups[k] ?? 0) + (h.value_base ?? 0)
     }
     return Object.entries(groups).map(([k, v]) => ({
       key: k, label: k, value_eur: v,

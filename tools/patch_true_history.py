@@ -538,18 +538,18 @@ def main():
         ) else "passive"
     print(f"  portfolio_type přidán do {len(holdings_list)} holdings")
 
-    # Přidej sub-portfolio summary (value a P&L z holdings)
+    # Sub-portfolio summary z holdings (správné fieldy ze snapshotu)
     def sub_summary(h_list: list) -> dict:
-        total_val   = sum(h.get("current_value",  h.get("value_eur", 0)) or 0 for h in h_list)
-        total_cost  = sum(h.get("cost_basis_eur", h.get("cost_basis", 0)) or 0 for h in h_list)
-        pnl_abs     = total_val - total_cost
-        pnl_pct     = pnl_abs / total_cost if total_cost > 0 else 0
+        total_val  = sum(h.get("value_base",      0) or 0 for h in h_list)
+        total_cost = sum(h.get("cost_total_base", 0) or 0 for h in h_list)
+        pnl_abs    = total_val - total_cost
+        pnl_pct    = pnl_abs / total_cost if total_cost > 0 else 0
         return {
-            "total_value_eur":       round(total_val,  2),
-            "total_cost_eur":        round(total_cost, 2),
-            "total_pnl_abs_eur":     round(pnl_abs,    2),
-            "total_pnl_pct":         round(pnl_pct,    6),
-            "holdings_count":        len(h_list),
+            "total_value_eur":   round(total_val,  2),
+            "total_cost_eur":    round(total_cost, 2),
+            "total_pnl_abs_eur": round(pnl_abs,    2),
+            "total_pnl_pct":     round(pnl_pct,    6),
+            "holdings_count":    len(h_list),
         }
 
     passive_holdings = [h for h in holdings_list if h.get("portfolio_type") == "passive"]
