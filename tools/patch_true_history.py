@@ -442,14 +442,23 @@ def build_sub_portfolio_history(lots: list, end_date: str, eurusd_rates=None) ->
     total_invested = invested[-1] if invested else 0
     total_return = (final_val - total_invested) / total_invested if total_invested > 0 else 0
     import numpy as np
-    port_arr = np.array(portfolio)
+    port_arr  = np.array(portfolio)
     bench_arr = np.array(benchmark)
+    inv_arr   = np.array(invested)
     tday = 252
     rf = 0.02
 
-    # Denní výnosy
-    daily_ret = np.diff(port_arr) / port_arr[:-1]
-    bench_ret = np.diff(bench_arr) / bench_arr[:-1]
+    # Denní výnosy OČIŠTĚNÉ od cashflow (nové nákupy)
+    # Změna hodnoty = cenová změna + nový vklad → odečteme nový vklad
+    port_diff    = np.diff(port_arr)
+    cash_in      = np.diff(inv_arr)          # nový vložený kapitál každý den
+    price_change = port_diff - cash_in       # čistá cenová změna
+    daily_ret    = price_change / port_arr[:-1]
+    daily_ret    = daily_ret[np.isfinite(daily_ret)]  # odfiltruj inf/nan
+
+    bench_diff = np.diff(bench_arr)
+    bench_ret  = bench_diff / bench_arr[:-1]
+    bench_ret  = bench_ret[np.isfinite(bench_ret)]
 
     # Roční výnos a volatilita
     ann_ret = (final_val / total_invested) ** (tday / max(len(portfolio), 1)) - 1 if total_invested > 0 else 0
