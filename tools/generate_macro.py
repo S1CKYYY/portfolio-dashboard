@@ -525,13 +525,24 @@ def main():
         "sp500":   "^GSPC",   # pro CPI/mzdy graf (2y)
     }, period="2y")  # 2y = dostatek pro YoY výpočty
 
-    # Retry us10y pokud chybí (^TNX někdy selže při prvním downloadu)
+    # Retry us10y pokud chybí — zkus FRED DGS10 (^TNX selhává)
     if not market.get('us10y', {}).get('history', {}).get('dates', []):
-        print("  Retrying us10y ^TNX...")
-        retry = fetch_yahoo({"us10y": "^TNX"}, period="2y")
-        if retry.get("us10y", {}).get("history", {}).get("dates", []):
-            market["us10y"] = retry["us10y"]
-            print(f"  us10y retry OK: {len(retry['us10y']['history']['dates'])} bodů")
+        print("  us10y chybí → zkouším FRED DGS10...")
+        dgs10 = fetch_fred("DGS10", 260)  # ~1 rok pracovních dní
+        if not dgs10.empty:
+            val  = float(dgs10.iloc[-1])
+            prev = float(dgs10.iloc[-2]) if len(dgs10) > 1 else val
+            market["us10y"] = {
+                "value": round(val, 4),
+                "change_pct": round((val - prev), 4),
+                "change_abs": round(val - prev, 4),
+                "sparkline": [round(float(v), 4) for v in dgs10.tail(30)],
+                "history": {
+                    "dates":  [d.strftime("%Y-%m-%d") for d in dgs10.tail(252).index],
+                    "values": [round(float(v), 4) for v in dgs10.tail(252)],
+                },
+            }
+            print(f"  us10y z FRED DGS10: {val:.3f}% ({len(dgs10)} bodů)")
 
     if "us10y" in market and "us2y" in market:
         market["yield_spread"] = yield_spread(market)
