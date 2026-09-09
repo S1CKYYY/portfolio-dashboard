@@ -77,15 +77,19 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
 
   function recomputeAlloc(hs: any[], key: string) {
     const total = hs.reduce((s: number, h: any) => s + (h.value_base ?? 0), 0)
-    const groups: Record<string, number> = {}
+    const groups: Record<string, { value: number; count: number }> = {}
     for (const h of hs) {
-      const k = h[key] ?? 'Ostatní'
-      groups[k] = (groups[k] ?? 0) + (h.value_base ?? 0)
+      const k = h[key] ?? 'Ostatni'
+      if (!groups[k]) groups[k] = { value: 0, count: 0 }
+      groups[k].value += h.value_base ?? 0
+      groups[k].count += 1
     }
-    return Object.entries(groups).map(([k, v]) => ({
-      key: k, label: k, value_eur: v,
-      allocation_pct: total > 0 ? v / total : 0,
-    })).sort((a, b) => b.value_eur - a.value_eur)
+    return Object.entries(groups).map(([k, g]) => ({
+      key: k,
+      value: g.value,
+      allocation_pct: total > 0 ? g.value / total : 0,
+      holdings: g.count,
+    })).sort((a, b) => b.value - a.value)
   }
 
   const viewSummary = (view === 'all' ? summary : {
