@@ -107,6 +107,23 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
     ? { ...risk, ...subData.risk, max_drawdown: subData.risk.max_drawdown }
     : risk
 
+  const viewMontecarlo = ((view !== 'all' && montecarlo && filteredTotalValue > 0)
+    ? (() => {
+        const ratio = filteredTotalValue / (montecarlo.start_value ?? filteredTotalValue)
+        return {
+          ...montecarlo,
+          start_value: filteredTotalValue,
+          percentile_bands: Object.fromEntries(
+            Object.entries(montecarlo.percentile_bands ?? {}).map(([k, vals]) => [
+              k, (vals as number[]).map((v: number) => Math.round(v * ratio))
+            ])
+          ),
+          expected_value: Math.round((montecarlo.expected_value ?? 0) * ratio),
+          median_value:   Math.round((montecarlo.median_value   ?? 0) * ratio),
+        }
+      })()
+    : montecarlo) as typeof montecarlo
+
   const viewLabel = view === 'passive' ? '🌱 Pasivní ETF' : view === 'picks' ? '🎯 Stock Picks' : null
 
   const czkRate = summary.czk_rate ?? 25.3
@@ -119,7 +136,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
         <MacroPage />
       ) : (
       <main className="app__main">
-        <KpiStrip risk={viewRisk} montecarlo={montecarlo} summary={viewSummary} currency={currency} />
+        <KpiStrip risk={viewRisk} montecarlo={viewMontecarlo} summary={viewSummary} currency={currency} />
         <div className="row row--overview">
           <PerformancePanel
             history={viewHistory}
@@ -137,8 +154,8 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
         </div>
         <div className="row row--analytics">
           <DrawdownPanel history={viewHistory} risk={viewRisk} />
-          <MonteCarloPanel montecarlo={montecarlo} currency={currency} />
-          <OutcomeDistributionPanel montecarlo={montecarlo} currency={currency} />
+          <MonteCarloPanel montecarlo={viewMontecarlo} currency={currency} />
+          <OutcomeDistributionPanel montecarlo={viewMontecarlo} currency={currency} />
         </div>
         {viewLabel && (
           <div style={{ padding: '4px 0 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
