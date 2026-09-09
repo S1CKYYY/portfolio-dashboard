@@ -195,47 +195,51 @@ function YieldCurve({ us2y, us10y, spread }: { us2y?: MarketCard; us10y?: Market
 // ── Rate card ─────────────────────────────────────────────────────────────
 
 
-function BriefBlock({ data }: { data: { generated_at?: string | null; session?: string | null; headline?: string | null; summary_html?: string | null; key_points?: Array<{ icon: string; text: string; color?: string }>; market_session?: string | null } | null }) {
+function BriefBlock({ data, session, icon }: {
+  data: { generated_at?: string | null; headline?: string | null; summary_html?: string | null; key_points?: Array<{ icon: string; text: string; color?: string }>; market_session?: string | null } | null
+  session: 'MORNING' | 'EVENING'
+  icon: string
+}) {
+  const sessionLabel = session === 'MORNING' ? 'MORNING BRIEF' : 'EVENING BRIEF'
+  const accentColor = session === 'MORNING' ? '#f59e0b' : '#818cf8'
+  const bgGradient = session === 'MORNING'
+    ? 'linear-gradient(135deg,#1a1200 0%,#0e0a00 100%)'
+    : 'linear-gradient(135deg,#0f0a1c 0%,#080610 100%)'
+  const borderColor = session === 'MORNING' ? '#78350f' : '#312e81'
+
   if (!data?.generated_at) return (
-    <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', borderLeft: '3px solid var(--accent)', padding: '14px 18px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{ background: 'var(--surface-panel)', border: `1px solid var(--line)`, borderLeft: `3px solid ${accentColor}40`, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: 0.5 }}>
       <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.18em', color: 'var(--text-tertiary)', marginBottom: 4 }}>MANAŽERSKÉ SHRNUTÍ</div>
-        <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Čeká se na morning brief — bude pushnut automaticky ráno</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.18em', color: accentColor, marginBottom: 4 }}>{icon} {sessionLabel}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Čeká se na brief — bude pushnut automaticky</div>
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-disabled)', whiteSpace: 'nowrap' }}>brief.json · prázdný</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-disabled)' }}>prázdný</div>
     </div>
   )
 
   return (
-    <div style={{ background: 'linear-gradient(135deg,#0a0f1c 0%,#08090e 100%)', border: '1px solid #1e3a5f', borderLeft: '3px solid var(--accent)', marginBottom: 14, overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 18px', borderBottom: '1px solid #1a2840' }}>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.18em', color: 'var(--accent)' }}>MANAŽERSKÉ SHRNUTÍ</span>
+    <div style={{ background: bgGradient, border: `1px solid ${borderColor}`, borderLeft: `3px solid ${accentColor}`, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 16px', borderBottom: `1px solid ${borderColor}` }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.18em', color: accentColor }}>{icon} {sessionLabel}</span>
           {data.market_session && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#fb923c', background: '#1c0a00', border: '1px solid #7c2d12', padding: '2px 8px', borderRadius: 2 }}>{data.market_session}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: accentColor, background: accentColor + '18', border: `1px solid ${accentColor}40`, padding: '2px 8px', borderRadius: 2 }}>{data.market_session}</span>
           )}
         </div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-disabled)' }}>
-          {data.generated_at ? new Date(data.generated_at).toLocaleString('cs-CZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
-        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-disabled)' }}>
+          {new Date(data.generated_at!).toLocaleString('cs-CZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+        </span>
       </div>
-
-      {/* Body */}
-      <div style={{ padding: '14px 18px', display: 'grid', gridTemplateColumns: (data.key_points?.length ?? 0) > 0 ? '1fr 1fr' : '1fr', gap: 16 }}>
+      <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: (data.key_points?.length ?? 0) > 0 ? '1fr 1fr' : '1fr', gap: 14 }}>
         <div>
-          {data.headline && (
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', marginBottom: 10, lineHeight: 1.4 }}>{data.headline}</div>
-          )}
-          {data.summary_html && (
-            <div style={{ fontSize: 13, lineHeight: 1.7, color: '#94a3b8' }} dangerouslySetInnerHTML={{ __html: data.summary_html }} />
-          )}
+          {data.headline && <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginBottom: 8, lineHeight: 1.4 }}>{data.headline}</div>}
+          {data.summary_html && <div style={{ fontSize: 12, lineHeight: 1.7, color: '#94a3b8' }} dangerouslySetInnerHTML={{ __html: data.summary_html }} />}
         </div>
         {(data.key_points?.length ?? 0) > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, borderLeft: '1px solid #1a2840', paddingLeft: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, borderLeft: `1px solid ${borderColor}`, paddingLeft: 14 }}>
             {(data.key_points ?? []).map((p: { icon: string; text: string; color?: string }, i: number) => (
-              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55, color: '#94a3b8' }}>
-                <span style={{ flexShrink: 0, color: p.color ?? 'var(--accent)' }}>{p.icon}</span>
+              <div key={i} style={{ display: 'flex', gap: 7, fontSize: 12, lineHeight: 1.55, color: '#94a3b8' }}>
+                <span style={{ flexShrink: 0, color: p.color ?? accentColor }}>{p.icon}</span>
                 <span dangerouslySetInnerHTML={{ __html: p.text }} />
               </div>
             ))}
@@ -592,12 +596,16 @@ function CurrencyImpact({ title, card, portfolioShare, favorableHigh, explanatio
 
 export function MacroPage() {
   const [data, setData] = useState<MacroData | null>(null)
-  const [briefData, _setBriefData] = useState<{
+  type BriefData = {
     generated_at?: string | null; session?: string | null; headline?: string | null;
     summary_html?: string | null; key_points?: Array<{ icon: string; text: string; color?: string }>;
     market_session?: string | null;
     rate_probabilities?: { cut: number; hold: number; hike: number; source?: string; next_meeting?: string; futures_price?: number; implied_rate?: number }
-  } | null>(null)
+  } | null
+  const [morningBrief, _setMorningBrief] = useState<BriefData>(null)
+  const [eveningBrief, _setEveningBrief] = useState<BriefData>(null)
+  // Keep briefData for RateCard backward compat
+  const briefData = morningBrief ?? eveningBrief
   const [loading, setLoading] = useState(true)
   useEffect(() => { fetchMacro().then(d => { setData(d); setLoading(false) }) }, [])
 
@@ -702,8 +710,11 @@ export function MacroPage() {
             Aktualizováno: {ts}
           </div>
 
-          {/* ── MANAŽERSKÉ SHRNUTÍ (brief.json) ── */}
-          <BriefBlock data={briefData} />
+          {/* ── MORNING & EVENING BRIEF ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: (morningBrief?.generated_at && eveningBrief?.generated_at) ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 14 }}>
+            <BriefBlock data={morningBrief} session="MORNING" icon="🌅" />
+            {eveningBrief?.generated_at && <BriefBlock data={eveningBrief} session="EVENING" icon="🌙" />}
+          </div>
 
           {/* ── SENTIMENT & DLUHOPISY ── */}
           <Sec title="SENTIMENT & DLUHOPISY" />
