@@ -693,7 +693,7 @@ export function MacroPage() {
                 <VixGauge card={m.vix} />
                 {vixHistory && (
                   <div style={{ width: '100%', marginTop: 4 }}>
-                    <HistoryChart series={[{ name: 'VIX', dates: vixHistory.dates, values: vixHistory.values, color: '#f59e0b' }]} height={110} />
+                    <HistoryChart series={[{ name: 'VIX', dates: vixHistory.dates, values: vixHistory.values, color: '#f59e0b' }]} height={160} />
                   </div>
                 )}
               </div>
@@ -714,7 +714,7 @@ export function MacroPage() {
               {bondSeries.length > 0 && (
                 <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '8px 12px' }}>
                   <div style={{ fontSize: 9, letterSpacing: '0.14em', color: 'var(--text-tertiary)', marginBottom: 4 }}>VÝNOSY 2Y · 10Y · 30Y — 1 ROK</div>
-                  <HistoryChart series={bondSeries} height={200} tight={true} />
+                  <HistoryChart series={bondSeries} height={320} tight={true} />
                 </div>
               )}
               {/* Fed Funds Rate historický graf */}
@@ -728,7 +728,7 @@ export function MacroPage() {
                   </div>
                   <HistoryChart
                     series={[{ name: 'Fed Rate', dates: f.fed_funds.history.dates, values: f.fed_funds.history.values, color: '#818cf8' }]}
-                    height={160}
+                    height={300}
                     tight={true}
                   />
                 </div>
