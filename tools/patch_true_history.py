@@ -613,6 +613,13 @@ def main():
     # total_value a P&L z equity křivky (current_value_eur a total_return_pct jsou již nastaveny)
     print(f"  Sub-portfolia: passive {sub_portfolio_passive.get('current_value_eur',0):,.0f} EUR ({sub_portfolio_passive.get('total_return_pct',0)*100:+.2f}%), picks {sub_portfolio_picks.get('current_value_eur',0):,.0f} EUR ({sub_portfolio_picks.get('total_return_pct',0)*100:+.2f}%)")
 
+    # Risk metriky z uložených hodnot (správné — bez nového yfinance downloadu)
+    print("  Počítám risk metriky sub-portfolií...")
+    sub_portfolio_passive["risk"] = compute_sub_risk(sub_portfolio_passive)
+    sub_portfolio_picks["risk"]   = compute_sub_risk(sub_portfolio_picks)
+    print(f"  Passive risk: sharpe={sub_portfolio_passive['risk'].get('sharpe_ratio','?')}, vol={sub_portfolio_passive['risk'].get('volatility_annualized_pct','?')}")
+    print(f"  Picks risk:   sharpe={sub_portfolio_picks['risk'].get('sharpe_ratio','?')}, vol={sub_portfolio_picks['risk'].get('volatility_annualized_pct','?')}")
+
     snapshot["sub_portfolios"] = {
         "passive": sub_portfolio_passive,
         "picks":   sub_portfolio_picks,
