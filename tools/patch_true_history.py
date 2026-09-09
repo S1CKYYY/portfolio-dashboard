@@ -538,24 +538,13 @@ def main():
         ) else "passive"
     print(f"  portfolio_type přidán do {len(holdings_list)} holdings")
 
-    # Sub-portfolio summary z holdings (správné fieldy ze snapshotu)
-    def sub_summary(h_list: list) -> dict:
-        total_val  = sum(h.get("value_base",      0) or 0 for h in h_list)
-        total_cost = sum(h.get("cost_total_base", 0) or 0 for h in h_list)
-        pnl_abs    = total_val - total_cost
-        pnl_pct    = pnl_abs / total_cost if total_cost > 0 else 0
-        return {
-            "total_value_eur":   round(total_val,  2),
-            "total_cost_eur":    round(total_cost, 2),
-            "total_pnl_abs_eur": round(pnl_abs,    2),
-            "total_pnl_pct":     round(pnl_pct,    6),
-            "holdings_count":    len(h_list),
-        }
-
-    passive_holdings = [h for h in holdings_list if h.get("portfolio_type") == "passive"]
-    picks_holdings   = [h for h in holdings_list if h.get("portfolio_type") == "picks"]
-    sub_portfolio_passive.update(sub_summary(passive_holdings))
-    sub_portfolio_picks.update(sub_summary(picks_holdings))
+    # Sub-portfolio summary přidej z equity dat (value_base v holdings je až po patch)
+    passive_count = sum(1 for lot in all_lots if not lot["is_usd"])
+    picks_count   = sum(1 for lot in all_lots if lot["is_usd"])
+    sub_portfolio_passive["holdings_count"] = len(set(l["yahoo_ticker"] for l in all_lots if not l["is_usd"]))
+    sub_portfolio_picks["holdings_count"]   = len(set(l["yahoo_ticker"] for l in all_lots if l["is_usd"]))
+    # total_value a P&L z equity křivky (current_value_eur a total_return_pct jsou již nastaveny)
+    print(f"  Sub-portfolia: passive {sub_portfolio_passive.get('current_value_eur',0):,.0f} EUR ({sub_portfolio_passive.get('total_return_pct',0)*100:+.2f}%), picks {sub_portfolio_picks.get('current_value_eur',0):,.0f} EUR ({sub_portfolio_picks.get('total_return_pct',0)*100:+.2f}%)")
 
     snapshot["sub_portfolios"] = {
         "passive": sub_portfolio_passive,
