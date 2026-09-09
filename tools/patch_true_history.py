@@ -441,41 +441,6 @@ def build_sub_portfolio_history(lots: list, end_date: str, eurusd_rates=None) ->
     final_val = portfolio[-1] if portfolio else 0
     total_invested = invested[-1] if invested else 0
     total_return = (final_val - total_invested) / total_invested if total_invested > 0 else 0
-    import numpy as np
-    port_arr  = np.array(portfolio)
-    bench_arr = np.array(benchmark)
-    inv_arr   = np.array(invested)
-    tday = 252
-    rf = 0.02
-
-    # Denní výnosy OČIŠTĚNÉ od cashflow (nové nákupy)
-    # Změna hodnoty = cenová změna + nový vklad → odečteme nový vklad
-    port_diff    = np.diff(port_arr)
-    cash_in      = np.diff(inv_arr)          # nový vložený kapitál každý den
-    price_change = port_diff - cash_in       # čistá cenová změna
-    daily_ret    = price_change / port_arr[:-1]
-    daily_ret    = daily_ret[np.isfinite(daily_ret)]  # odfiltruj inf/nan
-
-    bench_diff = np.diff(bench_arr)
-    bench_ret  = bench_diff / bench_arr[:-1]
-    bench_ret  = bench_ret[np.isfinite(bench_ret)]
-
-    # Roční výnos a volatilita
-    ann_ret = (final_val / total_invested) ** (tday / max(len(portfolio), 1)) - 1 if total_invested > 0 else 0
-    vol = float(np.std(daily_ret) * np.sqrt(tday)) if len(daily_ret) > 1 else 0
-    down = float(np.std(daily_ret[daily_ret < 0]) * np.sqrt(tday)) if len(daily_ret[daily_ret < 0]) > 1 else 0
-    sharpe  = (ann_ret - rf) / vol  if vol > 0 else 0
-    sortino = (ann_ret - rf) / down if down > 0 else 0
-
-    # Beta vs benchmark
-    if len(daily_ret) > 1 and len(bench_ret) > 1:
-        min_len = min(len(daily_ret), len(bench_ret))
-        cov = np.cov(daily_ret[-min_len:], bench_ret[-min_len:])
-        beta = float(cov[0,1] / cov[1,1]) if cov[1,1] > 0 else 1.0
-    else:
-        beta = 1.0
-
-    # Max drawdown detail
     min_dd = min(drawdown) if drawdown else 0
     min_idx = drawdown.index(min_dd) if drawdown else 0
     peak_idx = max(range(min_idx + 1), key=lambda i: portfolio[i]) if min_idx > 0 and portfolio else 0
@@ -497,24 +462,61 @@ def build_sub_portfolio_history(lots: list, end_date: str, eurusd_rates=None) ->
         "total_return_pct": round(total_return, 6),
         "max_drawdown_pct": round(min_dd, 6),
         "benchmark_return_pct": round((benchmark[-1] - total_invested) / total_invested, 6) if total_invested > 0 and benchmark else 0,
-        # Risk metriky pro sub-portfolio
-        "risk": {
-            "volatility_annualized_pct": round(vol, 4),
-            "downside_deviation_pct": round(down, 4),
-            "sharpe_ratio": round(sharpe, 4),
-            "sortino_ratio": round(sortino, 4),
-            "max_drawdown": {
-                "pct": round(min_dd, 6),
-                "peak_date": dates[peak_idx] if peak_idx < len(dates) else None,
-                "trough_date": dates[min_idx] if min_idx < len(dates) else None,
-                "peak_value": round(portfolio[peak_idx], 2) if peak_idx < len(portfolio) else None,
-                "trough_value": round(portfolio[min_idx], 2) if min_idx < len(portfolio) else None,
-                "recovery_date": dates[recovery_idx] if recovery_idx and recovery_idx < len(dates) else None,
-            },
-            "beta": {"value": round(beta, 4), "benchmark": "VUAA.DE", "benchmark_name": "VUAA.DE"},
-            "risk_free_rate": rf,
-            "trading_days_per_year": tday,
+        "drawdown_detail": {
+            "peak_date": dates[peak_idx] if peak_idx < len(dates) else None,
+            "trough_date": dates[min_idx] if min_idx < len(dates) else None,
+            "peak_value": round(portfolio[peak_idx], 2) if peak_idx < len(portfolio) else None,
+            "trough_value": round(portfolio[min_idx], 2) if min_idx < len(portfolio) else None,
+            "recovery_date": dates[recovery_idx] if recovery_idx and recovery_idx < len(dates) else None,
         },
+    }
+
+
+def compute_sub_risk(sp_data: dict, rf: float = 0.02, tday: int = 252) -> dict:
+    """Spočítá risk metriky ze ULOŽENÝCH portfolio hodnot (ne z nového yfinance downloadu)."""
+    import numpy as np
+    portfolio = sp_data.get("portfolio", [])
+    invested  = sp_data.get("cumulative_invested", [])
+    benchmark = sp_data.get("benchmark_rebased", [])
+    drawdown  = sp_data.get("drawdown_pct", [])
+    dd_detail = sp_data.get("drawdown_detail", {})
+    if len(portfolio) < 3:
+        return {}
+    port_arr = np.array(portfolio)
+    inv_arr  = np.array(invested)
+    bench_arr = np.array(benchmark)
+    # Denní výnosy očištěné od cashflow
+    price_change = np.diff(port_arr) - np.diff(inv_arr)
+    daily_ret = price_change / port_arr[:-1]
+    daily_ret = daily_ret[np.isfinite(daily_ret)]
+    bench_chg = np.diff(bench_arr) - np.diff(inv_arr)
+    bench_ret = bench_chg / bench_arr[:-1] if len(bench_arr) == len(inv_arr) else np.diff(bench_arr) / bench_arr[:-1]
+    bench_ret = bench_ret[np.isfinite(bench_ret)]
+    final_val = portfolio[-1]
+    total_inv = invested[-1]
+    ann_ret = (final_val / total_inv) ** (tday / max(len(portfolio), 1)) - 1 if total_inv > 0 else 0
+    vol  = float(np.std(daily_ret) * np.sqrt(tday)) if len(daily_ret) > 1 else 0
+    neg  = daily_ret[daily_ret < 0]
+    down = float(np.std(neg) * np.sqrt(tday)) if len(neg) > 1 else 0
+    sharpe  = (ann_ret - rf) / vol  if vol > 0 else 0
+    sortino = (ann_ret - rf) / down if down > 0 else 0
+    # Beta
+    if len(daily_ret) > 1 and len(bench_ret) > 1:
+        n = min(len(daily_ret), len(bench_ret))
+        cov = np.cov(daily_ret[-n:], bench_ret[-n:])
+        beta = float(cov[0,1] / cov[1,1]) if cov[1,1] > 0 else 1.0
+    else:
+        beta = 1.0
+    min_dd = min(drawdown) if drawdown else 0
+    return {
+        "volatility_annualized_pct": round(vol, 4),
+        "downside_deviation_pct": round(down, 4),
+        "sharpe_ratio": round(sharpe, 4),
+        "sortino_ratio": round(sortino, 4),
+        "max_drawdown": {"pct": round(min_dd, 6), **dd_detail},
+        "beta": {"value": round(beta, 4), "benchmark": "VUAA.DE", "benchmark_name": "VUAA.DE"},
+        "risk_free_rate": rf,
+        "trading_days_per_year": tday,
     }
 
 
