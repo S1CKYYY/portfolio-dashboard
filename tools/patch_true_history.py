@@ -558,11 +558,20 @@ def main():
 
     end_date = snapshot.get("as_of", datetime.today().strftime("%Y-%m-%d"))
 
+    # ── Injektuj portfolio_type HNED — nezávisle na yfinance ──────────────
+    holdings_list = snapshot.get("endpoints", {}).get("/holdings", {}).get("holdings", [])
+    for h in holdings_list:
+        ticker = h.get("ticker", "")
+        h["portfolio_type"] = "passive" if ticker in PASSIVE_TICKERS else "picks"
+    print(f"  portfolio_type nastaven pro {len(holdings_list)} holdings")
+
     print("\n📈 Rekonstruuji historii portfolia + benchmark...")
     dates, portfolio, benchmark, invested, closes = build_history(all_lots, end_date)
 
     if not dates:
-        print("⚠️  Nepodařilo se vygenerovat historii (pravděpodobně yfinance rate limit) — přeskakuji patch")
+        print("⚠️  Nepodařilo se vygenerovat historii — ukládám snapshot s portfolio_type a končím")
+        args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2))
+        print(f"  💾 Uloženo do {args.snapshot} (pouze portfolio_type, bez equity křivky)")
         sys.exit(0)
 
     print(f"  ✅ {len(dates)} obchodních dní")
@@ -619,14 +628,7 @@ def main():
     target["drawdown_pct"] = [round(v, 6) for v in drawdown]
     target["cumulative_invested"] = [round(v, 2) for v in invested]
 
-    # Injektuj portfolio_type do každého holdingu v snapshotu
-    # Zdroj pravdy: holdings.json (asset_class: ETF/ETC = passive, Stock = picks)
-    holdings_file_map = {lot["yahoo_ticker"]: lot for lot in all_lots}
-    holdings_list = snapshot.get("endpoints", {}).get("/holdings", {}).get("holdings", [])
-    for h in holdings_list:
-        ticker = h.get("ticker", "")
-        h["portfolio_type"] = "passive" if ticker in PASSIVE_TICKERS else "picks"
-    print(f"  portfolio_type přidán do {len(holdings_list)} holdings")
+    # portfolio_type již injektován na začátku (před build_history)
 
     # Sub-portfolio summary přidej z equity dat (value_base v holdings je až po patch)
     passive_count = sum(1 for lot in all_lots if not lot["is_usd"])
