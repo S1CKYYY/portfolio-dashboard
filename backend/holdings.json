@@ -1,6 +1,78 @@
 {
-  "base_currency": "CZK",
+  "base_currency": "EUR",
   "holdings": [
+    {
+      "ticker": "BRK-B",
+      "name": "BRK-B",
+      "currency": "USD",
+      "portfolio_type": "picks",
+      "quantity": 5.4653,
+      "asset_class": "Stock",
+      "region": "USA",
+      "ter_pct": 0.0,
+      "cost_basis_per_unit": 489.141604,
+      "acquired": "2025-01-13"
+    },
+    {
+      "ticker": "DUOL",
+      "name": "DUOL",
+      "currency": "USD",
+      "portfolio_type": "picks",
+      "quantity": 10.8342,
+      "asset_class": "Stock",
+      "region": "USA",
+      "ter_pct": 0.0,
+      "cost_basis_per_unit": 199.693674,
+      "acquired": "2025-11-04"
+    },
+    {
+      "ticker": "PYPL",
+      "name": "PYPL",
+      "currency": "USD",
+      "portfolio_type": "picks",
+      "quantity": 24.0308,
+      "asset_class": "Stock",
+      "region": "USA",
+      "ter_pct": 0.0,
+      "cost_basis_per_unit": 60.962872,
+      "acquired": "2025-12-15"
+    },
+    {
+      "ticker": "META",
+      "name": "META",
+      "currency": "USD",
+      "portfolio_type": "picks",
+      "quantity": 1.9146,
+      "asset_class": "Stock",
+      "region": "USA",
+      "ter_pct": 0.0,
+      "cost_basis_per_unit": 614.394561,
+      "acquired": "2026-01-14"
+    },
+    {
+      "ticker": "MSFT",
+      "name": "MSFT",
+      "currency": "USD",
+      "portfolio_type": "picks",
+      "quantity": 1.4525,
+      "asset_class": "Stock",
+      "region": "USA",
+      "ter_pct": 0.0,
+      "cost_basis_per_unit": 413.08,
+      "acquired": "2026-02-03"
+    },
+    {
+      "ticker": "NFLX",
+      "name": "NFLX",
+      "currency": "USD",
+      "portfolio_type": "picks",
+      "quantity": 8.01,
+      "asset_class": "Stock",
+      "region": "USA",
+      "ter_pct": 0.0,
+      "cost_basis_per_unit": 81.02,
+      "acquired": "2026-02-04"
+    },
     {
       "ticker": "VUAA.DE",
       "name": "Vanguard S&P 500 UCITS ETF",
@@ -84,78 +156,6 @@
       "ter_pct": 0.0,
       "cost_basis_per_unit": 1014.6,
       "acquired": "2026-09-10"
-    },
-    {
-      "ticker": "BRK-B",
-      "name": "BRK-B",
-      "currency": "USD",
-      "portfolio_type": "picks",
-      "quantity": 5.4653,
-      "asset_class": "Stock",
-      "region": "USA",
-      "ter_pct": 0.0,
-      "cost_basis_per_unit": 489.141604,
-      "acquired": "2025-01-13"
-    },
-    {
-      "ticker": "DUOL",
-      "name": "DUOL",
-      "currency": "USD",
-      "portfolio_type": "picks",
-      "quantity": 10.8342,
-      "asset_class": "Stock",
-      "region": "USA",
-      "ter_pct": 0.0,
-      "cost_basis_per_unit": 199.693674,
-      "acquired": "2025-11-04"
-    },
-    {
-      "ticker": "PYPL",
-      "name": "PYPL",
-      "currency": "USD",
-      "portfolio_type": "picks",
-      "quantity": 24.0308,
-      "asset_class": "Stock",
-      "region": "USA",
-      "ter_pct": 0.0,
-      "cost_basis_per_unit": 60.962872,
-      "acquired": "2025-12-15"
-    },
-    {
-      "ticker": "META",
-      "name": "META",
-      "currency": "USD",
-      "portfolio_type": "picks",
-      "quantity": 1.9146,
-      "asset_class": "Stock",
-      "region": "USA",
-      "ter_pct": 0.0,
-      "cost_basis_per_unit": 614.394561,
-      "acquired": "2026-01-14"
-    },
-    {
-      "ticker": "MSFT",
-      "name": "MSFT",
-      "currency": "USD",
-      "portfolio_type": "picks",
-      "quantity": 1.4525,
-      "asset_class": "Stock",
-      "region": "USA",
-      "ter_pct": 0.0,
-      "cost_basis_per_unit": 413.08,
-      "acquired": "2026-02-03"
-    },
-    {
-      "ticker": "NFLX",
-      "name": "NFLX",
-      "currency": "USD",
-      "portfolio_type": "picks",
-      "quantity": 8.01,
-      "asset_class": "Stock",
-      "region": "USA",
-      "ter_pct": 0.0,
-      "cost_basis_per_unit": 81.02,
-      "acquired": "2026-02-04"
     }
   ]
 }
