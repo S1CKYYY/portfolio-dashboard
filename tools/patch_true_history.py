@@ -30,6 +30,8 @@ TICKER_OVERRIDE = {
 }
 
 USD_TICKERS = {"BRKB.US", "DUOL.US", "PYPL.US", "META.US", "MSFT.US", "NFLX.US"}
+# Passivní ETF/ETC tickery — vše ostatní jsou picks (akcie)
+PASSIVE_TICKERS = {"VUAA.DE", "ZPRV.DE", "XNAS.DE", "4GLD.DE", "VWCE.DE", "IS3N.DE"}
 BENCHMARK = "VUAA.DE"
 
 # Skutečné geografické složení ETF indexů (přibližné váhy)
@@ -566,10 +568,7 @@ def main():
         except Exception:
             pass
     def _is_passive(lot):
-        ac = _asset_map.get(lot["yahoo_ticker"], "")
-        if ac:
-            return ac in ("ETF", "ETC")
-        return not lot["is_usd"]  # fallback na starý způsob
+        return lot["yahoo_ticker"] in PASSIVE_TICKERS
 
     passive_lots = [l for l in all_lots if _is_passive(l)]
     picks_lots   = [l for l in all_lots if not _is_passive(l)]
@@ -608,13 +607,7 @@ def main():
     holdings_list = snapshot.get("endpoints", {}).get("/holdings", {}).get("holdings", [])
     for h in holdings_list:
         ticker = h.get("ticker", "")
-        lot = holdings_file_map.get(ticker)
-        if lot:
-            # ETF/ETC = pasivní, Stock = picks (bez ohledu na měnu)
-            asset_class = h.get("asset_class", "")
-            h["portfolio_type"] = "passive" if asset_class in ("ETF", "ETC") else "picks"
-        else:
-            h["portfolio_type"] = "picks"
+        h["portfolio_type"] = "passive" if ticker in PASSIVE_TICKERS else "picks"
     print(f"  portfolio_type přidán do {len(holdings_list)} holdings")
 
     # Sub-portfolio summary přidej z equity dat (value_base v holdings je až po patch)
