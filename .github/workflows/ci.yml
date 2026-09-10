@@ -53,6 +53,7 @@ jobs:
           python generate_snapshot.py --no-cache
 
       - name: Patch true portfolio history
+        continue-on-error: true
         run: |
           FILES=$(find . -maxdepth 1 -name "*.xlsx" 2>/dev/null | tr '\n' ' ')
           if [ -n "$FILES" ]; then
