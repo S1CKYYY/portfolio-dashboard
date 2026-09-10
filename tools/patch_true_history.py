@@ -554,8 +554,25 @@ def main():
 
     # ── Sub-portfolia: Pasivní (EUR/ETF) vs. Stock Picks (USD) ──────────
     print("\n📊 Počítám sub-portfolia...")
-    passive_lots = [l for l in all_lots if not l["is_usd"]]
-    picks_lots   = [l for l in all_lots if l["is_usd"]]
+    # Split podle asset_class (ETF/ETC = passive, Stock = picks) — ne podle měny
+    # Tím RHM.DE (EUR Stock) jde správně do picks
+    import json as _json
+    _hfile = pathlib.Path(__file__).parent.parent / "backend" / "holdings.json"
+    _asset_map = {}
+    if _hfile.exists():
+        try:
+            _hdata = _json.loads(_hfile.read_text())
+            _asset_map = {h["ticker"]: h.get("asset_class", "") for h in _hdata.get("holdings", [])}
+        except Exception:
+            pass
+    def _is_passive(lot):
+        ac = _asset_map.get(lot["yahoo_ticker"], "")
+        if ac:
+            return ac in ("ETF", "ETC")
+        return not lot["is_usd"]  # fallback na starý způsob
+
+    passive_lots = [l for l in all_lots if _is_passive(l)]
+    picks_lots   = [l for l in all_lots if not _is_passive(l)]
     print(f"  Pasivní ETF: {len(passive_lots)} lotů ({len(set(l['yahoo_ticker'] for l in passive_lots))} tickerů)")
     print(f"  Stock Picks: {len(picks_lots)} lotů ({len(set(l['yahoo_ticker'] for l in picks_lots))} tickerů)")
     sub_portfolio_passive = build_sub_portfolio_history(passive_lots, end_date)
@@ -586,21 +603,25 @@ def main():
     target["cumulative_invested"] = [round(v, 2) for v in invested]
 
     # Injektuj portfolio_type do každého holdingu v snapshotu
+    # Zdroj pravdy: holdings.json (asset_class: ETF/ETC = passive, Stock = picks)
+    holdings_file_map = {lot["yahoo_ticker"]: lot for lot in all_lots}
     holdings_list = snapshot.get("endpoints", {}).get("/holdings", {}).get("holdings", [])
     for h in holdings_list:
         ticker = h.get("ticker", "")
-        # USD tickers = stock picks, ostatní = pasivní ETF
-        h["portfolio_type"] = "picks" if any(
-            lot["yahoo_ticker"] == ticker and lot["is_usd"]
-            for lot in all_lots
-        ) else "passive"
+        lot = holdings_file_map.get(ticker)
+        if lot:
+            # ETF/ETC = pasivní, Stock = picks (bez ohledu na měnu)
+            asset_class = h.get("asset_class", "")
+            h["portfolio_type"] = "passive" if asset_class in ("ETF", "ETC") else "picks"
+        else:
+            h["portfolio_type"] = "picks"
     print(f"  portfolio_type přidán do {len(holdings_list)} holdings")
 
     # Sub-portfolio summary přidej z equity dat (value_base v holdings je až po patch)
     passive_count = sum(1 for lot in all_lots if not lot["is_usd"])
     picks_count   = sum(1 for lot in all_lots if lot["is_usd"])
-    sub_portfolio_passive["holdings_count"] = len(set(l["yahoo_ticker"] for l in all_lots if not l["is_usd"]))
-    sub_portfolio_picks["holdings_count"]   = len(set(l["yahoo_ticker"] for l in all_lots if l["is_usd"]))
+    sub_portfolio_passive["holdings_count"] = len(set(l["yahoo_ticker"] for l in passive_lots))
+    sub_portfolio_picks["holdings_count"]   = len(set(l["yahoo_ticker"] for l in picks_lots))
     # total_value a P&L z equity křivky (current_value_eur a total_return_pct jsou již nastaveny)
     print(f"  Sub-portfolia: passive {sub_portfolio_passive.get('current_value_eur',0):,.0f} EUR ({sub_portfolio_passive.get('total_return_pct',0)*100:+.2f}%), picks {sub_portfolio_picks.get('current_value_eur',0):,.0f} EUR ({sub_portfolio_picks.get('total_return_pct',0)*100:+.2f}%)")
 
