@@ -27,6 +27,7 @@ TICKER_OVERRIDE = {
     "META.US": "META",
     "MSFT.US": "MSFT",
     "NFLX.US": "NFLX",
+    "RHM.DE":  "RHM.DE",   # Rheinmetall AG — Yahoo Finance ticker
 }
 
 USD_TICKERS = {"BRKB.US", "DUOL.US", "PYPL.US", "META.US", "MSFT.US", "NFLX.US"}
@@ -111,14 +112,40 @@ def build_history(lots, end_date):
     print(f"  Stahuji ceny: {', '.join(all_tickers)}")
 
     end_plus = (pd.Timestamp(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-    raw = yf.download(all_tickers, start=start_date, end=end_plus, auto_adjust=True, progress=False)
-    if raw.empty:
-        return [], [], [], [], pd.DataFrame()
+    try:
+        raw = yf.download(all_tickers, start=start_date, end=end_plus, auto_adjust=True, progress=False)
+    except Exception as e:
+        print(f"  ⚠️ yf.download selhal ({e}), zkouším po jednom...")
+        raw = pd.DataFrame()
+
+    # Pokud batch download selhal nebo je prázdný, zkus každý ticker zvlášť
+    if raw.empty or (isinstance(raw.columns, pd.MultiIndex) and raw["Close"].empty):
+        frames = []
+        for t in all_tickers:
+            try:
+                df = yf.download(t, start=start_date, end=end_plus, auto_adjust=True, progress=False)
+                if not df.empty:
+                    if isinstance(df.columns, pd.MultiIndex):
+                        df.columns = df.columns.droplevel(1)
+                    df = df[["Close"]].rename(columns={"Close": t})
+                    frames.append(df)
+                    print(f"  ✓ {t}")
+                else:
+                    print(f"  ✗ {t} — prázdná data, přeskakuji")
+            except Exception as ex:
+                print(f"  ✗ {t} — chyba: {ex}, přeskakuji")
+        if not frames:
+            return [], [], [], [], pd.DataFrame()
+        raw = pd.concat(frames, axis=1)
+        raw.columns = pd.MultiIndex.from_tuples([(c, "") for c in raw.columns]) if not isinstance(raw.columns, pd.MultiIndex) else raw.columns
 
     if isinstance(raw.columns, pd.MultiIndex):
-        closes = raw["Close"].copy()
+        try:
+            closes = raw["Close"].copy()
+        except KeyError:
+            closes = raw.copy()
     else:
-        closes = raw[["Close"]].rename(columns={"Close": all_tickers[0]}).copy()
+        closes = raw.copy()
     closes = closes.ffill()
     dates = [d.strftime("%Y-%m-%d") for d in closes.index]
 
