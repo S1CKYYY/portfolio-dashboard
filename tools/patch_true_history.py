@@ -115,37 +115,16 @@ def build_history(lots, end_date):
     try:
         raw = yf.download(all_tickers, start=start_date, end=end_plus, auto_adjust=True, progress=False)
     except Exception as e:
-        print(f"  ⚠️ yf.download selhal ({e}), zkouším po jednom...")
+        print(f"  ⚠️ yf.download exception: {e}")
         raw = pd.DataFrame()
 
-    # Pokud batch download selhal nebo je prázdný, zkus každý ticker zvlášť
-    if raw.empty or (isinstance(raw.columns, pd.MultiIndex) and raw["Close"].empty):
-        frames = []
-        for t in all_tickers:
-            try:
-                df = yf.download(t, start=start_date, end=end_plus, auto_adjust=True, progress=False)
-                if not df.empty:
-                    if isinstance(df.columns, pd.MultiIndex):
-                        df.columns = df.columns.droplevel(1)
-                    df = df[["Close"]].rename(columns={"Close": t})
-                    frames.append(df)
-                    print(f"  ✓ {t}")
-                else:
-                    print(f"  ✗ {t} — prázdná data, přeskakuji")
-            except Exception as ex:
-                print(f"  ✗ {t} — chyba: {ex}, přeskakuji")
-        if not frames:
-            return [], [], [], [], pd.DataFrame()
-        raw = pd.concat(frames, axis=1)
-        raw.columns = pd.MultiIndex.from_tuples([(c, "") for c in raw.columns]) if not isinstance(raw.columns, pd.MultiIndex) else raw.columns
+    if raw.empty:
+        return [], [], [], [], pd.DataFrame()
 
     if isinstance(raw.columns, pd.MultiIndex):
-        try:
-            closes = raw["Close"].copy()
-        except KeyError:
-            closes = raw.copy()
+        closes = raw["Close"].copy()
     else:
-        closes = raw.copy()
+        closes = raw[["Close"]].rename(columns={"Close": all_tickers[0]}).copy()
     closes = closes.ffill()
     dates = [d.strftime("%Y-%m-%d") for d in closes.index]
 
