@@ -203,8 +203,8 @@ def parse_open_positions(xlsx_path: Path) -> list[dict]:
         asset_class = CATEGORY_MAP.get(data["category"].upper(), data["category"])
 
         currency = "USD" if current_ticker.endswith(".US") else "EUR"
-        # portfolio_type: pasivní ETF/ETC = EUR, Stock Picks = USD
-        portfolio_type = "picks" if currency == "USD" else "passive"
+        # portfolio_type: ETF/ETC = pasivní, Stock = picks (bez ohledu na měnu)
+        portfolio_type = "passive" if asset_class in ("ETF", "ETC") else "picks"
         holding = {
             "ticker": yahoo_ticker,
             "name": NAMES.get(yahoo_ticker, yahoo_ticker),
