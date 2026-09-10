@@ -56,6 +56,7 @@ class PositionView:
     day_change_pct: float
     acquired: str
     sparkline: list[float]
+    portfolio_type: str = "picks"  # passive / picks
 
 
 class PortfolioAnalytics:
@@ -148,6 +149,7 @@ class PortfolioAnalytics:
                     ticker=ticker,
                     name=holding.name,
                     asset_class=holding.asset_class,
+                    portfolio_type=getattr(holding, "portfolio_type", "picks"),
                     region=holding.region_label,
                     currency=holding.currency,
                     quantity=holding.quantity,
@@ -271,6 +273,7 @@ class PortfolioAnalytics:
                         "day_change_pct": round_ratio(p.day_change_pct),
                         "acquired": p.acquired,
                         "sparkline": money_series(p.sparkline),
+                        "portfolio_type": getattr(p, "portfolio_type", None),
                     }
                     for p in self.positions
                 ],

@@ -85,6 +85,7 @@ class Holding:
     quantity: float
     cost_basis_per_unit: float
     acquired: str
+    portfolio_type: str = "picks"  # passive=ETF/ETC, picks=stocks
 
     @property
     def region_label(self) -> str:
@@ -143,6 +144,7 @@ def load_portfolio(path: Path | None = None) -> Portfolio:
                     name=str(item["name"]),
                     asset_class=str(item["asset_class"]),
                     region=item.get("region") or None,
+                    portfolio_type=str(item.get("portfolio_type", "picks")),
                     currency=str(item["currency"]),
                     quantity=float(item["quantity"]),
                     cost_basis_per_unit=float(item["cost_basis_per_unit"]),
