@@ -545,18 +545,26 @@ def economic_calendar(jblanked_api_key: str = "") -> list:
 
     # ── 2. jblanked News API (vyžaduje API klíč, 1 req/den zdarma) ──
     if not results and jblanked_api_key:
-        end_date = (now + datetime.timedelta(days=14)).isoformat()
-        for currency in ["USD", "EUR"]:
-            url = f"https://www.jblanked.com/news/api/mql5/calendar/range/?from={now}&to={end_date}&currency={currency}&impact=High"
+        # Použij week + nextweek endpoint (1 request each, max 2 credits)
+        jb_headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Api-Key {jblanked_api_key}",
+        }
+        jb_urls = [
+            "https://www.jblanked.com/news/api/forex-factory/calendar/week/",
+            "https://www.jblanked.com/news/api/forex-factory/calendar/week/?offset=1",
+        ]
+        for url in jb_urls:
             try:
-                req = _ur.Request(url, headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Api-Key {jblanked_api_key}",
-                })
+                req = _ur.Request(url, headers=jb_headers)
                 with _ur.urlopen(req, timeout=10) as r:
                     events = _js.loads(r.read())
+                    before = len(results)
                     for e in events:
-                        # Formát: {Name, Currency, Impact, Date, Forecast, Previous}
+                        currency = e.get("Currency", "")
+                        impact_str = e.get("Impact", "")
+                        if currency not in ("USD", "EUR", "GBP") or impact_str not in ("High", "Medium"):
+                            continue
                         try:
                             dt = datetime.datetime.strptime(e.get("Date", ""), "%Y.%m.%d %H:%M:%S")
                             date_str = dt.strftime("%Y-%m-%d")
@@ -569,17 +577,19 @@ def economic_calendar(jblanked_api_key: str = "") -> list:
                             "date":      date_str,
                             "time":      time_str,
                             "event":     e.get("Name", ""),
-                            "detail":    f"{e.get('Currency','')} · {e.get('Category','')} · Forecast: {e.get('Forecast','-')}",
+                            "detail":    f"{currency} · {e.get('Category','')} · Forecast: {e.get('Forecast','-')} · Prev: {e.get('Previous','-')}",
                             "consensus": str(e.get("Forecast", "")),
                             "prev":      str(e.get("Previous", "")),
-                            "impact":    3 if e.get("Impact") == "High" else 2,
-                            "sentiment": "bearish_risk",
+                            "impact":    3 if impact_str == "High" else 2,
+                            "sentiment": "bearish_risk" if impact_str == "High" else "watch",
                             "category":  "macro",
                         })
-                _t.sleep(1)  # rate limit
-                print(f"  jblanked API ({currency}): {len([x for x in results if 'jb' not in x])} events")
+                    added = len(results) - before
+                    print(f"  jblanked {url.split('/')[-2]}: +{added} events")
+                _t.sleep(2)
             except Exception as jb_err:
-                print(f"  jblanked API error ({currency}): {jb_err}")
+                print(f"  jblanked error: {jb_err}")
+                break
 
     # ── 3. Hardcoded fallback (FOMC + odhadnuté macro daty) ──
     if not results:
