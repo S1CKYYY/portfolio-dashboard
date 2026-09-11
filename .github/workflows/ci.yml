@@ -46,6 +46,14 @@ jobs:
             echo "Žádné XLSX soubory, používám stávající holdings.json"
           fi
 
+      - name: Restore price cache
+        uses: actions/cache@v4
+        with:
+          path: price_cache.pkl
+          key: price-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            price-cache-${{ runner.os }}-
+
       - name: Generate snapshot + Patch history
         working-directory: backend
         run: |

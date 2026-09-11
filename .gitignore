@@ -36,3 +36,4 @@ backend/holdings.backup-*.json
 
 # OS
 .DS_Store
+price_cache.pkl

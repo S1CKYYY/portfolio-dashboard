@@ -119,23 +119,40 @@ def build_history(lots, end_date):
 
     end_plus = (pd.Timestamp(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
 
-    # Krátké zpoždění aby se předešlo rate limitingu po generate_snapshot.py
-    import time as _t
-    _t.sleep(5)
+    import time as _t, pathlib as _pl
+    cache_path = _pl.Path(__file__).parent.parent / "price_cache.pkl"
 
+    # Zkus načíst z cache (max 6h staré)
     raw = pd.DataFrame()
-    for attempt in range(3):
-        try:
-            raw = yf.download(all_tickers, start=start_date, end=end_plus,
-                              auto_adjust=True, progress=False)
-            if not raw.empty:
-                print(f"  Download OK (pokus {attempt+1}): {len(raw)} dní")
-                break
-            print(f"  Pokus {attempt+1}: prázdná data, zkouším znovu...")
-            _t.sleep(10 * (attempt + 1))
-        except Exception as e:
-            print(f"  Pokus {attempt+1} selhal: {e}")
-            _t.sleep(10 * (attempt + 1))
+    if cache_path.exists():
+        cache_age = (_t.time() - cache_path.stat().st_mtime) / 3600
+        if cache_age < 6:
+            try:
+                raw = pd.read_pickle(str(cache_path))
+                print(f"  Načteno z cache ({cache_age:.1f}h staré): {len(raw)} dní")
+            except Exception:
+                raw = pd.DataFrame()
+
+    # Pokud cache chybí nebo stará, stáhni z yfinance
+    if raw.empty:
+        _t.sleep(10)  # dej yfinance klid po generate_snapshot
+        for attempt in range(4):
+            try:
+                raw = yf.download(all_tickers, start=start_date, end=end_plus,
+                                  auto_adjust=True, progress=False)
+                if not raw.empty:
+                    print(f"  Download OK (pokus {attempt+1}): {len(raw)} dní")
+                    try:
+                        raw.to_pickle(str(cache_path))
+                        print(f"  Cache uložena: {cache_path.name}")
+                    except Exception:
+                        pass
+                    break
+                print(f"  Pokus {attempt+1}: prázdná data, čekám...")
+                _t.sleep(20 * (attempt + 1))
+            except Exception as e:
+                print(f"  Pokus {attempt+1} selhal: {e}")
+                _t.sleep(20 * (attempt + 1))
 
     if raw.empty:
         return [], [], [], [], pd.DataFrame()
