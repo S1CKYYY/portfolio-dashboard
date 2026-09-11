@@ -647,7 +647,7 @@ def main():
     # Split podle asset_class (ETF/ETC = passive, Stock = picks) — ne podle měny
     # Tím RHM.DE (EUR Stock) jde správně do picks
     import json as _json
-    _hfile = pathlib.Path(__file__).parent.parent / "backend" / "holdings.json"
+    _hfile = Path(__file__).parent.parent / "backend" / "holdings.json"
     _asset_map = {}
     if _hfile.exists():
         try:
