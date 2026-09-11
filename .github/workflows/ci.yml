@@ -46,20 +46,18 @@ jobs:
             echo "Žádné XLSX soubory, používám stávající holdings.json"
           fi
 
-      - name: Generate snapshot
+      - name: Generate snapshot + Patch history
         working-directory: backend
         run: |
           rm -rf ~/.cache/py-yfinance /tmp/yf-cache /tmp/yf-tz-fresh
           python generate_snapshot.py --no-cache
-
-      - name: Patch true portfolio history
-        continue-on-error: true
-        run: |
+          cd ..
           FILES=$(find . -maxdepth 1 -name "*.xlsx" 2>/dev/null | tr '\n' ' ')
           if [ -n "$FILES" ]; then
-            python tools/patch_true_history.py $FILES --snapshot snapshot.json
+            echo "Spouštím patch_true_history..."
+            python tools/patch_true_history.py $FILES --snapshot snapshot.json || echo "⚠️ patch selhal, pokračuji s nepatčovaným snaphotem"
           else
-            echo "Žádné XLSX soubory, přeskakuji"
+            echo "Žádné XLSX soubory, přeskakuji patch"
           fi
 
       - uses: actions/setup-node@v4
