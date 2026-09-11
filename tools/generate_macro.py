@@ -495,21 +495,136 @@ def rate_expectations(current_rate: float | None, market: dict | None = None) ->
     return {**base, "next_meeting": fomc_date}
 
 
-def economic_calendar() -> list:
-    """Klíčové ekonomické události — aktualizuj měsíčně nebo přes scheduled task."""
-    return [
-        {"date":"2026-09-09","time":"22:00","event":"Oracle Earnings Q1 FY27","detail":"AI cloud proxy — Beat → tech bounce, Miss → AI selloff","consensus":"EPS $1,64","prev":"EPS $1,59","impact":2,"sentiment":"neutral","category":"earnings"},
-        {"date":"2026-09-11","time":"15:30","event":"CPI srpen (USA)","detail":"Core CPI ≥0,3% MoM → hike téměř jistý. ≤0,1% → hold back on table. Geopolitika/energie = upside risk","consensus":"Core 0,2% MoM, YoY ~3,3%","prev":"Core 0,2% MoM","impact":3,"sentiment":"bearish_risk","category":"macro"},
-        {"date":"2026-09-11","time":"15:30","event":"Initial Jobless Claims","detail":"Spike nad 250K = trh práce ochlazuje → hold signal pro Fed","consensus":"220K","prev":"215K","impact":1,"sentiment":"neutral","category":"macro"},
-        {"date":"2026-09-12","time":"15:30","event":"PPI srpen (USA)","detail":"Leading indicator pro PCE. Services PPI = core inflační tlak","consensus":"+0,2% MoM","prev":"+0,1% MoM","impact":2,"sentiment":"bearish_risk","category":"macro"},
-        {"date":"2026-09-12","time":"17:00","event":"Michigan Consumer Sentiment","detail":"Inflační očekávání 1Y/5Y — Fed sleduje. Anchor <3,5% = hold comfort","consensus":"68,0","prev":"67,4","impact":2,"sentiment":"watch","category":"macro"},
-        {"date":"2026-09-15","time":"—","event":"FOMC — Den 1 (Blackout)","detail":"Fedspeak blackout. Trhy v pre-decision pozicionování. Nízký volume.","consensus":"—","prev":"—","impact":3,"sentiment":"watch","category":"fed"},
-        {"date":"2026-09-16","time":"21:00","event":"FOMC Rozhodnutí + Warsh 21:30","detail":"60% hike +25bp → 3,75–4,00%. Scénář A: hike+one&done → relief rally. B: hike+hawkish → selloff. Dot plot key.","consensus":"60% hike","prev":"Hold 3,50–3,75%","impact":3,"sentiment":"max_volatility","category":"fed"},
-        {"date":"2026-09-17","time":"22:00","event":"Adobe Earnings Q3","detail":"Creative AI adoption rate. First major tech post-FOMC. Bullish read-through pro MSFT, GOOGL.","consensus":"EPS $4,97","prev":"EPS $4,65","impact":2,"sentiment":"bullish_potential","category":"earnings"},
-        {"date":"2026-09-18","time":"15:30","event":"Jobless Claims + Philly Fed","detail":"Post-FOMC první data. Philly Fed <0 = recesní signal v průmyslu.","consensus":"225K claims","prev":"215K","impact":1,"sentiment":"neutral","category":"macro"},
-        {"date":"2026-09-24","time":"15:30","event":"PCE srpen","detail":"Core PCE >2,5% YoY → prosinec hike pressure. Fedův preferovaný inflační ukazatel.","consensus":"Core 2,6% YoY","prev":"Core 2,7% YoY","impact":2,"sentiment":"bearish_risk","category":"macro"},
-        {"date":"2026-09-26","time":"17:00","event":"Consumer Confidence + Fedspeak","detail":"Blackout končí — první signál Fed tónu pro prosinec. Hawkish → December hike re-price.","consensus":"103","prev":"101,5","impact":1,"sentiment":"watch","category":"macro"}
-    ]
+def economic_calendar(jblanked_api_key: str = "") -> list:
+    """Ekonomický kalendář — zkouší FF JSON feed, pak jblanked API, pak hardcoded fallback."""
+    import datetime, time as _t, urllib.request as _ur, json as _js
+
+    now = datetime.date.today()
+    cutoff = (now + datetime.timedelta(days=60)).isoformat()
+    results = []
+
+    # ── 1. Forex Factory JSON feed (bez API klíče, ale může být blokovaný) ──
+    for week_url in [
+        "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+        "https://nfs.faireconomy.media/ff_calendar_nextweek.json",
+    ]:
+        try:
+            req = _ur.Request(week_url, headers={"User-Agent": "Mozilla/5.0"})
+            with _ur.urlopen(req, timeout=8) as r:
+                events = _js.loads(r.read())
+                for e in events:
+                    # Formát: {title, country, date, impact, forecast, previous, actual}
+                    currency = e.get("country", "")
+                    impact_str = e.get("impact", "")
+                    if currency not in ("USD", "EUR", "GBP") or impact_str not in ("High", "Medium"):
+                        continue
+                    # Parsuj datum: "Sep 11, 2026 8:30am" → "2026-09-11"
+                    try:
+                        dt = datetime.datetime.strptime(e.get("date", ""), "%b %d, %Y %I:%M%p")
+                        date_str = dt.strftime("%Y-%m-%d")
+                        time_str = dt.strftime("%H:%M")
+                    except Exception:
+                        continue
+                    if date_str < now.isoformat() or date_str > cutoff:
+                        continue
+                    impact_num = 3 if impact_str == "High" else 2
+                    results.append({
+                        "date":      date_str,
+                        "time":      time_str,
+                        "event":     e.get("title", ""),
+                        "detail":    f"{currency} · Forecast: {e.get('forecast','-')} · Prev: {e.get('previous','-')}",
+                        "consensus": e.get("forecast", ""),
+                        "prev":      e.get("previous", ""),
+                        "impact":    impact_num,
+                        "sentiment": "bearish_risk" if impact_num == 3 else "watch",
+                        "category":  "macro",
+                    })
+            print(f"  FF JSON feed: {len(results)} events načteno")
+        except Exception as ff_err:
+            print(f"  FF JSON nedostupný: {ff_err}")
+
+    # ── 2. jblanked News API (vyžaduje API klíč, 1 req/den zdarma) ──
+    if not results and jblanked_api_key:
+        end_date = (now + datetime.timedelta(days=14)).isoformat()
+        for currency in ["USD", "EUR"]:
+            url = f"https://www.jblanked.com/news/api/mql5/calendar/range/?from={now}&to={end_date}&currency={currency}&impact=High"
+            try:
+                req = _ur.Request(url, headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Api-Key {jblanked_api_key}",
+                })
+                with _ur.urlopen(req, timeout=10) as r:
+                    events = _js.loads(r.read())
+                    for e in events:
+                        # Formát: {Name, Currency, Impact, Date, Forecast, Previous}
+                        try:
+                            dt = datetime.datetime.strptime(e.get("Date", ""), "%Y.%m.%d %H:%M:%S")
+                            date_str = dt.strftime("%Y-%m-%d")
+                            time_str = dt.strftime("%H:%M")
+                        except Exception:
+                            continue
+                        if date_str < now.isoformat() or date_str > cutoff:
+                            continue
+                        results.append({
+                            "date":      date_str,
+                            "time":      time_str,
+                            "event":     e.get("Name", ""),
+                            "detail":    f"{e.get('Currency','')} · {e.get('Category','')} · Forecast: {e.get('Forecast','-')}",
+                            "consensus": str(e.get("Forecast", "")),
+                            "prev":      str(e.get("Previous", "")),
+                            "impact":    3 if e.get("Impact") == "High" else 2,
+                            "sentiment": "bearish_risk",
+                            "category":  "macro",
+                        })
+                _t.sleep(1)  # rate limit
+                print(f"  jblanked API ({currency}): {len([x for x in results if 'jb' not in x])} events")
+            except Exception as jb_err:
+                print(f"  jblanked API error ({currency}): {jb_err}")
+
+    # ── 3. Hardcoded fallback (FOMC + odhadnuté macro daty) ──
+    if not results:
+        print("  Používám hardcoded fallback kalend")
+        FOMC_2026 = [
+            ("2026-09-16", "21:00", "🏦 FOMC Rozhodnutí + Warsh tiskovka",
+             "60% hike +25bp. Scénář A: hike+one&done → relief rally. B: hike+hawkish → selloff.", "60% hike", "Hold 3,50–3,75%"),
+            ("2026-11-04", "21:00", "🏦 FOMC zasedání + tiskovka", "Fed rozhodnutí o sazbách.", "—", "—"),
+            ("2026-12-09", "21:00", "🏦 FOMC zasedání + dot plot", "Poslední FOMC 2026, revize dot plotu.", "—", "—"),
+        ]
+        for d, t, name, detail, cons, prev in FOMC_2026:
+            if d >= now.isoformat() and d <= cutoff:
+                results.append({"date":d,"time":t,"event":name,"detail":detail,"consensus":cons,"prev":prev,
+                                 "impact":3,"sentiment":"max_volatility","category":"fed"})
+
+        # Nonfarm Payrolls (první pátek v měsíci)
+        for mo in range(0, 3):
+            ref = (now.replace(day=1) + datetime.timedelta(days=32*mo)).replace(day=1)
+            day = ref
+            while day.weekday() != 4:
+                day += datetime.timedelta(days=1)
+            if now.isoformat() <= day.isoformat() <= cutoff:
+                results.append({"date":day.isoformat(),"time":"15:30","event":f"Nonfarm Payrolls {ref.strftime('%B %Y')}",
+                                 "detail":"Klíčová data trhu práce. Silné = Fed hike tlak.","consensus":"viz Bloomberg","prev":"",
+                                 "impact":3,"sentiment":"watch","category":"macro"})
+
+        # CPI (~11. v měsíci)
+        for mo in range(0, 3):
+            ref = (now.replace(day=1) + datetime.timedelta(days=32*(mo+1))).replace(day=1)
+            d = ref.replace(day=11)
+            if now.isoformat() <= d.isoformat() <= cutoff:
+                results.append({"date":d.isoformat(),"time":"15:30","event":f"CPI {(ref-datetime.timedelta(days=1)).strftime('%B %Y')} (USA)",
+                                 "detail":"Core CPI ≥0,3% MoM → hike tlak. Klíčový vstup pro Fed.","consensus":"viz Bloomberg","prev":"",
+                                 "impact":3,"sentiment":"bearish_risk","category":"macro"})
+
+    # Deduplikace a seřazení
+    seen = set()
+    unique = []
+    for e in sorted(results, key=lambda x: x["date"] + x.get("time","00:00")):
+        key = (e["date"], e["event"][:20])
+        if key not in seen:
+            seen.add(key)
+            unique.append(e)
+
+    return [e for e in unique if e["date"] <= cutoff]
 
 
 def main():
@@ -690,7 +805,7 @@ def main():
         "generated_at": NOW.isoformat(), "market": market,
         "fred": fred, "cpi_wages_history": cpi_wages,
         "rate_expectations": rate_exp, "news": news,
-        "economic_calendar": economic_calendar(),
+        "economic_calendar": economic_calendar(os.environ.get("JBLANKED_API_KEY", "")),
     }, ensure_ascii=False, separators=(",",":")))
     print(f"\n✅ macro.json hotov ({len(OUT.read_text())//1024} KB)")
 
