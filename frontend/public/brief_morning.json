@@ -1,9 +1,46 @@
 {
-  "generated_at": null,
+  "generated_at": "2026-09-11T07:50:44.540984+00:00",
   "session": "MORNING",
-  "market_session": null,
-  "headline": null,
-  "summary_html": null,
-  "key_points": [],
-  "rate_probabilities": { "cut": 0, "hold": 0, "hike": 0, "source": null, "next_meeting": null }
+  "market_session": "⬤ PRE-MARKET · 07:00 CET",
+  "headline": "CPI srpen dnes 14:30 CET — rozhodne o Fed hike 59% za 5 dní",
+  "summary_html": "S&P 500 po <strong>4. sérii poklesů</strong> (−0,58% čtvrtek) otevírá s mírnými futures zisky. Klíčová událost: <strong>CPI srpen v 14:30 CET</strong> — po horkém PPI +0,4 % (MoM) trh čeká, zda core CPI potvrdí inflační tlak. FOMC 15–16. 9. za 5 dní. Brent <strong>překročil 100 $/bbl</strong> kvůli válce v Íránu.",
+  "key_points": [
+    {
+      "icon": "⚡",
+      "color": "#f59e0b",
+      "text": "<b>CPI srpen 14:30 CET</b> — core konsenzus +0,4 % MoM. Pokud ≥0,4 %: hike téměř jistý. Pokud ≤0,2 %: hold odds rostou"
+    },
+    {
+      "icon": "🔴",
+      "color": "#ef4444",
+      "text": "<b>PPI srpen +0,4 % MoM</b> (+5,4 % YoY, nad odhadem) — nejhorší wholesale inflace od června, tlačí na hike narrative"
+    },
+    {
+      "icon": "🛢️",
+      "color": "#ef4444",
+      "text": "<b>Brent 102–107 $/bbl</b> — 4. týden růstu, válka v Íránu. VIX 17,84 (+8,4 %). 10Y Treasury na multi-decade high"
+    },
+    {
+      "icon": "🏦",
+      "color": "#f59e0b",
+      "text": "<b>CME FedWatch: 59 % hike</b> na FOMC 15–16. 9. Warsh hawkish po Jackson Hole. Barclays: 2 hiky letos (září + prosinec = +50 bp)"
+    },
+    {
+      "icon": "📉",
+      "color": "#ef4444",
+      "text": "<b>S&P 500 −0,58 % čtvrtek</b> (4. pokles v řadě), Nasdaq −0,65 %. Futures mírně zelené (+0,21 %). Polymarket 64 % bullish dnes"
+    },
+    {
+      "icon": "🎯",
+      "color": "#60a5fa",
+      "text": "<b>Portfolio watch</b>: META, MSFT, NFLX pod tlakem (rate sensitivity). BRK-B defensivní. RHM.DE odolný (obranný průmysl, Brent bullish)"
+    }
+  ],
+  "rate_probabilities": {
+    "cut": 0.0,
+    "hold": 0.41,
+    "hike": 0.59,
+    "source": "CME FedWatch",
+    "next_meeting": "2026-09-16"
+  }
 }
