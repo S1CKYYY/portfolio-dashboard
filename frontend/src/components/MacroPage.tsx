@@ -195,10 +195,9 @@ function YieldCurve({ us2y, us10y, spread }: { us2y?: MarketCard; us10y?: Market
 // ── Rate card ─────────────────────────────────────────────────────────────
 
 
-function RateCard({ exp, fedFunds, brief }: {
+function RateCard({ exp, fedFunds }: {
   exp: MacroData['rate_expectations']
   fedFunds?: FredCard
-  brief?: { rate_probabilities?: { cut: number; hold: number; hike: number; source?: string; next_meeting?: string; futures_price?: number; implied_rate?: number } } | null
 }) {
   const chartRef = useRef<HTMLDivElement>(null)
   const rate = fedFunds?.value ?? exp.current_rate ?? 3.75
@@ -211,20 +210,19 @@ function RateCard({ exp, fedFunds, brief }: {
   const holdLabel = toBps(lowerBound)
   const hikeLabel = toBps(upperBound)
 
-  // Pravděpodobnosti: brief.json má přednost (daily push), pak exp z macro.json
-  const bp = brief?.rate_probabilities
-  const rawCut  = bp?.cut  ?? exp.cut_probability  ?? 0
-  const rawHold = bp?.hold ?? exp.hold_probability ?? 0
-  const rawHike = bp?.hike ?? exp.hike_probability ?? 0
-  const source  = bp?.source ?? exp.source
-  const nextMtg = bp?.next_meeting ?? exp.next_meeting
-  const fprice  = bp?.futures_price ?? exp.futures_price
-  const irate   = bp?.implied_rate ?? exp.implied_rate
+
+  const rawCut  = exp.cut_probability  ?? 0
+  const rawHold = exp.hold_probability ?? 0
+  const rawHike = exp.hike_probability ?? 0
+  const source  = exp.source
+  const nextMtg = exp.next_meeting
+  const fprice  = exp.futures_price
+  const irate   = exp.implied_rate
 
   const cutP  = Math.round(rawCut  * 1000) / 10
   const holdP = Math.round(rawHold * 1000) / 10
   const hikeP = Math.round(rawHike * 1000) / 10
-  const hasProb = (cutP + holdP + hikeP) > 0
+  const hasProb = exp.available && (cutP + holdP + hikeP) > 0
 
   const scenarios = [
     { label: cutLabel,  prob: hasProb ? cutP  : null, col: '#22c55e', ease: true,  noChange: false, hike: false, move: '▼ Snížení' },
@@ -268,7 +266,7 @@ function RateCard({ exp, fedFunds, brief }: {
       }],
     })
     return () => chart.dispose()
-  }, [exp, brief])
+  }, [exp])
 
   return (
     <div style={{ background: 'var(--surface-panel)', border: '1px solid var(--line)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, height: '100%', boxSizing: 'border-box' }}>
@@ -664,7 +662,7 @@ export function MacroPage() {
               </div>
               {/* Target Rate — flex:1 aby vyplnil zbytek výšky levého sloupce */}
               <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
-                <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} brief={briefData} />
+                <RateCard exp={data.rate_expectations} fedFunds={f.fed_funds} />
               </div>
             </div>
 
