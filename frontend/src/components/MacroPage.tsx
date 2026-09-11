@@ -211,8 +211,6 @@ function RateCard({ exp, fedFunds }: {
   const holdLabel = toBps(lowerBound)
   const hikeLabel = toBps(upperBound)
 
-  // Pravděpodobnosti: brief.json má přednost (daily push), pak exp z macro.json
-  const bp = brief?.rate_probabilities
   const rawCut  = exp.cut_probability  ?? 0
   const rawHold = exp.hold_probability ?? 0
   const rawHike = exp.hike_probability ?? 0
@@ -541,12 +539,6 @@ function CurrencyImpact({ title, card, portfolioShare, favorableHigh, explanatio
 
 export function MacroPage() {
   const [data, setData] = useState<MacroData | null>(null)
-  type BriefData = {
-    generated_at?: string | null; session?: string | null; headline?: string | null;
-    summary_html?: string | null; key_points?: Array<{ icon: string; text: string; color?: string }>;
-    market_session?: string | null;
-    rate_probabilities?: { cut: number; hold: number; hike: number; source?: string; next_meeting?: string; futures_price?: number; implied_rate?: number }
-  } | null
   const [loading, setLoading] = useState(true)
   useEffect(() => { fetchMacro().then(d => { setData(d); setLoading(false) }) }, [])
 
