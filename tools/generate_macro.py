@@ -544,52 +544,72 @@ def economic_calendar(jblanked_api_key: str = "") -> list:
             print(f"  FF JSON nedostupný: {ff_err}")
 
     # ── 2. jblanked News API (vyžaduje API klíč, 1 req/den zdarma) ──
-    if not results and jblanked_api_key:
-        # Použij week + nextweek endpoint (1 request each, max 2 credits)
-        jb_headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Api-Key {jblanked_api_key}",
-        }
-        jb_urls = [
-            "https://www.jblanked.com/news/api/forex-factory/calendar/week/",
-            "https://www.jblanked.com/news/api/forex-factory/calendar/week/?offset=1",
-        ]
-        for url in jb_urls:
-            try:
-                req = _ur.Request(url, headers=jb_headers)
-                with _ur.urlopen(req, timeout=10) as r:
-                    events = _js.loads(r.read())
-                    before = len(results)
-                    for e in events:
-                        currency = e.get("Currency", "")
-                        impact_str = e.get("Impact", "")
-                        if currency not in ("USD", "EUR", "GBP") or impact_str not in ("High", "Medium"):
-                            continue
-                        try:
-                            dt = datetime.datetime.strptime(e.get("Date", ""), "%Y.%m.%d %H:%M:%S")
-                            date_str = dt.strftime("%Y-%m-%d")
-                            time_str = dt.strftime("%H:%M")
-                        except Exception:
-                            continue
-                        if date_str < now.isoformat() or date_str > cutoff:
-                            continue
-                        results.append({
-                            "date":      date_str,
-                            "time":      time_str,
-                            "event":     e.get("Name", ""),
-                            "detail":    f"{currency} · {e.get('Category','')} · Forecast: {e.get('Forecast','-')} · Prev: {e.get('Previous','-')}",
-                            "consensus": str(e.get("Forecast", "")),
-                            "prev":      str(e.get("Previous", "")),
-                            "impact":    3 if impact_str == "High" else 2,
-                            "sentiment": "bearish_risk" if impact_str == "High" else "watch",
-                            "category":  "macro",
-                        })
-                    added = len(results) - before
-                    print(f"  jblanked {url.split('/')[-2]}: +{added} events")
-                _t.sleep(2)
-            except Exception as jb_err:
-                print(f"  jblanked error: {jb_err}")
-                break
+    if jblanked_api_key:
+        # 1 request/den (free limit) — tento týden, USD+EUR+GBP, High+Medium
+        try:
+            req = _ur.Request(
+                "https://www.jblanked.com/news/api/forex-factory/calendar/week/",
+                headers={"Content-Type": "application/json",
+                         "Authorization": f"Api-Key {jblanked_api_key}"}
+            )
+            with _ur.urlopen(req, timeout=10) as r:
+                events = _js.loads(r.read())
+            before = len(results)
+            for e in events:
+                currency = e.get("Currency", "")
+                impact_str = e.get("Impact", "")
+                if currency not in ("USD", "EUR", "GBP") or impact_str not in ("High", "Medium"):
+                    continue
+                try:
+                    dt = datetime.datetime.strptime(e.get("Date", ""), "%Y.%m.%d %H:%M:%S")
+                    date_str = dt.strftime("%Y-%m-%d")
+                    time_str = dt.strftime("%H:%M")
+                except Exception:
+                    continue
+                if date_str < now.isoformat() or date_str > cutoff:
+                    continue
+                results.append({
+                    "date":      date_str,
+                    "time":      time_str,
+                    "event":     e.get("Name", ""),
+                    "detail":    f"{currency} · {e.get('Category','')} · Forecast: {e.get('Forecast','-')} · Prev: {e.get('Previous','-')}",
+                    "consensus": str(e.get("Forecast", "")),
+                    "prev":      str(e.get("Previous", "")),
+                    "impact":    3 if impact_str == "High" else 2,
+                    "sentiment": "bearish_risk" if impact_str == "High" else "watch",
+                    "category":  "macro",
+                })
+            print(f"  jblanked FF week: +{len(results) - before} events")
+        except Exception as jb_err:
+            print(f"  jblanked error: {jb_err}")
+
+    # FOMC + Payrolls + CPI vždy přidej (hardcoded, pokrývá příštích 60 dní)
+    FOMC_2026 = [
+        ("2026-09-16","21:00","🏦 FOMC Rozhodnutí + Warsh 21:30","60% hike → 3,75–4,00%. One&done signal klíčový.","60% hike","3,50–3,75%"),
+        ("2026-11-04","21:00","🏦 FOMC zasedání + tiskovka","Fed rozhodnutí o sazbách.","—","—"),
+        ("2026-12-09","21:00","🏦 FOMC zasedání + dot plot","Poslední FOMC 2026, dot plot revize.","—","—"),
+    ]
+    for d, t, name, detail, cons, prev in FOMC_2026:
+        if now.isoformat() <= d <= cutoff:
+            results.append({"date":d,"time":t,"event":name,"detail":detail,
+                             "consensus":cons,"prev":prev,"impact":3,"sentiment":"max_volatility","category":"fed"})
+    for mo in range(0, 3):
+        ref = (now.replace(day=1) + datetime.timedelta(days=32*mo)).replace(day=1)
+        day = ref
+        while day.weekday() != 4: day += datetime.timedelta(days=1)
+        if now.isoformat() <= day.isoformat() <= cutoff:
+            results.append({"date":day.isoformat(),"time":"15:30",
+                             "event":f"Nonfarm Payrolls {ref.strftime('%B %Y')}",
+                             "detail":"Klíčová data trhu práce. Silné = Fed hike tlak.",
+                             "consensus":"viz Bloomberg","prev":"","impact":3,"sentiment":"watch","category":"macro"})
+        for offset_m in [1]:
+            ref2 = (now.replace(day=1) + datetime.timedelta(days=32*(mo+offset_m))).replace(day=1)
+            d2 = ref2.replace(day=11)
+            if now.isoformat() <= d2.isoformat() <= cutoff:
+                results.append({"date":d2.isoformat(),"time":"15:30",
+                                 "event":f"CPI {(ref2-datetime.timedelta(days=1)).strftime('%B %Y')} (USA)",
+                                 "detail":"Core CPI ≥0,3% MoM → hike tlak.","consensus":"viz Bloomberg",
+                                 "prev":"","impact":3,"sentiment":"bearish_risk","category":"macro"})
 
     # ── 3. Hardcoded fallback (FOMC + odhadnuté macro daty) ──
     if not results:
