@@ -516,6 +516,38 @@ def build_sub_portfolio_history(lots: list, end_date: str, eurusd_rates=None) ->
     }
 
 
+def compute_sub_portfolios_from_snapshot(snapshot: dict) -> dict:
+    """Počítá sub_portfolio summary přímo ze snapshot holdings — bez yfinance.
+    Vrací current_value, P&L a alokaci pro passive a picks.
+    Equity křivky budou prázdné (doplní se pokud patch_true_history úspěšně dobíhá)."""
+    holdings = snapshot.get("endpoints", {}).get("/holdings", {}).get("holdings", [])
+    result = {}
+    for portfolio_type in ("passive", "picks"):
+        subset = [h for h in holdings if h.get("portfolio_type") == portfolio_type]
+        if not subset:
+            continue
+        current_value = sum(h.get("value_base", 0) or 0 for h in subset)
+        cost_total    = sum(h.get("cost_total_base", 0) or 0 for h in subset)
+        pnl_abs       = sum(h.get("unrealized_pnl", 0) or 0 for h in subset)
+        total_return  = pnl_abs / cost_total if cost_total > 0 else 0
+        result[portfolio_type] = {
+            "current_value_eur":  round(current_value, 2),
+            "total_invested_eur": round(cost_total, 2),
+            "total_return_pct":   round(total_return, 6),
+            "holdings_count":     len(subset),
+            # Equity křivky prázdné — plní patch_true_history pokud dobíhá
+            "dates": [],
+            "portfolio": [],
+            "benchmark_rebased": [],
+            "drawdown_pct": [],
+            "cumulative_invested": [],
+            "max_drawdown_pct": 0,
+            "benchmark_return_pct": 0,
+            "risk": {},
+        }
+    return result
+
+
 def compute_sub_risk(sp_data: dict, rf: float = 0.02, tday: int = 252) -> dict:
     """Spocita risk metriky ze ulozene portfolio krivky."""
     import numpy as np
@@ -593,9 +625,14 @@ def main():
     dates, portfolio, benchmark, invested, closes = build_history(all_lots, end_date)
 
     if not dates:
-        print("⚠️  Nepodařilo se vygenerovat historii — ukládám snapshot s portfolio_type a končím")
+        print("⚠️  Nepodařilo se vygenerovat historii — počítám sub_portfolia ze snapshot dat")
+        sp_from_snap = compute_sub_portfolios_from_snapshot(snapshot)
+        if sp_from_snap:
+            snapshot["sub_portfolios"] = sp_from_snap
+            for k, v in sp_from_snap.items():
+                print(f"  {k}: {v['current_value_eur']:,.0f} EUR ({v['total_return_pct']*100:+.1f}%)")
         args.snapshot.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2))
-        print(f"  💾 Uloženo do {args.snapshot} (pouze portfolio_type, bez equity křivky)")
+        print(f"  💾 Uloženo do {args.snapshot}")
         sys.exit(0)
 
     print(f"  ✅ {len(dates)} obchodních dní")
