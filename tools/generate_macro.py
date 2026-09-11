@@ -3,7 +3,7 @@ tools/generate_macro.py — makroekonomická data pro dashboard.
 Zdroje: Yahoo Finance + FRED CSV + CME ZQ Futures + Manifold Markets
 """
 
-import json, sys, time, warnings
+import json, os, sys, time, warnings
 from datetime import datetime, timezone
 from pathlib import Path
 
