@@ -496,175 +496,20 @@ def rate_expectations(current_rate: float | None, market: dict | None = None) ->
 
 
 def economic_calendar() -> list:
-    """Dynamický ekonomický kalendář: earnings z yfinance + FOMC + odhadnuté macro daty."""
-    import datetime, time
-    now  = datetime.date.today()
-    events = []
-
-    # ── 1. Earnings pro portfolio tickers ────────────────────────────────────
-    PORTFOLIO_TICKERS = [
-        ("META",  "Meta Platforms"),
-        ("MSFT",  "Microsoft"),
-        ("NFLX",  "Netflix"),
-        ("DUOL",  "Duolingo"),
-        ("PYPL",  "PayPal"),
-        ("BRK-B", "Berkshire Hathaway"),
-        ("RHM.DE","Rheinmetall"),
+    """Klíčové ekonomické události — aktualizuj měsíčně nebo přes scheduled task."""
+    return [
+        {"date":"2026-09-09","time":"22:00","event":"Oracle Earnings Q1 FY27","detail":"AI cloud proxy — Beat → tech bounce, Miss → AI selloff","consensus":"EPS $1,64","prev":"EPS $1,59","impact":2,"sentiment":"neutral","category":"earnings"},
+        {"date":"2026-09-11","time":"15:30","event":"CPI srpen (USA)","detail":"Core CPI ≥0,3% MoM → hike téměř jistý. ≤0,1% → hold back on table. Geopolitika/energie = upside risk","consensus":"Core 0,2% MoM, YoY ~3,3%","prev":"Core 0,2% MoM","impact":3,"sentiment":"bearish_risk","category":"macro"},
+        {"date":"2026-09-11","time":"15:30","event":"Initial Jobless Claims","detail":"Spike nad 250K = trh práce ochlazuje → hold signal pro Fed","consensus":"220K","prev":"215K","impact":1,"sentiment":"neutral","category":"macro"},
+        {"date":"2026-09-12","time":"15:30","event":"PPI srpen (USA)","detail":"Leading indicator pro PCE. Services PPI = core inflační tlak","consensus":"+0,2% MoM","prev":"+0,1% MoM","impact":2,"sentiment":"bearish_risk","category":"macro"},
+        {"date":"2026-09-12","time":"17:00","event":"Michigan Consumer Sentiment","detail":"Inflační očekávání 1Y/5Y — Fed sleduje. Anchor <3,5% = hold comfort","consensus":"68,0","prev":"67,4","impact":2,"sentiment":"watch","category":"macro"},
+        {"date":"2026-09-15","time":"—","event":"FOMC — Den 1 (Blackout)","detail":"Fedspeak blackout. Trhy v pre-decision pozicionování. Nízký volume.","consensus":"—","prev":"—","impact":3,"sentiment":"watch","category":"fed"},
+        {"date":"2026-09-16","time":"21:00","event":"FOMC Rozhodnutí + Warsh 21:30","detail":"60% hike +25bp → 3,75–4,00%. Scénář A: hike+one&done → relief rally. B: hike+hawkish → selloff. Dot plot key.","consensus":"60% hike","prev":"Hold 3,50–3,75%","impact":3,"sentiment":"max_volatility","category":"fed"},
+        {"date":"2026-09-17","time":"22:00","event":"Adobe Earnings Q3","detail":"Creative AI adoption rate. First major tech post-FOMC. Bullish read-through pro MSFT, GOOGL.","consensus":"EPS $4,97","prev":"EPS $4,65","impact":2,"sentiment":"bullish_potential","category":"earnings"},
+        {"date":"2026-09-18","time":"15:30","event":"Jobless Claims + Philly Fed","detail":"Post-FOMC první data. Philly Fed <0 = recesní signal v průmyslu.","consensus":"225K claims","prev":"215K","impact":1,"sentiment":"neutral","category":"macro"},
+        {"date":"2026-09-24","time":"15:30","event":"PCE srpen","detail":"Core PCE >2,5% YoY → prosinec hike pressure. Fedův preferovaný inflační ukazatel.","consensus":"Core 2,6% YoY","prev":"Core 2,7% YoY","impact":2,"sentiment":"bearish_risk","category":"macro"},
+        {"date":"2026-09-26","time":"17:00","event":"Consumer Confidence + Fedspeak","detail":"Blackout končí — první signál Fed tónu pro prosinec. Hawkish → December hike re-price.","consensus":"103","prev":"101,5","impact":1,"sentiment":"watch","category":"macro"}
     ]
-    for ticker, name in PORTFOLIO_TICKERS:
-        try:
-            t = yf.Ticker(ticker)
-            cal = t.calendar
-            if cal and isinstance(cal, dict):
-                # yfinance vrací dict s 'Earnings Date' jako datetime nebo list
-                ed = cal.get("Earnings Date")
-                if ed is None:
-                    ed = cal.get("earningsDate")
-                if ed is not None:
-                    if hasattr(ed, "__iter__") and not isinstance(ed, str):
-                        ed = list(ed)[0]
-                    if hasattr(ed, "date"):
-                        ed = ed.date()
-                    elif isinstance(ed, str):
-                        ed = datetime.date.fromisoformat(ed[:10])
-                    if ed >= now:
-                        eps_est = cal.get("EPS Estimate", cal.get("epsEstimate"))
-                        events.append({
-                            "date":      ed.isoformat(),
-                            "time":      "po uzavření",
-                            "event":     f"{name} Earnings",
-                            "detail":    f"Čtvrtletní výsledky — sleduj guidance a beat/miss",
-                            "consensus": f"EPS est. {eps_est:.2f}" if eps_est else "viz konsenzus",
-                            "prev":      "",
-                            "impact":    2,
-                            "sentiment": "neutral",
-                            "category":  "earnings",
-                        })
-            # Zkus také earnings_dates
-            try:
-                ed2 = t.get_earnings_dates(limit=2)
-                if ed2 is not None and not ed2.empty:
-                    for idx, row in ed2.iterrows():
-                        d = idx.date() if hasattr(idx, "date") else datetime.date.fromisoformat(str(idx)[:10])
-                        if d >= now:
-                            eps = row.get("EPS Estimate") if hasattr(row, "get") else None
-                            events.append({
-                                "date":      d.isoformat(),
-                                "time":      "po uzavření",
-                                "event":     f"{name} Earnings",
-                                "detail":    "Čtvrtletní výsledky — sleduj guidance a beat/miss",
-                                "consensus": f"EPS est. {eps:.2f}" if eps and str(eps) != "nan" else "viz konsenzus",
-                                "prev":      "",
-                                "impact":    2,
-                                "sentiment": "neutral",
-                                "category":  "earnings",
-                            })
-                            break
-            except Exception:
-                pass
-            time.sleep(0.2)
-        except Exception:
-            pass
-
-    # ── 2. FOMC zasedání 2026 (Fed calendar, zveřejněno rok dopředu) ─────────
-    FOMC_2026 = [
-        ("2026-09-15", "2026-09-16", "FOMC zasedání + Warsh tiskovka 21:30"),
-        ("2026-11-03", "2026-11-04", "FOMC zasedání + tiskovka"),
-        ("2026-12-08", "2026-12-09", "FOMC zasedání + tiskovka + dot plot"),
-    ]
-    for d1, d2, label in FOMC_2026:
-        d = datetime.date.fromisoformat(d2)  # den rozhodnutí
-        if d >= now:
-            events.append({
-                "date":      d2,
-                "time":      "21:00",
-                "event":     f"🏦 {label}",
-                "detail":    "Rozhodnutí o sazbách 21:00 CET. Dot plot v prosinci. Sleduj Warsh tón pro další cyklus.",
-                "consensus": "viz CME FedWatch",
-                "prev":      "",
-                "impact":    3,
-                "sentiment": "max_volatility",
-                "category":  "fed",
-            })
-
-    # ── 3. CPI / PPI / PCE — odhadnuté daty (typicky 2. týden měsíce) ────────
-    for month_offset in range(0, 4):
-        # CPI: typicky kolem 10.–15. dne měsíce N+1 za měsíc N
-        ref = (now.replace(day=1) + datetime.timedelta(days=32 * (month_offset + 1))).replace(day=1)
-        cpi_day = ref.replace(day=11)  # přibližně
-        ppi_day = ref.replace(day=10)
-        pce_day = ref.replace(day=25)
-        ref_month = (ref - datetime.timedelta(days=1)).strftime("%B %Y")
-
-        if cpi_day >= now:
-            events.append({
-                "date":      cpi_day.isoformat(),
-                "time":      "15:30",
-                "event":     f"CPI {ref_month} (USA)",
-                "detail":    "Core CPI ≥0,3 % MoM → hike tlak. ≤0,1 % → hold comfort. Klíčový vstup pro Fed.",
-                "consensus": "viz Bloomberg",
-                "prev":      "",
-                "impact":    3,
-                "sentiment": "bearish_risk",
-                "category":  "macro",
-            })
-        if ppi_day >= now and ppi_day != cpi_day:
-            events.append({
-                "date":      ppi_day.isoformat(),
-                "time":      "15:30",
-                "event":     f"PPI {ref_month} (USA)",
-                "detail":    "Leading indicator pro PCE. Services PPI = core inflační tlak.",
-                "consensus": "viz Bloomberg",
-                "prev":      "",
-                "impact":    2,
-                "sentiment": "bearish_risk",
-                "category":  "macro",
-            })
-        if pce_day >= now:
-            events.append({
-                "date":      pce_day.isoformat(),
-                "time":      "15:30",
-                "event":     f"PCE {ref_month} (USA)",
-                "detail":    "Fedův preferovaný inflační ukazatel. Core PCE >2,5 % YoY = hike pressure.",
-                "consensus": "viz FRED",
-                "prev":      "",
-                "impact":    2,
-                "sentiment": "bearish_risk",
-                "category":  "macro",
-            })
-
-    # ── 4. Nonfarm Payrolls (první pátek v měsíci) ───────────────────────────
-    for month_offset in range(0, 3):
-        ref = (now.replace(day=1) + datetime.timedelta(days=32 * month_offset)).replace(day=1)
-        # Najdi první pátek
-        day = ref
-        while day.weekday() != 4:  # 4 = pátek
-            day += datetime.timedelta(days=1)
-        if day >= now:
-            events.append({
-                "date":      day.isoformat(),
-                "time":      "15:30",
-                "event":     f"Nonfarm Payrolls {ref.strftime('%B %Y')}",
-                "detail":    "Klíčová data trhu práce. Silné číslo → Fed hike tlak. Slabé → hold comfort.",
-                "consensus": "viz Bloomberg",
-                "prev":      "",
-                "impact":    3,
-                "sentiment": "watch",
-                "category":  "macro",
-            })
-
-    # ── Deduplikace a seřazení ─────────────────────────────────────────────
-    seen = set()
-    unique = []
-    for e in sorted(events, key=lambda x: x["date"]):
-        key = (e["date"], e["event"][:20])
-        if key not in seen:
-            seen.add(key)
-            unique.append(e)
-
-    # Vrať jen události v příštích 60 dnech
-    cutoff = (now + datetime.timedelta(days=60)).isoformat()
-    return [e for e in unique if e["date"] <= cutoff]
 
 
 def main():
