@@ -63,7 +63,10 @@ jobs:
           FILES=$(find . -maxdepth 1 -name "*.xlsx" 2>/dev/null | tr '\n' ' ')
           if [ -n "$FILES" ]; then
             echo "Spouštím patch_true_history..."
-            python tools/patch_true_history.py $FILES --snapshot snapshot.json || echo "⚠️ patch selhal, pokračuji s nepatčovaným snaphotem"
+            python tools/patch_true_history.py $FILES --snapshot snapshot.json 2>&1
+            EXIT_CODE=$?
+            echo "=== Patch exit code: $EXIT_CODE ==="
+            python3 -c "import json; s=json.load(open('snapshot.json')); print('sub_portfolios keys:', list(s.get('sub_portfolios',{}).keys()))"
           else
             echo "Žádné XLSX soubory, přeskakuji patch"
           fi
