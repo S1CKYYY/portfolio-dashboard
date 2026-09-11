@@ -108,27 +108,22 @@ def build_history(lots, end_date):
     print(f"  Rozsah dat: {start_date} → {end_date}")
 
     yahoo_tickers = list(set(lot["yahoo_ticker"] for lot in lots))
-    all_tickers = yahoo_tickers + ["EURUSD=X", BENCHMARK]
+    # RHM.DE způsobuje selhání batch downloadu v CI — vynech ho z downloadu
+    # Jeho hodnota v historické equity křivce bude 0 (koupený teprve nedávno)
+    SKIP_FROM_DOWNLOAD = {"RHM.DE"}
+    download_tickers = [t for t in yahoo_tickers if t not in SKIP_FROM_DOWNLOAD]
+    all_tickers = download_tickers + ["EURUSD=X", BENCHMARK]
+    skipped = SKIP_FROM_DOWNLOAD & set(yahoo_tickers)
+    if skipped:
+        print(f"  Přeskakuji z downloadu: {skipped} (krátká historie)")
     print(f"  Stahuji ceny: {', '.join(all_tickers)}")
 
     end_plus = (pd.Timestamp(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     try:
         raw = yf.download(all_tickers, start=start_date, end=end_plus, auto_adjust=True, progress=False)
-        print(f"  Staženo sloupců: {list(raw.columns.get_level_values(0).unique()) if isinstance(raw.columns, pd.MultiIndex) else list(raw.columns)}")
     except Exception as e:
         print(f"  ⚠️ yf.download exception: {e}")
         raw = pd.DataFrame()
-
-    if raw.empty:
-        # Zkus bez problematických tickerů (RHM.DE může selhávat)
-        safe_tickers = [t for t in yahoo_tickers if t not in {"RHM.DE"}] + ["EURUSD=X", BENCHMARK]
-        if safe_tickers != all_tickers:
-            print(f"  Opakuji bez RHM.DE: {safe_tickers}")
-            try:
-                raw = yf.download(safe_tickers, start=start_date, end=end_plus, auto_adjust=True, progress=False)
-            except Exception as e2:
-                print(f"  ⚠️ druhý pokus selhal: {e2}")
-                raw = pd.DataFrame()
 
     if raw.empty:
         return [], [], [], [], pd.DataFrame()
