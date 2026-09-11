@@ -109,7 +109,6 @@ def build_history(lots, end_date):
 
     yahoo_tickers = list(set(lot["yahoo_ticker"] for lot in lots))
     # RHM.DE způsobuje selhání batch downloadu v CI — vynech ho z downloadu
-    # Jeho hodnota v historické equity křivce bude 0 (koupený teprve nedávno)
     SKIP_FROM_DOWNLOAD = {"RHM.DE"}
     download_tickers = [t for t in yahoo_tickers if t not in SKIP_FROM_DOWNLOAD]
     all_tickers = download_tickers + ["EURUSD=X", BENCHMARK]
@@ -119,11 +118,24 @@ def build_history(lots, end_date):
     print(f"  Stahuji ceny: {', '.join(all_tickers)}")
 
     end_plus = (pd.Timestamp(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-    try:
-        raw = yf.download(all_tickers, start=start_date, end=end_plus, auto_adjust=True, progress=False)
-    except Exception as e:
-        print(f"  ⚠️ yf.download exception: {e}")
-        raw = pd.DataFrame()
+
+    # Krátké zpoždění aby se předešlo rate limitingu po generate_snapshot.py
+    import time as _t
+    _t.sleep(5)
+
+    raw = pd.DataFrame()
+    for attempt in range(3):
+        try:
+            raw = yf.download(all_tickers, start=start_date, end=end_plus,
+                              auto_adjust=True, progress=False)
+            if not raw.empty:
+                print(f"  Download OK (pokus {attempt+1}): {len(raw)} dní")
+                break
+            print(f"  Pokus {attempt+1}: prázdná data, zkouším znovu...")
+            _t.sleep(10 * (attempt + 1))
+        except Exception as e:
+            print(f"  Pokus {attempt+1} selhal: {e}")
+            _t.sleep(10 * (attempt + 1))
 
     if raw.empty:
         return [], [], [], [], pd.DataFrame()
