@@ -558,7 +558,10 @@ def economic_calendar(jblanked_api_key: str = "") -> list:
             for e in events:
                 currency = e.get("Currency", "")
                 impact_str = e.get("Impact", "")
-                if currency not in ("USD", "EUR", "GBP") or impact_str not in ("High", "Medium"):
+                # USD = všechny eventy, EUR/GBP = jen High+Medium
+                if currency not in ("USD", "EUR", "GBP"):
+                    continue
+                if currency != "USD" and impact_str not in ("High", "Medium"):
                     continue
                 try:
                     dt = datetime.datetime.strptime(e.get("Date", ""), "%Y.%m.%d %H:%M:%S")
@@ -575,7 +578,7 @@ def economic_calendar(jblanked_api_key: str = "") -> list:
                     "detail":    f"{currency} · {e.get('Category','')} · Forecast: {e.get('Forecast','-')} · Prev: {e.get('Previous','-')}",
                     "consensus": str(e.get("Forecast", "")),
                     "prev":      str(e.get("Previous", "")),
-                    "impact":    3 if impact_str == "High" else 2,
+                    "impact":    3 if impact_str == "High" else 2 if impact_str == "Medium" else 1,
                     "sentiment": "bearish_risk" if impact_str == "High" else "watch",
                     "category":  "macro",
                 })
