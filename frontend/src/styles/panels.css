@@ -598,38 +598,3 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
-/* ═══ MACRO PAGE RESPONSIVE ══════════════════════════════════════════ */
-
-@media (max-width: 900px) {
-  /* MacroPage — sidebar jde nad obsah */
-  .macro-sidebar-layout {
-    flex-direction: column !important;
-  }
-
-  .macro-sidebar {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-height: 340px;
-    border-right: none !important;
-    border-bottom: 1px solid var(--line);
-    position: static !important;
-  }
-}
-
-@media (max-width: 640px) {
-  /* MacroPage obsah padding */
-  .macro-content {
-    padding: 0 var(--space-3) var(--space-6) !important;
-  }
-
-  /* Sentiment grid — 1 sloupec */
-  .macro-sentiment-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* FRED metriky grid — 2 sloupce */
-  .macro-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}

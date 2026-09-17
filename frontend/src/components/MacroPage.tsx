@@ -539,6 +539,7 @@ function CurrencyImpact({ title, card, portfolioShare, favorableHigh, explanatio
 export function MacroPage() {
   const [data, setData] = useState<MacroData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [calOpen, setCalOpen] = useState(false)
   useEffect(() => { fetchMacro().then(d => { setData(d); setLoading(false) }) }, [])
 
   if (loading) return <div style={{ padding: 60, textAlign: 'center', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>Načítám makro data…</div>
@@ -561,10 +562,25 @@ export function MacroPage() {
   ]
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
+    <div className="macro-sidebar-layout" style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
       {/* ── EKONOMICKÝ KALENDÁŘ + NEWS SIDEBAR ── */}
-      <div className="macro-sidebar" style={{ width: 380, minWidth: 380, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
+      {/* Mobile toggle button pro kalendář */}
+      <button
+        className="macro-cal-toggle"
+        onClick={() => setCalOpen(o => !o)}
+        aria-expanded={calOpen}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        {calOpen ? 'Skrýt kalendář' : 'Ekonomický kalendář'}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: calOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      <div className={`macro-sidebar ${calOpen ? 'macro-sidebar--open' : ''}`} style={{ width: 380, minWidth: 380, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
 
         {/* Ekonomický kalendář */}
         <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid var(--line)', fontSize: 10, letterSpacing: '0.16em', color: 'var(--text-tertiary)' }}>

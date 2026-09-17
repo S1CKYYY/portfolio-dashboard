@@ -1,0 +1,304 @@
+/*
+ * mobile.css — Responsive & touch layout
+ * Loaded by main.tsx alongside other style files.
+ */
+
+/* ── Portfolio Tabs (sub-nav, viditelný vždy) ── */
+.portfolio-tabs {
+  display: none; /* na desktopu schovaný — tam je v TopBaru PortfolioSelector */
+}
+
+/* ── Bottom Nav ── */
+.bottom-nav {
+  display: none;
+}
+
+/* ── Macro calendar toggle ── */
+.macro-cal-toggle {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TABLET  ≤ 1024px
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .row--analytics {
+    grid-template-columns: 1fr 1fr;
+  }
+  .row--analytics > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE  ≤ 768px  — hlavní breakpoint
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Body & app shell ── */
+  body {
+    overscroll-behavior: contain;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .app {
+    padding-bottom: 64px; /* prostor pro bottom nav */
+  }
+
+  /* ── Bottom nav bar ── */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: color-mix(in srgb, var(--surface-base) 96%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .bottom-nav__tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 8px 8px;
+    min-height: 56px;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-family: var(--font-sans);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bottom-nav__tab--active {
+    color: var(--accent);
+  }
+
+  /* ── Portfolio Tabs (Celé / ETF / Picks) ── */
+  .portfolio-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    margin: 0 calc(-1 * var(--space-4)) var(--space-3);
+    padding: 0 var(--space-4);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .portfolio-tabs::-webkit-scrollbar { display: none; }
+
+  .portfolio-tabs__tab {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .portfolio-tabs__tab--active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── TopBar — zjednodušení ── */
+  .topbar {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-2);
+  }
+
+  .topbar__title {
+    font-size: var(--size-caption);
+  }
+
+  .topbar__amount {
+    font-size: clamp(24px, 7vw, 32px);
+  }
+
+  .topbar__aside {
+    display: none; /* sparkline pryč */
+  }
+
+  /* Schovej portfolio selector a navigaci v TopBaru — jsou v bottom nav a portfolio-tabs */
+  .topbar__value > div[style*="display: 'flex'"],
+  .topbar__value > div:first-of-type {
+    display: none;
+  }
+
+  /* ── Hlavní obsah ── */
+  .app__main {
+    padding: var(--space-3) var(--space-3);
+    gap: var(--space-4);
+    padding-bottom: calc(64px + var(--space-4));
+  }
+
+  /* ── KPI strip — 2 sloupce ── */
+  .kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .kpi__value { font-size: var(--size-data); }
+  .kpi__label { font-size: 9px; }
+
+  /* ── Rows — vždy sloupec ── */
+  .row--overview,
+  .row--risk,
+  .row--analytics,
+  .row--analytics > :last-child {
+    display: flex !important;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  /* ── Panely ── */
+  .panel {
+    padding: var(--space-4);
+  }
+
+  /* ── Performance ── */
+  .performance__readout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .readout__meaning { display: none; }
+  .performance__stats { gap: var(--space-4); }
+
+  /* ── Allocation ── */
+  .allocation { flex-direction: column; }
+  .allocation__group {
+    border-right: none !important;
+    border-bottom: 1px solid var(--line-faint);
+  }
+  .allocation__group:last-child { border-bottom: none; }
+
+  /* ── Holdings tabulka ── */
+  .panel--holdings {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── MACRO PAGE ── */
+
+  /* Toggle button — viditelný pouze na mobilu */
+  .macro-cal-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface-panel);
+    border: none;
+    border-bottom: 1px solid var(--line);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .macro-cal-toggle svg:first-child {
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .macro-cal-toggle span {
+    flex: 1;
+  }
+
+  /* Sidebar — schovaný defaultně, animovaně se otevírá */
+  .macro-sidebar-layout {
+    flex-direction: column !important;
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  .macro-sidebar {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    border-right: none !important;
+    border-bottom: none;
+    position: static !important;
+    transition: max-height 0.3s ease;
+  }
+
+  .macro-sidebar--open {
+    max-height: 320px !important;
+    overflow-y: auto !important;
+    border-bottom: 1px solid var(--line) !important;
+  }
+
+  /* Obsah makro — normální scroll */
+  .macro-content {
+    flex: none !important;
+    overflow-y: visible !important;
+    padding: 0 var(--space-3) 80px !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Sentiment grid — stack */
+  .macro-content div[style*="300px 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Yield karty — 2 sloupce */
+  .macro-content div[style*="repeat(4"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* FRED grid */
+  .macro-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* VIX + Target Rate stack */
+  .macro-content div[style*="gridTemplateColumns: '300px"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SMALL PHONE  ≤ 480px
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Holdings — skryj méně důležité sloupce */
+  .grid [data-column='cost_basis_base'],
+  .grid [data-column='acquired'],
+  .grid [data-column='day_change_pct'] {
+    display: none;
+  }
+
+  .topbar__deltas {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .macro-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}

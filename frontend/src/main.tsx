@@ -11,6 +11,7 @@ import '@fontsource/ibm-plex-mono/500.css'
 
 import './styles/tokens.css'
 import './styles/base.css'
+import './styles/mobile.css'
 import './styles/layout.css'
 import './styles/panels.css'
 

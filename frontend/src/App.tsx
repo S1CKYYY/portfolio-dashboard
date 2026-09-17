@@ -14,6 +14,7 @@ import { PerformancePanel } from './components/PerformancePanel'
 import { RiskPanel } from './components/RiskPanel'
 import { TopBar } from './components/TopBar'
 import { BottomNav } from './components/BottomNav'
+import { PortfolioTabs } from './components/PortfolioTabs'
 import { formatTimestamp } from './lib/format'
 import { MacroPage } from './components/MacroPage'
 import { CurrencyProvider } from './lib/currency'
@@ -141,6 +142,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
         <MacroPage />
       ) : (
       <main className="app__main">
+        <PortfolioTabs />
         <KpiStrip risk={viewRisk} montecarlo={viewMontecarlo} summary={viewSummary} currency={currency} />
         <div className="row row--overview">
           <PerformancePanel
