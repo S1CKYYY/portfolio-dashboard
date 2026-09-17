@@ -420,3 +420,226 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════ *
+ * BOTTOM NAVIGATION BAR — mobile only                               *
+ * ═══════════════════════════════════════════════════════════════════ */
+
+.bottom-nav {
+  display: none; /* skrytý na desktopu */
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--surface-base);
+    border-top: 1px solid var(--line);
+    padding: 0 0 env(safe-area-inset-bottom, 0);
+  }
+
+  .bottom-nav__tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 10px 4px 8px;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-family: var(--font-sans);
+    font-size: 10px;
+    cursor: pointer;
+    transition: color 0.15s;
+    min-height: 56px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bottom-nav__tab--active {
+    color: var(--accent);
+  }
+
+  .bottom-nav__icon {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  /* TopBar zjednodušení na mobilu — nav tlačítka pryč, PortfolioSelector pryč */
+  .topbar__value > div[style*="marginRight: 8"] {
+    display: none;
+  }
+
+  /* Padding na spod pro bottom nav */
+  .app {
+    padding-bottom: 56px;
+  }
+
+  .app__main {
+    padding-bottom: calc(var(--space-6) + 56px);
+  }
+
+  /* TopBar — kompaktnější */
+  .topbar {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-2);
+  }
+
+  .topbar__identity {
+    gap: var(--space-2);
+  }
+
+  .topbar__eyebrow {
+    gap: var(--space-1);
+  }
+
+  .topbar__title {
+    font-size: var(--size-caption);
+  }
+
+  .topbar__amount {
+    font-size: clamp(22px, 8vw, 30px);
+  }
+
+  .topbar__deltas {
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .topbar__delta {
+    min-width: 0;
+  }
+
+  .topbar__aside {
+    display: none; /* sparkline pryč na mobilu */
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════ *
+ * MOBILE LAYOUT — sekce pod sebou, lepší spacing                    *
+ * ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* Hlavní obsah */
+  .app__main {
+    padding: var(--space-3) var(--space-3) var(--space-4);
+    gap: var(--space-4);
+  }
+
+  /* KPI strip — 2 sloupce vždy */
+  .kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  /* Všechny row gridy → 1 sloupec */
+  .row--overview,
+  .row--risk,
+  .row--analytics,
+  .row--analytics > :last-child {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  /* Panely — kompaktnější padding */
+  .panel {
+    padding: var(--space-4) var(--space-4);
+  }
+
+  .panel__header {
+    margin-bottom: var(--space-3);
+  }
+
+  /* Performance readout — 2 sloupce */
+  .performance__readout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .readout__meaning {
+    display: none;
+  }
+
+  /* Allocation — sloupcový */
+  .allocation {
+    flex-direction: column;
+  }
+
+  .allocation__group {
+    border-right: none;
+    border-bottom: 1px solid var(--line-faint);
+  }
+
+  .allocation__group:last-child {
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 480px) {
+  /* KPI hodnoty menší font */
+  .kpi__value {
+    font-size: var(--size-data);
+  }
+
+  .kpi__label {
+    font-size: 9px;
+  }
+
+  /* Hor. scroll pro holdings tabulku */
+  .panel--holdings {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .panel--holdings .grid {
+    min-width: 320px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════ *
+ * MACRO PAGE MOBILE                                                  *
+ * ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .macro-sidebar-layout {
+    flex-direction: column !important;
+  }
+
+  .macro-sidebar {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-height: 280px;
+    border-right: none !important;
+    border-bottom: 1px solid var(--line);
+    position: static !important;
+  }
+
+  .macro-content {
+    padding: 0 var(--space-3) 80px !important;
+  }
+
+  /* Sentiment & dluhopisy — stack na mobilu */
+  .macro-content > div[style*="300px 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Yield karty — 2 sloupce */
+  .macro-content > div[style*="4, 1fr"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* FRED sekce karty */
+  .macro-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Levý sloupec VIX+Target */
+  .macro-content div[style*="gridTemplateColumns: '300px 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+}

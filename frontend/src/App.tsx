@@ -13,6 +13,7 @@ import { MonteCarloPanel, OutcomeDistributionPanel } from './components/MonteCar
 import { PerformancePanel } from './components/PerformancePanel'
 import { RiskPanel } from './components/RiskPanel'
 import { TopBar } from './components/TopBar'
+import { BottomNav } from './components/BottomNav'
 import { formatTimestamp } from './lib/format'
 import { MacroPage } from './components/MacroPage'
 import { CurrencyProvider } from './lib/currency'
@@ -191,6 +192,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           {formatTimestamp(viewSummary.generated_at)}
         </span>
       </footer>
+      <BottomNav page={page} onNavigate={navigate} />
     </div>
     </CurrencyProvider>
   )
