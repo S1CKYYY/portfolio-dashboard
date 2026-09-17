@@ -328,3 +328,95 @@
     padding: var(--space-4) var(--space-5);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════ *
+ * MOBILE / RESPONSIVE — přidáno pro plnou mobilní podporu           *
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* TopBar — navigation + controls na mobilu pod sebou */
+@media (max-width: 640px) {
+  .topbar {
+    padding: var(--space-4) var(--space-4) var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .topbar__value {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+
+  .topbar__amount {
+    font-size: var(--size-large);
+    width: 100%;
+  }
+
+  .topbar__deltas {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .topbar__delta {
+    min-width: calc(50% - var(--space-3));
+  }
+
+  /* Navigace a selectory na plnou šířku */
+  .topbar__value > div:first-of-type,
+  .topbar__value > div[style] {
+    flex-wrap: wrap;
+  }
+}
+
+/* KPI strip — 2 sloupcový layout na mobilu */
+@media (max-width: 500px) {
+  .kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Holdings tabulka — hide dalších sloupců na malém mobilu */
+@media (max-width: 520px) {
+  .grid [data-column='cost_basis_base'],
+  .grid [data-column='acquired'] {
+    display: none;
+  }
+
+  .grid [data-column='ticker'] {
+    max-width: 80px;
+  }
+}
+
+/* Performance stats na mobilu */
+@media (max-width: 480px) {
+  .performance__readout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .readout__period {
+    font-size: 10px;
+  }
+}
+
+/* App main padding na mobilu */
+@media (max-width: 640px) {
+  .app__main {
+    padding: var(--space-4) var(--space-3);
+    gap: var(--space-4);
+  }
+
+  .section__title {
+    font-size: var(--size-label);
+  }
+
+  .panel {
+    padding: var(--space-4);
+  }
+}
+
+/* Overflow scroll na tabulce */
+@media (max-width: 768px) {
+  .panel--holdings {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

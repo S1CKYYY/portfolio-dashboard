@@ -26,6 +26,9 @@ body {
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  touch-action: manipulation;  /* eliminuje 300ms delay na mobilu */
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: contain;
 }
 
 /* Every numeral in the product is monospaced and column-aligned. */

@@ -95,7 +95,7 @@ export function TopBar({ summary, health, config, page = 'dashboard', onNavigate
             className="num topbar__amount"
           />
           {/* Navigace */}
-          <div style={{ display: 'flex', gap: 2, marginRight: 8 }}>
+          <div style={{ display: 'flex', gap: 2, marginRight: 8, flexShrink: 0 }}>
             <button type="button" className="segmented__option" style={{ opacity: page === 'dashboard' ? 1 : 0.5 }} onClick={() => onNavigate?.('dashboard')}>Portfolio</button>
             <button type="button" className="segmented__option" style={{ opacity: page === 'macro' ? 1 : 0.5 }} onClick={() => onNavigate?.('macro')}>Makro</button>
           </div>

@@ -564,7 +564,7 @@ export function MacroPage() {
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
       {/* ── EKONOMICKÝ KALENDÁŘ + NEWS SIDEBAR ── */}
-      <div style={{ width: 380, minWidth: 380, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
+      <div className="macro-sidebar" style={{ width: 380, minWidth: 380, borderRight: '1px solid var(--line)', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', position: 'sticky', top: 0, flexShrink: 0 }}>
 
         {/* Ekonomický kalendář */}
         <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid var(--line)', fontSize: 10, letterSpacing: '0.16em', color: 'var(--text-tertiary)' }}>
@@ -636,7 +636,7 @@ export function MacroPage() {
       </div>
 
       {/* ── MAKRO OBSAH ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 10px 40px', minWidth: 0 }}>
+      <div className="macro-content" style={{ flex: 1, overflowY: 'auto', padding: '0 10px 40px', minWidth: 0 }}>
         <div>
           <div style={{ padding: '6px 0 2px', fontSize: 10, color: '#52525b', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
             Aktualizováno: {ts}
