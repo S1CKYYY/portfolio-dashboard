@@ -773,9 +773,13 @@ def main():
                         break
             risk_ep = snapshot.get('endpoints', {}).get('/portfolio/risk', {})
             if risk_ep and 'max_drawdown' in risk_ep:
+                peak_value = round(vals_series[peak_idx], 2) if peak_idx < len(vals_series) else None
+                trough_value = round(vals_series[min_idx], 2) if min_idx < len(vals_series) else None
                 risk_ep['max_drawdown']['pct'] = round(min_dd, 6)
                 risk_ep['max_drawdown']['peak_date'] = dates_series[peak_idx] if peak_idx < len(dates_series) else None
                 risk_ep['max_drawdown']['trough_date'] = dates_series[min_idx]
+                risk_ep['max_drawdown']['peak_value'] = peak_value
+                risk_ep['max_drawdown']['trough_value'] = trough_value
                 risk_ep['max_drawdown']['recovery_date'] = dates_series[recovery_idx] if recovery_idx else None
                 print(f'  Max drawdown opraveno: {min_dd*100:.2f}% ({dates_series[peak_idx]} → {dates_series[min_idx]})')
     except Exception as e:
