@@ -222,8 +222,20 @@ def _store_cache(path: Path, closes: pd.DataFrame, fetched_at: datetime) -> None
         pickle.dump({"closes": closes, "fetched_at": fetched_at}, handle)
 
 
-def _align_to_trading_calendar(closes: pd.DataFrame, benchmark_symbol: str) -> pd.DataFrame:
-    calendar = closes[benchmark_symbol].dropna().index
+# NYSE is the broadest trading calendar; use it to anchor alignment so that
+# US stock closes are never dropped due to European venue holidays (e.g. VUAA.DE
+# missing on a day NYSE is open).
+_US_CALENDAR_ANCHOR = "^GSPC"
+
+
+def _align_to_trading_calendar(
+    closes: pd.DataFrame,
+    benchmark_symbol: str,
+    calendar_anchor: str | None = None,
+) -> pd.DataFrame:
+    # Prefer the explicit calendar anchor (NYSE); fall back to the display benchmark.
+    anchor = calendar_anchor if (calendar_anchor and calendar_anchor in closes.columns) else benchmark_symbol
+    calendar = closes[anchor].dropna().index
     aligned = closes.reindex(calendar).ffill()
     return aligned.dropna(how="any")
 
@@ -245,7 +257,9 @@ def load_market_data(
     )
     pairs = {currency: fx_symbol(currency, base) for currency in foreign}
 
-    symbols = list(dict.fromkeys([*portfolio.tickers, settings.benchmark, *pairs.values()]))
+    # Always include the NYSE calendar anchor so US market days are never dropped
+    # even when the display benchmark (e.g. VUAA.DE) has a data gap on that day.
+    symbols = list(dict.fromkeys([*portfolio.tickers, settings.benchmark, _US_CALENDAR_ANCHOR, *pairs.values()]))
     end = date.today() + timedelta(days=1)
     start = end - timedelta(days=int(365.25 * settings.history_years) + 10)
 
@@ -260,7 +274,7 @@ def load_market_data(
         fetched_at = datetime.now(timezone.utc)
         _store_cache(cache_path, closes, fetched_at)
 
-    aligned = _align_to_trading_calendar(closes, settings.benchmark)
+    aligned = _align_to_trading_calendar(closes, settings.benchmark, calendar_anchor=_US_CALENDAR_ANCHOR)
 
     fx = {currency: aligned[symbol] for currency, symbol in pairs.items()}
     benchmark = aligned[settings.benchmark]
