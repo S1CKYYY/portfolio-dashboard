@@ -27,10 +27,12 @@ TICKER_OVERRIDE = {
     "META.US": "META",
     "MSFT.US": "MSFT",
     "NFLX.US": "NFLX",
+    "VST.US":  "VST",
+    "VICI.US": "VICI",
     "RHM.DE":  "RHM.DE",   # Rheinmetall AG — Yahoo Finance ticker
 }
 
-USD_TICKERS = {"BRKB.US", "DUOL.US", "PYPL.US", "META.US", "MSFT.US", "NFLX.US"}
+USD_TICKERS = {"BRKB.US", "DUOL.US", "PYPL.US", "META.US", "MSFT.US", "NFLX.US", "VST.US", "VICI.US"}
 # Passivní ETF/ETC tickery — vše ostatní jsou picks (akcie)
 PASSIVE_TICKERS = {"VUAA.DE", "ZPRV.DE", "XNAS.DE", "4GLD.DE", "VWCE.DE", "IS3N.DE"}
 BENCHMARK = "VUAA.DE"
@@ -53,6 +55,9 @@ ETF_REGION_WEIGHTS = {
     "META":  {"USA": 1.0},
     "MSFT":  {"USA": 1.0},
     "NFLX":  {"USA": 1.0},
+    "VST":   {"USA": 1.0},
+    "VICI":  {"USA": 1.0},
+    "RHM.DE": {"Evropa": 1.0},
 }
 
 
@@ -377,6 +382,9 @@ ETF_SECTOR_WEIGHTS = {
     "META":   {"Komunikační služby":   1.0},
     "MSFT":   {"Technologie":          1.0},
     "NFLX":   {"Komunikační služby":   1.0},
+    "VST":    {"Energie":              1.0},
+    "VICI":   {"Reality":              1.0},
+    "RHM.DE": {"Průmysl":             1.0},
 }
 
 
