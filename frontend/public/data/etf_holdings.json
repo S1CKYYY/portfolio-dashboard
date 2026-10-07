@@ -1,0 +1,117 @@
+{
+  "4GLD.DE": {
+    "name": "Xetra-Gold (fyzicke zlato)",
+    "coverage_pct": 1.0,
+    "holdings": []
+  },
+  "VUAA.DE": {
+    "name": "Vanguard S&P 500 UCITS ETF",
+    "coverage_pct": 0.61,
+    "holdings": [
+      { "ticker": "AAPL",  "name": "Apple",                "weight": 0.0720 },
+      { "ticker": "NVDA",  "name": "Nvidia",               "weight": 0.0660 },
+      { "ticker": "MSFT",  "name": "Microsoft",            "weight": 0.0610 },
+      { "ticker": "AMZN",  "name": "Amazon",               "weight": 0.0370 },
+      { "ticker": "META",  "name": "Meta Platforms",       "weight": 0.0270 },
+      { "ticker": "GOOGL", "name": "Alphabet A",           "weight": 0.0200 },
+      { "ticker": "GOOG",  "name": "Alphabet C",           "weight": 0.0175 },
+      { "ticker": "BRK-B", "name": "Berkshire Hathaway B", "weight": 0.0165 },
+      { "ticker": "LLY",   "name": "Eli Lilly",            "weight": 0.0160 },
+      { "ticker": "AVGO",  "name": "Broadcom",             "weight": 0.0150 },
+      { "ticker": "TSLA",  "name": "Tesla",                "weight": 0.0140 },
+      { "ticker": "JPM",   "name": "JPMorgan Chase",       "weight": 0.0138 },
+      { "ticker": "UNH",   "name": "UnitedHealth",         "weight": 0.0120 },
+      { "ticker": "XOM",   "name": "Exxon Mobil",          "weight": 0.0105 },
+      { "ticker": "V",     "name": "Visa",                 "weight": 0.0095 },
+      { "ticker": "COST",  "name": "Costco",               "weight": 0.0090 },
+      { "ticker": "MA",    "name": "Mastercard",           "weight": 0.0088 },
+      { "ticker": "NFLX",  "name": "Netflix",              "weight": 0.0085 },
+      { "ticker": "JNJ",   "name": "Johnson & Johnson",    "weight": 0.0083 },
+      { "ticker": "WMT",   "name": "Walmart",              "weight": 0.0080 }
+    ]
+  },
+  "VWCE.DE": {
+    "name": "Vanguard FTSE All-World UCITS ETF",
+    "coverage_pct": 0.42,
+    "holdings": [
+      { "ticker": "AAPL",  "name": "Apple",                "weight": 0.0465 },
+      { "ticker": "NVDA",  "name": "Nvidia",               "weight": 0.0430 },
+      { "ticker": "MSFT",  "name": "Microsoft",            "weight": 0.0390 },
+      { "ticker": "AMZN",  "name": "Amazon",               "weight": 0.0240 },
+      { "ticker": "META",  "name": "Meta Platforms",       "weight": 0.0175 },
+      { "ticker": "GOOGL", "name": "Alphabet A",           "weight": 0.0130 },
+      { "ticker": "GOOG",  "name": "Alphabet C",           "weight": 0.0115 },
+      { "ticker": "BRK-B", "name": "Berkshire Hathaway B", "weight": 0.0107 },
+      { "ticker": "LLY",   "name": "Eli Lilly",            "weight": 0.0104 },
+      { "ticker": "AVGO",  "name": "Broadcom",             "weight": 0.0097 },
+      { "ticker": "TSLA",  "name": "Tesla",                "weight": 0.0090 },
+      { "ticker": "JPM",   "name": "JPMorgan Chase",       "weight": 0.0089 },
+      { "ticker": "UNH",   "name": "UnitedHealth",         "weight": 0.0077 },
+      { "ticker": "XOM",   "name": "Exxon Mobil",          "weight": 0.0068 },
+      { "ticker": "V",     "name": "Visa",                 "weight": 0.0062 },
+      { "ticker": "COST",  "name": "Costco",               "weight": 0.0058 },
+      { "ticker": "NFLX",  "name": "Netflix",              "weight": 0.0055 },
+      { "ticker": "WMT",   "name": "Walmart",              "weight": 0.0052 },
+      { "ticker": "NOVO-B","name": "Novo Nordisk",         "weight": 0.0049 },
+      { "ticker": "TSM",   "name": "TSMC",                 "weight": 0.0046 }
+    ]
+  },
+  "XNAS.DE": {
+    "name": "Xtrackers NASDAQ-100 Swap UCITS ETF",
+    "coverage_pct": 0.73,
+    "holdings": [
+      { "ticker": "AAPL",  "name": "Apple",                "weight": 0.0890 },
+      { "ticker": "NVDA",  "name": "Nvidia",               "weight": 0.0820 },
+      { "ticker": "MSFT",  "name": "Microsoft",            "weight": 0.0750 },
+      { "ticker": "AMZN",  "name": "Amazon",               "weight": 0.0520 },
+      { "ticker": "META",  "name": "Meta Platforms",       "weight": 0.0380 },
+      { "ticker": "GOOGL", "name": "Alphabet A",           "weight": 0.0280 },
+      { "ticker": "GOOG",  "name": "Alphabet C",           "weight": 0.0250 },
+      { "ticker": "AVGO",  "name": "Broadcom",             "weight": 0.0210 },
+      { "ticker": "TSLA",  "name": "Tesla",                "weight": 0.0195 },
+      { "ticker": "COST",  "name": "Costco",               "weight": 0.0130 },
+      { "ticker": "NFLX",  "name": "Netflix",              "weight": 0.0120 },
+      { "ticker": "ASML",  "name": "ASML",                 "weight": 0.0095 },
+      { "ticker": "AMD",   "name": "AMD",                  "weight": 0.0093 },
+      { "ticker": "LIN",   "name": "Linde",                "weight": 0.0090 },
+      { "ticker": "QCOM",  "name": "Qualcomm",             "weight": 0.0085 },
+      { "ticker": "ISRG",  "name": "Intuitive Surgical",   "weight": 0.0082 },
+      { "ticker": "TXN",   "name": "Texas Instruments",    "weight": 0.0080 },
+      { "ticker": "ADBE",  "name": "Adobe",                "weight": 0.0075 },
+      { "ticker": "CMCSA", "name": "Comcast",              "weight": 0.0070 },
+      { "ticker": "HON",   "name": "Honeywell",            "weight": 0.0065 }
+    ]
+  },
+  "ZPRV.DE": {
+    "name": "SPDR MSCI USA Small Cap Value Weighted ETF",
+    "coverage_pct": 0.22,
+    "holdings": [
+      { "ticker": "COOP",  "name": "Mr. Cooper Group",     "weight": 0.0045 },
+      { "ticker": "OFG",   "name": "OFG Bancorp",          "weight": 0.0040 },
+      { "ticker": "EPRT",  "name": "Essential Properties", "weight": 0.0038 },
+      { "ticker": "VICI",  "name": "VICI Properties",      "weight": 0.0037 },
+      { "ticker": "MDU",   "name": "MDU Resources",        "weight": 0.0035 },
+      { "ticker": "HCC",   "name": "Warrior Met Coal",     "weight": 0.0034 },
+      { "ticker": "DEN",   "name": "Chord Energy",         "weight": 0.0033 },
+      { "ticker": "CADE",  "name": "Cadence Bank",         "weight": 0.0032 },
+      { "ticker": "FHB",   "name": "First Hawaiian",       "weight": 0.0031 },
+      { "ticker": "PEBO",  "name": "Peoples Bancorp",      "weight": 0.0030 }
+    ]
+  },
+  "IS3N.DE": {
+    "name": "iShares Core MSCI EM IMI UCITS ETF",
+    "coverage_pct": 0.31,
+    "holdings": [
+      { "ticker": "TSM",   "name": "TSMC",                 "weight": 0.0740 },
+      { "ticker": "TCEHY", "name": "Tencent",              "weight": 0.0390 },
+      { "ticker": "BABA",  "name": "Alibaba",              "weight": 0.0250 },
+      { "ticker": "PDD",   "name": "PDD Holdings",         "weight": 0.0210 },
+      { "ticker": "SMSN",  "name": "Samsung Electronics",  "weight": 0.0185 },
+      { "ticker": "RELIANCE","name":"Reliance Industries",  "weight": 0.0130 },
+      { "ticker": "MELI",  "name": "MercadoLibre",         "weight": 0.0110 },
+      { "ticker": "INFY",  "name": "Infosys",              "weight": 0.0105 },
+      { "ticker": "JD",    "name": "JD.com",               "weight": 0.0098 },
+      { "ticker": "HINDUNILVR","name":"Hindustan Unilever", "weight": 0.0087 }
+    ]
+  }
+}

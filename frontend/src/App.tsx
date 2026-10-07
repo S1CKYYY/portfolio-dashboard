@@ -17,6 +17,7 @@ import { BottomNav } from './components/BottomNav'
 import { PortfolioTabs } from './components/PortfolioTabs'
 import { formatTimestamp } from './lib/format'
 import { MacroPage } from './components/MacroPage'
+import { InsightsPage } from './components/InsightsPage'
 import { CurrencyProvider } from './lib/currency'
 import { useAnalytics } from './lib/useAnalytics'
 
@@ -53,12 +54,15 @@ export default function App() {
 }
 
 function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAnalytics>['data']>; config: ReturnType<typeof useAnalytics>['config'] }) {
-  const [page, setPage] = useState<'dashboard' | 'macro'>(() =>
-    window.location.hash === '#/macro' ? 'macro' : 'dashboard'
-  )
-  const navigate = (p: 'dashboard' | 'macro') => {
+  const [page, setPage] = useState<'dashboard' | 'macro' | 'insights'>(() => {
+    const h = window.location.hash
+    if (h === '#/macro') return 'macro'
+    if (h === '#/insights') return 'insights'
+    return 'dashboard'
+  })
+  const navigate = (p: 'dashboard' | 'macro' | 'insights') => {
     setPage(p)
-    window.location.hash = p === 'macro' ? '/macro' : '/dashboard'
+    window.location.hash = p === 'macro' ? '/macro' : p === 'insights' ? '/insights' : '/dashboard'
   }
   const { health, holdings, summary, history, returns, risk, montecarlo } = data
   const currency = summary.base_currency
@@ -140,6 +144,8 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
       <TopBar summary={viewSummary} health={health} config={config} page={page} onNavigate={navigate} />
       {page === 'macro' ? (
         <MacroPage />
+      ) : page === 'insights' ? (
+        <InsightsPage />
       ) : (
       <main className="app__main">
         <PortfolioTabs />
@@ -194,7 +200,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           {formatTimestamp(viewSummary.generated_at)}
         </span>
       </footer>
-      <BottomNav page={page} onNavigate={navigate} />
+      <BottomNav page={page} onNavigate={navigate as any} />
     </div>
     </CurrencyProvider>
   )
