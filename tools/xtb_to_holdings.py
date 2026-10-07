@@ -4,6 +4,9 @@ XTB XLSX → holdings.json adaptér pro chrispathway/portfolio-dashboard
 Použití:
     python xtb_to_holdings.py EUR_*.xlsx USD_*.xlsx --currency CZK
 
+    Pokud je předáno více souborů stejného účtu (EUR/USD), použije se
+    vždy pouze nejnovější (podle data v názvu souboru).
+
 Výstup: holdings.json kompatibilní s chrispathway dashboardem
 """
 
@@ -28,8 +31,6 @@ CATEGORY_MAP = {
 }
 
 # ── Mapování XTB tickerů na Yahoo Finance symboly ────────────────────────────
-# XTB používá např. VUAA.DE, Yahoo Finance totéž — většinou funguje přímo.
-# Pokud by nefungovalo, přidat sem výjimku.
 REGION_MAP = {
     # ETF – USA akciové indexy
     "VUAA.DE": "USA",
@@ -41,6 +42,8 @@ REGION_MAP = {
     "IS3N.DE": "Rozvíjející se trhy",
     # ETC – komodity
     "4GLD.DE": "Komodity",
+    # Německé akcie
+    "RHM.DE": "Evropa",
     # US akcie
     "BRK-B": "USA",
     "DUOL": "USA",
@@ -48,6 +51,8 @@ REGION_MAP = {
     "META": "USA",
     "MSFT": "USA",
     "NFLX": "USA",
+    "VST": "USA",
+    "VICI": "USA",
 }
 
 TICKER_OVERRIDE = {
@@ -57,6 +62,8 @@ TICKER_OVERRIDE = {
     "META.US": "META",
     "MSFT.US": "MSFT",
     "NFLX.US": "NFLX",
+    "VST.US":  "VST",
+    "VICI.US": "VICI",
 }
 
 TER_MAP = {
@@ -67,12 +74,15 @@ TER_MAP = {
     'VWCE.DE': 0.19,
     '4GLD.DE': 0.35,
     'IS3N.DE': 0.18,
+    'RHM.DE':  0.00,
     'BRK-B':   0.00,
     'DUOL':    0.00,
     'PYPL':    0.00,
     'META':    0.00,
     'MSFT':    0.00,
     'NFLX':    0.00,
+    'VST':     0.00,
+    'VICI':    0.00,
 }
 
 NAMES = {
@@ -82,13 +92,18 @@ NAMES = {
     "VWCE.DE": "Vanguard FTSE All-World UCITS ETF",
     "4GLD.DE": "Xetra-Gold",
     "IS3N.DE": "iShares Core MSCI EM IMI UCITS ETF",
-    "BRKB.US": "Berkshire Hathaway Inc.",
-    "DUOL.US": "Duolingo Inc.",
-    "PYPL.US": "PayPal Holdings Inc.",
-    "META.US": "Meta Platforms Inc.",
-    "MSFT.US": "Microsoft Corporation",
-    "NFLX.US": "Netflix Inc.",
+    "RHM.DE":  "Rheinmetall AG",
+    # US stocks (after TICKER_OVERRIDE maps *.US → clean ticker)
+    "BRK-B": "Berkshire Hathaway Inc.",
+    "DUOL":  "Duolingo Inc.",
+    "PYPL":  "PayPal Holdings Inc.",
+    "META":  "Meta Platforms Inc.",
+    "MSFT":  "Microsoft Corporation",
+    "NFLX":  "Netflix Inc.",
+    "VST":   "Vistra Energy Corp.",
+    "VICI":  "VICI Properties Inc.",
 }
+
 
 def excel_serial_to_date(serial) -> str | None:
     """Převede Excel sériové číslo na ISO datum string."""
@@ -113,7 +128,9 @@ def parse_open_positions(xlsx_path: Path) -> list[dict]:
     """
     Parsuje 'Open Positions' list z XTB XLSX exportu.
 
-    Vrátí seznam slovníků pro každý AGREGOVANÝ ticker (ne individuální loty).
+    Čte POUZE aktuálně otevřené pozice — uzavřené obchody (prodeje)
+    jsou již odstraněny z listu Open Positions samotným XTB.
+    Vrátí seznam slovníků pro každý AGREGOVANÝ ticker.
     Individuální loty slouží pro VWAP cost basis a nejstarší datum nákupu.
     """
     df = pd.read_excel(xlsx_path, sheet_name="Open Positions", header=None)
@@ -134,35 +151,33 @@ def parse_open_positions(xlsx_path: Path) -> list[dict]:
     df.columns = df.iloc[header_row]
     df = df.iloc[header_row + 1:].reset_index(drop=True)
 
-    # Sloupce: Product, Instrument/Position, Ticker, Category, Type, Volume,
-    #          Value, Current price, Open price, Open time (UTC), ...
     col_position = "Instrument/Position"
-    col_ticker = "Ticker"
-    col_type = "Type"
-    col_volume = "Volume"
+    col_ticker   = "Ticker"
+    col_type     = "Type"
+    col_volume   = "Volume"
     col_open_price = "Open price"
-    col_open_time = "Open time (UTC)"
-    col_category = "Category"
+    col_open_time  = "Open time (UTC)"
+    col_category   = "Category"
 
-    holdings = {}  # ticker → {lots: [...], category: str}
+    holdings: dict[str, dict] = {}  # ticker → {lots: [...], category: str}
 
-    current_ticker = None
-    current_category = None
+    current_ticker: str | None = None
+    current_category: str = "ETF"
 
     for _, row in df.iterrows():
-        ticker = row.get(col_ticker)
-        position = row.get(col_position)
-        typ = row.get(col_type)
-        volume = row.get(col_volume)
+        ticker    = row.get(col_ticker)
+        position  = row.get(col_position)
+        typ       = row.get(col_type)
+        volume    = row.get(col_volume)
         open_price = row.get(col_open_price)
-        open_time = row.get(col_open_time)
-        category = row.get(col_category)
+        open_time  = row.get(col_open_time)
+        category   = row.get(col_category)
 
         # Přeskoč prázdné řádky
         if pd.isna(position) and pd.isna(ticker):
             continue
 
-        # Souhrnný řádek (Type = NaN, position = název instrumentu)
+        # Souhrnný řádek pro nástroj (Type = NaN, position = název instrumentu)
         if pd.isna(typ):
             if pd.notna(ticker):
                 current_ticker = str(ticker).strip()
@@ -173,47 +188,43 @@ def parse_open_positions(xlsx_path: Path) -> list[dict]:
         elif str(typ).strip().upper() == "BUY" and current_ticker:
             if pd.isna(volume) or pd.isna(open_price):
                 continue
-            lot = {
-                "quantity": float(volume),
+            holdings[current_ticker]["lots"].append({
+                "quantity":   float(volume),
                 "open_price": float(open_price),
-                "open_time": open_time,
-            }
-            holdings[current_ticker]["lots"].append(lot)
+                "open_time":  open_time,
+            })
 
-    # Agreguj loty → VWAP cost basis + nejstarší datum
+    # Agreguj loty → VWAP cost basis + nejstarší datum nákupu
     result = []
-    for ticker, data in holdings.items():
+    for xtb_ticker, data in holdings.items():
         lots = data["lots"]
         if not lots:
             continue
 
-        total_qty = sum(l["quantity"] for l in lots)
+        total_qty  = sum(l["quantity"] for l in lots)
         total_cost = sum(l["quantity"] * l["open_price"] for l in lots)
         vwap = total_cost / total_qty if total_qty > 0 else None
 
         # Nejstarší datum nákupu
-        dates = []
-        for l in lots:
-            d = excel_serial_to_date(l["open_time"])
-            if d:
-                dates.append(d)
+        dates = [d for l in lots if (d := excel_serial_to_date(l["open_time"]))]
         earliest_date = min(dates) if dates else None
 
-        yahoo_ticker = TICKER_OVERRIDE.get(ticker, ticker)
-        asset_class = CATEGORY_MAP.get(data["category"].upper(), data["category"])
-
-        currency = "USD" if current_ticker.endswith(".US") else "EUR"
-        # portfolio_type: ETF/ETC = pasivní, Stock = picks (bez ohledu na měnu)
+        yahoo_ticker = TICKER_OVERRIDE.get(xtb_ticker, xtb_ticker)
+        asset_class  = CATEGORY_MAP.get(data["category"].upper(), data["category"])
+        # Měna: XTB EUR účet → .DE, .UK, atd.; USD účet → .US
+        currency = "USD" if xtb_ticker.endswith(".US") else "EUR"
+        # portfolio_type: ETF/ETC = pasivní, Stock/CFD = picks
         portfolio_type = "passive" if asset_class in ("ETF", "ETC") else "picks"
-        holding = {
-            "ticker": yahoo_ticker,
-            "name": NAMES.get(yahoo_ticker, yahoo_ticker),
-            "currency": currency,
+
+        holding: dict = {
+            "ticker":         yahoo_ticker,
+            "name":           NAMES.get(yahoo_ticker, yahoo_ticker),
+            "currency":       currency,
             "portfolio_type": portfolio_type,
-            "quantity": round(total_qty, 6),
-            "asset_class": asset_class,
-            "region": REGION_MAP.get(yahoo_ticker, "USA"),
-            "ter_pct": TER_MAP.get(yahoo_ticker, 0.0),
+            "quantity":       round(total_qty, 6),
+            "asset_class":    asset_class,
+            "region":         REGION_MAP.get(yahoo_ticker, "USA"),
+            "ter_pct":        TER_MAP.get(yahoo_ticker, 0.0),
         }
         if vwap is not None:
             holding["cost_basis_per_unit"] = round(vwap, 6)
@@ -225,24 +236,54 @@ def parse_open_positions(xlsx_path: Path) -> list[dict]:
     return result
 
 
+def dedupe_by_account(paths: list[Path]) -> list[Path]:
+    """
+    Z případně více souborů stejného účtu vybere vždy jen nejnovější.
+
+    Předpokládaný formát názvu: {CURRENCY}_{ACCOUNT}_{FROM}_{TO}.xlsx
+    Soubory se stejnou dvojicí (CURRENCY, ACCOUNT) jsou odstraněny
+    s výjimkou nejnovějšího (největší TO datum v názvu).
+    """
+    groups: dict[str, list[Path]] = {}
+    for p in paths:
+        parts = p.stem.split("_")
+        # Klíč = první dvě části (např. "EUR_51409698")
+        key = "_".join(parts[:2]) if len(parts) >= 2 else p.stem
+        groups.setdefault(key, []).append(p)
+
+    selected = []
+    for key, files in groups.items():
+        if len(files) == 1:
+            selected.append(files[0])
+        else:
+            # Seřaď dle názvu sestupně (datum na konci) a vezmi první
+            newest = sorted(files, key=lambda f: f.stem, reverse=True)[0]
+            skipped = [f.name for f in files if f != newest]
+            print(f"  ℹ️  Účet {key}: používám {newest.name}, přeskakuji {skipped}", file=sys.stderr)
+            selected.append(newest)
+
+    return selected
+
+
 def build_holdings_json(xlsx_paths: list[Path], base_currency: str) -> dict:
     """Sestaví kompletní holdings.json z jednoho nebo více XTB exportů."""
-    all_holdings = []
+    # Deduplikace souborů: pro každý účet jen nejnovější
+    deduped = dedupe_by_account(xlsx_paths)
 
-    for path in xlsx_paths:
+    all_holdings: list[dict] = []
+    for path in deduped:
         print(f"  Načítám {path.name}...")
         h = parse_open_positions(path)
         print(f"    → {len(h)} pozic nalezeno")
         all_holdings.extend(h)
 
-    # Deduplikace — pokud stejný ticker ve více souborech, sečti množství
+    # Deduplikace tickerů (pro jistotu — nemělo by nastat po dedupe_by_account)
     merged: dict[str, dict] = {}
     for h in all_holdings:
         t = h["ticker"]
         if t not in merged:
             merged[t] = h.copy()
         else:
-            # Vážený průměr cost basis
             existing = merged[t]
             q1 = existing["quantity"]
             q2 = h["quantity"]

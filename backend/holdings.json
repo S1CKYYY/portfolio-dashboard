@@ -14,18 +14,6 @@
       "acquired": "2025-03-27"
     },
     {
-      "ticker": "ZPRV.DE",
-      "name": "SPDR MSCI USA Small Cap Value Weighted UCITS ETF",
-      "currency": "EUR",
-      "portfolio_type": "passive",
-      "quantity": 93.1437,
-      "asset_class": "ETF",
-      "region": "USA",
-      "ter_pct": 0.3,
-      "cost_basis_per_unit": 61.368184,
-      "acquired": "2025-02-19"
-    },
-    {
       "ticker": "XNAS.DE",
       "name": "Xtrackers NASDAQ 100 UCITS ETF",
       "currency": "EUR",
@@ -38,16 +26,16 @@
       "acquired": "2025-04-22"
     },
     {
-      "ticker": "4GLD.DE",
-      "name": "Xetra-Gold",
+      "ticker": "ZPRV.DE",
+      "name": "SPDR MSCI USA Small Cap Value Weighted UCITS ETF",
       "currency": "EUR",
       "portfolio_type": "passive",
-      "quantity": 44.7964,
-      "asset_class": "ETC",
-      "region": "Komodity",
-      "ter_pct": 0.35,
-      "cost_basis_per_unit": 94.992835,
-      "acquired": "2025-02-04"
+      "quantity": 93.1437,
+      "asset_class": "ETF",
+      "region": "USA",
+      "ter_pct": 0.3,
+      "cost_basis_per_unit": 61.368184,
+      "acquired": "2025-02-19"
     },
     {
       "ticker": "VWCE.DE",
@@ -60,6 +48,18 @@
       "ter_pct": 0.19,
       "cost_basis_per_unit": 130.975099,
       "acquired": "2025-03-27"
+    },
+    {
+      "ticker": "4GLD.DE",
+      "name": "Xetra-Gold",
+      "currency": "EUR",
+      "portfolio_type": "passive",
+      "quantity": 44.7964,
+      "asset_class": "ETC",
+      "region": "Komodity",
+      "ter_pct": 0.35,
+      "cost_basis_per_unit": 94.992835,
+      "acquired": "2025-02-04"
     },
     {
       "ticker": "IS3N.DE",
@@ -75,19 +75,19 @@
     },
     {
       "ticker": "RHM.DE",
-      "name": "RHM.DE",
+      "name": "Rheinmetall AG",
       "currency": "EUR",
       "portfolio_type": "picks",
       "quantity": 1.0,
       "asset_class": "Stock",
-      "region": "USA",
+      "region": "Evropa",
       "ter_pct": 0.0,
       "cost_basis_per_unit": 1014.6,
       "acquired": "2026-09-10"
     },
     {
       "ticker": "BRK-B",
-      "name": "BRK-B",
+      "name": "Berkshire Hathaway Inc.",
       "currency": "USD",
       "portfolio_type": "picks",
       "quantity": 5.4653,
@@ -98,32 +98,8 @@
       "acquired": "2025-01-13"
     },
     {
-      "ticker": "DUOL",
-      "name": "DUOL",
-      "currency": "USD",
-      "portfolio_type": "picks",
-      "quantity": 10.8342,
-      "asset_class": "Stock",
-      "region": "USA",
-      "ter_pct": 0.0,
-      "cost_basis_per_unit": 199.693674,
-      "acquired": "2025-11-04"
-    },
-    {
-      "ticker": "PYPL",
-      "name": "PYPL",
-      "currency": "USD",
-      "portfolio_type": "picks",
-      "quantity": 24.0308,
-      "asset_class": "Stock",
-      "region": "USA",
-      "ter_pct": 0.0,
-      "cost_basis_per_unit": 60.962872,
-      "acquired": "2025-12-15"
-    },
-    {
       "ticker": "META",
-      "name": "META",
+      "name": "Meta Platforms Inc.",
       "currency": "USD",
       "portfolio_type": "picks",
       "quantity": 1.9146,
@@ -134,8 +110,44 @@
       "acquired": "2026-01-14"
     },
     {
+      "ticker": "VST",
+      "name": "Vistra Energy Corp.",
+      "currency": "USD",
+      "portfolio_type": "picks",
+      "quantity": 8.0,
+      "asset_class": "Stock",
+      "region": "USA",
+      "ter_pct": 0.0,
+      "cost_basis_per_unit": 140.91,
+      "acquired": "2026-09-22"
+    },
+    {
+      "ticker": "NFLX",
+      "name": "Netflix Inc.",
+      "currency": "USD",
+      "portfolio_type": "picks",
+      "quantity": 14.0,
+      "asset_class": "Stock",
+      "region": "USA",
+      "ter_pct": 0.0,
+      "cost_basis_per_unit": 77.09655,
+      "acquired": "2026-02-04"
+    },
+    {
+      "ticker": "VICI",
+      "name": "VICI Properties Inc.",
+      "currency": "USD",
+      "portfolio_type": "picks",
+      "quantity": 41.0,
+      "asset_class": "Stock",
+      "region": "USA",
+      "ter_pct": 0.0,
+      "cost_basis_per_unit": 24.01,
+      "acquired": "2026-09-22"
+    },
+    {
       "ticker": "MSFT",
-      "name": "MSFT",
+      "name": "Microsoft Corporation",
       "currency": "USD",
       "portfolio_type": "picks",
       "quantity": 1.4525,
@@ -144,18 +156,6 @@
       "ter_pct": 0.0,
       "cost_basis_per_unit": 413.08,
       "acquired": "2026-02-03"
-    },
-    {
-      "ticker": "NFLX",
-      "name": "NFLX",
-      "currency": "USD",
-      "portfolio_type": "picks",
-      "quantity": 8.01,
-      "asset_class": "Stock",
-      "region": "USA",
-      "ter_pct": 0.0,
-      "cost_basis_per_unit": 81.02,
-      "acquired": "2026-02-04"
     }
   ]
 }
