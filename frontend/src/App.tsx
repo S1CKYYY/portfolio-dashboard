@@ -18,6 +18,8 @@ import { PortfolioTabs } from './components/PortfolioTabs'
 import { formatTimestamp } from './lib/format'
 import { MacroPage } from './components/MacroPage'
 import { InsightsPage } from './components/InsightsPage'
+import { InsightsSummaryCard } from './components/InsightsSummaryCard'
+import { MonthlyReturnsPanel } from './components/MonthlyReturnsPanel'
 import { CurrencyProvider } from './lib/currency'
 import { useAnalytics } from './lib/useAnalytics'
 
@@ -188,6 +190,10 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
         <div className="row row--risk">
           <RiskPanel risk={viewRisk} currency={currency} />
           <CorrelationPanel correlation={risk.correlation} />
+        </div>
+        <div className="row" style={{ alignItems: 'flex-start' }}>
+          <MonthlyReturnsPanel monthly={returns.monthly_pct} />
+          <InsightsSummaryCard onNavigate={navigate} />
         </div>
       </main>
       )}
