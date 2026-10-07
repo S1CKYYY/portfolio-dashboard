@@ -622,6 +622,70 @@ def main():
 
     end_date = snapshot.get("as_of", datetime.today().strftime("%Y-%m-%d"))
 
+    # ── Filtruj loty na aktuální holdings ────────────────────────────────────
+    # Problém: kombinace více XLSX souborů způsobuje:
+    #   1. Fantomové pozice (VST/VICI z Oct XLSX, které uživatel mezitím prodal)
+    #   2. Duplicitní loty (BRK-B/META/MSFT v Aug i Oct XLSX)
+    #   3. Nadbytečné loty (NFLX 5.99 shares z Oct, ale aktuálně jen 8.01)
+    # Oprava: filtruj, deduplikuj a ořízni na aktuální množství.
+    import json as _json_hf
+    _hfile_path = Path(__file__).parent.parent / "backend" / "holdings.json"
+    current_qty: dict[str, float] = {}
+    if _hfile_path.exists():
+        try:
+            _hdata = _json_hf.loads(_hfile_path.read_text())
+            for h in _hdata.get("holdings", []):
+                current_qty[h["ticker"]] = float(h["quantity"])
+        except Exception as _e:
+            print(f"  ⚠️ Nelze načíst holdings.json pro filtraci: {_e}")
+
+    if current_qty:
+        # 1. Filtruj na aktuální tickery (odstraní VST, VICI a jiné prodané pozice)
+        before = len(all_lots)
+        all_lots = [l for l in all_lots if l["yahoo_ticker"] in current_qty]
+        print(f"  Filtrace na aktuální tickery: {before} → {len(all_lots)} lotů")
+
+        # 2. Deduplikuj podle (ticker, datum, množství, cena) — odstraní dvojité
+        #    loty ze stejného XLSX souboru exportovaného vícekrát
+        seen_lot_keys: set = set()
+        deduped: list = []
+        for lot in all_lots:
+            key = (lot["yahoo_ticker"], lot["open_date"],
+                   round(lot["quantity"], 6), round(lot["open_price"], 4))
+            if key not in seen_lot_keys:
+                seen_lot_keys.add(key)
+                deduped.append(lot)
+        print(f"  Deduplikace: {len(all_lots)} → {len(deduped)} lotů")
+        all_lots = deduped
+
+        # 3. Ořízni celkové množství na aktuální holdings (nejstarší loty mají prioritu)
+        #    Odstraní nadbytečné loty (např. NFLX extra 5.99 shares z Oct XLSX)
+        all_lots.sort(key=lambda l: l["open_date"])
+        qty_rem: dict[str, float] = dict(current_qty)
+        capped: list = []
+        for lot in all_lots:
+            t = lot["yahoo_ticker"]
+            rem = qty_rem.get(t, 0.0)
+            if rem <= 1e-6:
+                continue  # ticker plný nebo neznámý
+            if lot["quantity"] <= rem + 1e-6:
+                capped.append(lot)
+                qty_rem[t] = rem - lot["quantity"]
+            else:
+                # Částečný lot — ořízni na zbývající množství
+                partial = dict(lot)
+                partial["quantity"] = rem
+                capped.append(partial)
+                qty_rem[t] = 0.0
+        print(f"  Ořez množství: {len(all_lots)} → {len(capped)} lotů")
+        # Zkontroluj pokrytí
+        for t, rem in qty_rem.items():
+            if rem > 0.01:
+                print(f"  ⚠️ {t}: chybí {rem:.4f} shares v XLSX (z {current_qty[t]:.4f} požadovaných)")
+        all_lots = capped
+    else:
+        print("  ⚠️ holdings.json nenalezen — filtrování přeskočeno")
+
     # ── Injektuj portfolio_type HNED — nezávisle na yfinance ──────────────
     holdings_list = snapshot.get("endpoints", {}).get("/holdings", {}).get("holdings", [])
     for h in holdings_list:
