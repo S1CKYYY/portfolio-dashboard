@@ -113,7 +113,6 @@ export function EtfHoldingsPanel() {
   const activeKey = availableEtfs.includes(selected) ? selected : availableEtfs[0]
   const activeData = etfMap[activeKey]
   const top10 = activeData.holdings.slice(0, 10)
-  const maxWeight = top10[0]?.weight ?? 0.01
   const top10sum = top10.reduce((s, h) => s + h.weight, 0)
 
   return (
