@@ -9,7 +9,7 @@ import type { InsightsData } from '../lib/insights-types'
 const base = () => (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '')
 
 interface Props {
-  onNavigate: (p: 'insights') => void
+  onNavigate: (p: 'analysis') => void
 }
 
 export function InsightsSummaryCard({ onNavigate }: Props) {
@@ -45,7 +45,7 @@ export function InsightsSummaryCard({ onNavigate }: Props) {
         <h2 className="panel__title" style={{ margin: 0 }}>Insights</h2>
         <button
           type="button"
-          onClick={() => onNavigate('insights')}
+          onClick={() => onNavigate('analysis')}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             color: POS, fontFamily: 'var(--font-mono)',

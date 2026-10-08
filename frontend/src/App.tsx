@@ -18,8 +18,8 @@ import { PortfolioTabs } from './components/PortfolioTabs'
 import { formatTimestamp } from './lib/format'
 import { MacroPage } from './components/MacroPage'
 import { InsightsPage } from './components/InsightsPage'
-import { InsightsSummaryCard } from './components/InsightsSummaryCard'
 import { MonthlyReturnsPanel } from './components/MonthlyReturnsPanel'
+import { EtfHoldingsPanel } from './components/EtfHoldingsPanel'
 import { CurrencyProvider } from './lib/currency'
 import { useAnalytics } from './lib/useAnalytics'
 
@@ -55,16 +55,18 @@ export default function App() {
   return <PortfolioProvider><AppInner data={data} config={config} /></PortfolioProvider>
 }
 
+type PageId = 'dashboard' | 'macro' | 'analysis'
+
 function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAnalytics>['data']>; config: ReturnType<typeof useAnalytics>['config'] }) {
-  const [page, setPage] = useState<'dashboard' | 'macro' | 'insights'>(() => {
+  const [page, setPage] = useState<PageId>(() => {
     const h = window.location.hash
-    if (h === '#/macro') return 'macro'
-    if (h === '#/insights') return 'insights'
+    if (h === '#/macro')    return 'macro'
+    if (h === '#/analysis') return 'analysis'
     return 'dashboard'
   })
-  const navigate = (p: 'dashboard' | 'macro' | 'insights') => {
+  const navigate = (p: PageId) => {
     setPage(p)
-    window.location.hash = p === 'macro' ? '/macro' : p === 'insights' ? '/insights' : '/dashboard'
+    window.location.hash = p === 'macro' ? '/macro' : p === 'analysis' ? '/analysis' : '/dashboard'
   }
   const { health, holdings, summary, history, returns, risk, montecarlo } = data
   const currency = summary.base_currency
@@ -114,7 +116,6 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
     sparkline: { values: (subData?.portfolio ?? []).slice(-60) },
   }) as typeof summary
 
-  // Přepočítané risk metriky pro sub-portfolio
   const viewRisk = (view !== 'all' && subData?.risk)
     ? { ...risk, ...subData.risk, max_drawdown: subData.risk.max_drawdown }
     : risk
@@ -146,12 +147,16 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
       <TopBar summary={viewSummary} health={health} config={config} page={page} onNavigate={navigate} />
       {page === 'macro' ? (
         <MacroPage />
-      ) : page === 'insights' ? (
+      ) : page === 'analysis' ? (
         <InsightsPage />
       ) : (
       <main className="app__main">
         <PortfolioTabs />
         <KpiStrip risk={viewRisk} montecarlo={viewMontecarlo} summary={viewSummary} currency={currency} />
+
+        {/* Monthly returns – prominent on home */}
+        <MonthlyReturnsPanel monthly={returns.monthly_pct} />
+
         <div className="row row--overview">
           <PerformancePanel
             history={viewHistory}
@@ -187,13 +192,15 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           totalValue={filteredTotalValue}
           currency={currency}
         />
+
+        {/* ETF top holdings – show only in passive or all view */}
+        {(view === 'all' || view === 'passive') && (
+          <EtfHoldingsPanel />
+        )}
+
         <div className="row row--risk">
           <RiskPanel risk={viewRisk} currency={currency} />
           <CorrelationPanel correlation={risk.correlation} />
-        </div>
-        <div className="row" style={{ alignItems: 'flex-start' }}>
-          <MonthlyReturnsPanel monthly={returns.monthly_pct} />
-          <InsightsSummaryCard onNavigate={navigate} />
         </div>
       </main>
       )}
@@ -206,7 +213,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           {formatTimestamp(viewSummary.generated_at)}
         </span>
       </footer>
-      <BottomNav page={page} onNavigate={navigate as any} />
+      <BottomNav page={page} onNavigate={navigate} />
     </div>
     </CurrencyProvider>
   )

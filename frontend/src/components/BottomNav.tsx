@@ -1,6 +1,6 @@
 interface BottomNavProps {
-  page: 'dashboard' | 'macro' | 'insights'
-  onNavigate: (p: 'dashboard' | 'macro' | 'insights') => void
+  page: 'dashboard' | 'macro' | 'analysis'
+  onNavigate: (p: 'dashboard' | 'macro' | 'analysis') => void
 }
 
 export function BottomNav({ page, onNavigate }: BottomNavProps) {
@@ -28,8 +28,8 @@ export function BottomNav({ page, onNavigate }: BottomNavProps) {
         <span>Makro</span>
       </button>
       <button
-        className={`bottom-nav__tab ${page === 'insights' ? 'bottom-nav__tab--active' : ''}`}
-        onClick={() => onNavigate('insights')}
+        className={`bottom-nav__tab ${page === 'analysis' ? 'bottom-nav__tab--active' : ''}`}
+        onClick={() => onNavigate('analysis')}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <circle cx="11" cy="11" r="8"/>
