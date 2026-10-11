@@ -20,7 +20,6 @@ import { MacroPage } from './components/MacroPage'
 import { InsightsPage } from './components/InsightsPage'
 import { TransactionsPage } from './components/TransactionsPage'
 import { MonthlyReturnsPanel } from './components/MonthlyReturnsPanel'
-import { EtfHoldingsPanel } from './components/EtfHoldingsPanel'
 import { CurrencyProvider } from './lib/currency'
 import { useAnalytics } from './lib/useAnalytics'
 
@@ -199,11 +198,6 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           totalValue={filteredTotalValue}
           currency={currency}
         />
-
-        {/* ETF top holdings – show only in passive or all view */}
-        {(view === 'all' || view === 'passive') && (
-          <EtfHoldingsPanel />
-        )}
 
         <div className="row row--risk">
           <RiskPanel risk={viewRisk} currency={currency} />

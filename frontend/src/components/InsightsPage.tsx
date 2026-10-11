@@ -12,6 +12,7 @@ import type {
 } from '../lib/insights-types'
 import { usePortfolio } from '../lib/portfolio-context'
 import { useAnalytics } from '../lib/useAnalytics'
+import { EtfHoldingsPanel } from './EtfHoldingsPanel'
 
 // ─── Fetch helpers ─────────────────────────────────────────────────────────
 const base = () => (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '')
@@ -551,7 +552,10 @@ export function InsightsPage() {
         </section>
       )}
 
-      {/* ── 2. Earnings Calendar ─────────────────────────── */}
+      {/* ── 2. ETF Složení ───────────────────────────────── */}
+      <EtfHoldingsPanel />
+
+      {/* ── 3. Earnings Calendar ─────────────────────────── */}
       {insights ? (
         <EarningsSection data={insights} />
       ) : (
@@ -563,7 +567,7 @@ export function InsightsPage() {
         </section>
       )}
 
-      {/* ── 3. Insider Transactions ──────────────────────── */}
+      {/* ── 4. Insider Transactions ──────────────────────── */}
       {insights ? (
         <InsiderSection data={insights} />
       ) : null}
