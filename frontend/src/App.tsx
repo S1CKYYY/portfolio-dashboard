@@ -20,6 +20,7 @@ import { MacroPage } from './components/MacroPage'
 import { InsightsPage } from './components/InsightsPage'
 import { TransactionsPage } from './components/TransactionsPage'
 import { MonthlyReturnsPanel } from './components/MonthlyReturnsPanel'
+import { InsightsSummaryCard } from './components/InsightsSummaryCard'
 import { CurrencyProvider } from './lib/currency'
 import { useAnalytics } from './lib/useAnalytics'
 
@@ -203,6 +204,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           <RiskPanel risk={viewRisk} currency={currency} />
           <CorrelationPanel correlation={risk.correlation} />
         </div>
+        <InsightsSummaryCard onNavigate={() => navigate('analysis')} />
       </main>
       )}
       <footer className="footer">
