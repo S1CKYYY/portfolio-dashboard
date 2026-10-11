@@ -83,10 +83,9 @@ jobs:
 
       - name: Generate Insights (Finnhub earnings + insider)
         run: |
+          export FINNHUB_API_KEY="${{ secrets.FINNHUB_API_KEY }}"
           if [ -n "$FINNHUB_API_KEY" ]; then echo "✅ FINNHUB_API_KEY je nastaven (${#FINNHUB_API_KEY} znaku)"; else echo "⚠️ FINNHUB_API_KEY je PRAZDNY"; fi
           python tools/generate_insights.py --force 2>&1 || echo "⚠️ generate_insights.py selhal, pouzivam cache"
-        env:
-          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
 
       - name: Generate transactions history
         run: |
