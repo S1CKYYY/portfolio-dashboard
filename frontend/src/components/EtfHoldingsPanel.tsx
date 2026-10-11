@@ -44,8 +44,6 @@ interface EtfCardProps {
 
 function EtfCard({ ticker, data, isActive, onSelect }: EtfCardProps) {
   const short = ETF_SHORT[ticker] ?? ticker
-  const top = data.holdings.slice(0, 10)
-  const maxWeight = top[0]?.weight ?? 0.01
 
   return (
     <div
@@ -114,6 +112,7 @@ export function EtfHoldingsPanel() {
   const activeData = etfMap[activeKey]
   const top10 = activeData.holdings.slice(0, 10)
   const top10sum = top10.reduce((s, h) => s + h.weight, 0)
+  const maxWeight = top10[0]?.weight ?? 0.01
 
   return (
     <section className="panel">
