@@ -13,11 +13,6 @@ on:
     - cron: '30 15 * * 1-5' # US open — 9:30 ET / 15:30 UTC
     - cron: '0 22 * * 1-5'  # US close — 16:00 ET / 22:00 UTC
   workflow_dispatch:
-    inputs:
-      finnhub_key:
-        description: 'Finnhub API key (volitelne, pouzij kdyz secret nefunguje)'
-        required: false
-        default: ''
 
 permissions:
   contents: write
@@ -88,7 +83,7 @@ jobs:
 
       - name: Generate Insights (Finnhub earnings + insider)
         run: |
-          export FINNHUB_API_KEY="${{ github.event.inputs.finnhub_key || secrets.FH_KEY }}"
+          export FINNHUB_API_KEY="${{ secrets.FH_KEY }}"
           if [ -n "$FINNHUB_API_KEY" ]; then echo "✅ FINNHUB_API_KEY je nastaven (${#FINNHUB_API_KEY} znaku)"; else echo "⚠️ FINNHUB_API_KEY je PRAZDNY"; fi
           python tools/generate_insights.py --force 2>&1 || echo "⚠️ generate_insights.py selhal, pouzivam cache"
 
