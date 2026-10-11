@@ -1,6 +1,8 @@
+type PageId = 'dashboard' | 'macro' | 'analysis' | 'transactions'
+
 interface BottomNavProps {
-  page: 'dashboard' | 'macro' | 'analysis'
-  onNavigate: (p: 'dashboard' | 'macro' | 'analysis') => void
+  page: PageId
+  onNavigate: (p: PageId) => void
 }
 
 export function BottomNav({ page, onNavigate }: BottomNavProps) {
@@ -38,6 +40,18 @@ export function BottomNav({ page, onNavigate }: BottomNavProps) {
           <line x1="8" y1="11" x2="14" y2="11"/>
         </svg>
         <span>Analyza</span>
+      </button>
+      <button
+        className={`bottom-nav__tab ${page === 'transactions' ? 'bottom-nav__tab--active' : ''}`}
+        onClick={() => onNavigate('transactions')}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <line x1="9" y1="12" x2="15" y2="12"/>
+          <line x1="9" y1="16" x2="13" y2="16"/>
+        </svg>
+        <span>Transakce</span>
       </button>
     </nav>
   )

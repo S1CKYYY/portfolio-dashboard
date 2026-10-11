@@ -13,8 +13,8 @@ interface TopBarProps {
   summary: SummaryPayload
   health: Health
   config: DataConfig
-  page?: 'dashboard' | 'macro' | 'analysis'
-  onNavigate?: (p: 'dashboard' | 'macro' | 'analysis') => void
+  page?: 'dashboard' | 'macro' | 'analysis' | 'transactions'
+  onNavigate?: (p: 'dashboard' | 'macro' | 'analysis' | 'transactions') => void
 }
 
 interface DeltaProps {
@@ -75,7 +75,7 @@ function PortfolioSelector() {
   )
 }
 
-export function TopBar({ summary, health, config, page = 'dashboard' as 'dashboard' | 'macro' | 'analysis', onNavigate }: TopBarProps) {
+export function TopBar({ summary, health, config, page = 'dashboard' as 'dashboard' | 'macro' | 'analysis' | 'transactions', onNavigate }: TopBarProps) {
   const { displayCurrency, multiplier, toggle } = useCurrency()
   const today = summary.changes.day
   const live = config.source === 'api'
@@ -99,6 +99,7 @@ export function TopBar({ summary, health, config, page = 'dashboard' as 'dashboa
             <button type="button" className="segmented__option" style={{ opacity: page === 'dashboard' ? 1 : 0.5 }} onClick={() => onNavigate?.('dashboard')}>Portfolio</button>
             <button type="button" className="segmented__option" style={{ opacity: page === 'macro' ? 1 : 0.5 }} onClick={() => onNavigate?.('macro')}>Makro</button>
             <button type="button" className="segmented__option" style={{ opacity: page === 'analysis' ? 1 : 0.5 }} onClick={() => onNavigate?.('analysis')}>Analyza</button>
+            <button type="button" className="segmented__option" style={{ opacity: page === 'transactions' ? 1 : 0.5 }} onClick={() => onNavigate?.('transactions')}>Transakce</button>
           </div>
           {/* Portfolio split selector – only on main dashboard */}
           {page === 'dashboard' && <PortfolioSelector />}

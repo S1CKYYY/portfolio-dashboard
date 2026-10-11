@@ -18,6 +18,7 @@ import { PortfolioTabs } from './components/PortfolioTabs'
 import { formatTimestamp } from './lib/format'
 import { MacroPage } from './components/MacroPage'
 import { InsightsPage } from './components/InsightsPage'
+import { TransactionsPage } from './components/TransactionsPage'
 import { MonthlyReturnsPanel } from './components/MonthlyReturnsPanel'
 import { EtfHoldingsPanel } from './components/EtfHoldingsPanel'
 import { CurrencyProvider } from './lib/currency'
@@ -55,18 +56,23 @@ export default function App() {
   return <PortfolioProvider><AppInner data={data} config={config} /></PortfolioProvider>
 }
 
-type PageId = 'dashboard' | 'macro' | 'analysis'
+type PageId = 'dashboard' | 'macro' | 'analysis' | 'transactions'
 
 function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAnalytics>['data']>; config: ReturnType<typeof useAnalytics>['config'] }) {
   const [page, setPage] = useState<PageId>(() => {
     const h = window.location.hash
-    if (h === '#/macro')    return 'macro'
-    if (h === '#/analysis') return 'analysis'
+    if (h === '#/macro')        return 'macro'
+    if (h === '#/analysis')     return 'analysis'
+    if (h === '#/transactions') return 'transactions'
     return 'dashboard'
   })
   const navigate = (p: PageId) => {
     setPage(p)
-    window.location.hash = p === 'macro' ? '/macro' : p === 'analysis' ? '/analysis' : '/dashboard'
+    window.location.hash =
+      p === 'macro'        ? '/macro' :
+      p === 'analysis'     ? '/analysis' :
+      p === 'transactions' ? '/transactions' :
+      '/dashboard'
   }
   const { health, holdings, summary, history, returns, risk, montecarlo } = data
   const currency = summary.base_currency
@@ -149,6 +155,8 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
         <MacroPage />
       ) : page === 'analysis' ? (
         <InsightsPage />
+      ) : page === 'transactions' ? (
+        <TransactionsPage />
       ) : (
       <main className="app__main">
         <PortfolioTabs />
@@ -213,7 +221,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
           {formatTimestamp(viewSummary.generated_at)}
         </span>
       </footer>
-      <BottomNav page={page} onNavigate={navigate} />
+      <BottomNav page={page} onNavigate={(p: PageId) => navigate(p)} />
     </div>
     </CurrencyProvider>
   )
