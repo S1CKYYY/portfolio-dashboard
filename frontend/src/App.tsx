@@ -162,9 +162,6 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
         <PortfolioTabs />
         <KpiStrip risk={viewRisk} montecarlo={viewMontecarlo} summary={viewSummary} currency={currency} />
 
-        {/* Monthly returns – prominent on home */}
-        <MonthlyReturnsPanel monthly={returns.monthly_pct} />
-
         <div className="row row--overview">
           <PerformancePanel
             history={viewHistory}
@@ -180,6 +177,8 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
             currency={currency}
           />
         </div>
+        {/* Monthly returns – below performance */}
+        <MonthlyReturnsPanel monthly={returns.monthly_pct} />
         <div className="row row--analytics">
           <DrawdownPanel history={viewHistory} risk={viewRisk} />
           <MonteCarloPanel montecarlo={viewMontecarlo} currency={currency} />
