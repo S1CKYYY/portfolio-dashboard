@@ -87,9 +87,36 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
   const filteredTotalValue = subData?.total_value_eur
     ?? filteredHoldings.reduce((s: number, h: any) => s + (h.value_base ?? 0), 0)
 
+  // Fix chart gap: history (from XLSX patch) may disagree with summary (yfinance)
+  // on the last date. Replace the last portfolio value with the authoritative
+  // summary.total_value so the chart endpoint matches the TopBar.
+  const historyWithGapFixed = (() => {
+    if (history.dates.length === 0) return history
+    const lastHistDate = history.dates[history.dates.length - 1]
+    if (lastHistDate === summary.as_of && history.portfolio[history.portfolio.length - 1] !== summary.total_value) {
+      const portfolio = [...history.portfolio]
+      portfolio[portfolio.length - 1] = summary.total_value
+      return { ...history, portfolio }
+    }
+    // If history is older than summary.as_of, append today's value as extra point
+    if (lastHistDate < summary.as_of) {
+      return {
+        ...history,
+        dates: [...history.dates, summary.as_of],
+        portfolio: [...history.portfolio, summary.total_value],
+        drawdown_pct: [...history.drawdown_pct, 0],
+        benchmark_rebased: [...history.benchmark_rebased, history.benchmark_rebased[history.benchmark_rebased.length - 1] ?? 0],
+        cumulative_invested: history.cumulative_invested
+          ? [...history.cumulative_invested, history.cumulative_invested[history.cumulative_invested.length - 1] ?? 0]
+          : undefined,
+      }
+    }
+    return history
+  })()
+
   const viewHistory = subData?.dates?.length
-    ? { ...history, portfolio: subData.portfolio, dates: subData.dates, drawdown_pct: subData.drawdown_pct, cumulative_invested: subData.cumulative_invested, benchmark_rebased: subData.benchmark_rebased ?? [] }
-    : history
+    ? { ...historyWithGapFixed, portfolio: subData.portfolio, dates: subData.dates, drawdown_pct: subData.drawdown_pct, cumulative_invested: subData.cumulative_invested, benchmark_rebased: subData.benchmark_rebased ?? [] }
+    : historyWithGapFixed
 
   function recomputeAlloc(hs: any[], key: string) {
     const total = hs.reduce((s: number, h: any) => s + (h.value_base ?? 0), 0)
@@ -108,7 +135,38 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
     })).sort((a, b) => b.value - a.value)
   }
 
-  const viewSummary = (view === 'all' ? summary : {
+  // --- TWR alignment ---
+  // cumulative_pct is TWR (price appreciation of current holdings from first
+  // data point). Use it everywhere instead of the simple MWR so that the
+  // TopBar, PerformancePanel "Vse" readout, and MonthlyReturnsPanel all agree.
+  const allTimeTwr: number | null =
+    returns.cumulative_pct.length > 0
+      ? returns.cumulative_pct[returns.cumulative_pct.length - 1]
+      : null
+
+  // YTD TWR: compound monthly returns for the current calendar year
+  const currentYear = String(new Date().getFullYear())
+  const ytdTwr: number | null = (() => {
+    const ytdMonths = returns.monthly_pct.filter(m => m.month.startsWith(currentYear) && m.pct !== null)
+    if (ytdMonths.length === 0) return null
+    return ytdMonths.reduce((acc, m) => acc * (1 + (m.pct as number)), 1) - 1
+  })()
+
+  // For 'all' view: replace MWR pct with TWR so it matches the monthly heatmap
+  // compound. Keep the EUR absolute as the real profit (cost basis P&L).
+  const viewSummary = (view === 'all' ? {
+    ...summary,
+    total_unrealized_pnl_pct: allTimeTwr ?? summary.total_unrealized_pnl_pct,
+    changes: {
+      ...summary.changes,
+      all: allTimeTwr !== null
+        ? { ...summary.changes.all, pct: allTimeTwr }
+        : summary.changes.all,
+      ytd: ytdTwr !== null
+        ? { ...summary.changes.ytd, pct: ytdTwr }
+        : summary.changes.ytd,
+    },
+  } : {
     ...summary,
     total_value: subData?.current_value_eur ?? filteredTotalValue,
     total_unrealized_pnl: subData ? (subData.current_value_eur - subData.total_invested_eur) : summary.total_unrealized_pnl,
