@@ -135,37 +135,8 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
     })).sort((a, b) => b.value - a.value)
   }
 
-  // --- TWR alignment ---
-  // cumulative_pct is TWR (price appreciation of current holdings from first
-  // data point). Use it everywhere instead of the simple MWR so that the
-  // TopBar, PerformancePanel "Vse" readout, and MonthlyReturnsPanel all agree.
-  const allTimeTwr: number | null =
-    returns.cumulative_pct.length > 0
-      ? returns.cumulative_pct[returns.cumulative_pct.length - 1]
-      : null
-
-  // YTD TWR: compound monthly returns for the current calendar year
-  const currentYear = String(new Date().getFullYear())
-  const ytdTwr: number | null = (() => {
-    const ytdMonths = returns.monthly_pct.filter(m => m.month.startsWith(currentYear) && m.pct !== null)
-    if (ytdMonths.length === 0) return null
-    return ytdMonths.reduce((acc, m) => acc * (1 + (m.pct as number)), 1) - 1
-  })()
-
-  // For 'all' view: replace MWR pct with TWR so it matches the monthly heatmap
-  // compound. Keep the EUR absolute as the real profit (cost basis P&L).
   const viewSummary = (view === 'all' ? {
     ...summary,
-    total_unrealized_pnl_pct: allTimeTwr ?? summary.total_unrealized_pnl_pct,
-    changes: {
-      ...summary.changes,
-      all: allTimeTwr !== null
-        ? { ...summary.changes.all, pct: allTimeTwr }
-        : summary.changes.all,
-      ytd: ytdTwr !== null
-        ? { ...summary.changes.ytd, pct: ytdTwr }
-        : summary.changes.ytd,
-    },
   } : {
     ...summary,
     total_value: subData?.current_value_eur ?? filteredTotalValue,

@@ -116,7 +116,13 @@ export function TopBar({ summary, health, config, page = 'dashboard' as 'dashboa
         <div className="topbar__deltas">
           <Delta label="Dnes" absolute={today.absolute * multiplier} percent={today.pct} delay={90} />
           <Delta
-            label="Zhodnocení"
+            label="Tento měsíc"
+            absolute={summary.changes.month.absolute * multiplier}
+            percent={summary.changes.month.pct}
+            delay={150}
+          />
+          <Delta
+            label="Celkem"
             absolute={summary.total_unrealized_pnl * multiplier}
             percent={summary.total_unrealized_pnl_pct}
             delay={210}
