@@ -19,7 +19,49 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   TABLET  ≤ 1024px
+   TABLET / iPAD  769px – 1240px
+   Override layout.css collapse — keep desktop-style 2-col grids,
+   just slightly narrower. Bottom nav stays hidden, top nav stays.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1240px) {
+  /* Keep 2-column layout instead of collapsing to 1-col */
+  .row--overview {
+    grid-template-columns: minmax(0, 1fr) 260px !important;
+  }
+  .row--analytics {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+  .row--analytics > :last-child {
+    grid-column: 1 / -1 !important;
+  }
+  .row--risk {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) !important;
+  }
+
+  /* KPI — 4 columns on tablet */
+  .kpi {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* Slightly tighter padding */
+  .app__main {
+    padding: 0 var(--space-4);
+    gap: var(--space-4);
+  }
+  .panel {
+    padding: var(--space-4);
+  }
+  .topbar {
+    padding: var(--space-4) var(--space-5);
+    gap: var(--space-4);
+  }
+  .topbar__amount {
+    font-size: clamp(26px, 3.5vw, 40px);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TABLET  ≤ 1024px  (narrower iPads — keep analytics 2-col)
    ═══════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .row--analytics {
