@@ -61,6 +61,9 @@ export function MonthlyReturnsPanel({ monthly }: MonthlyReturnsPanelProps) {
   const best  = allPcts.length ? Math.max(...allPcts) : null
   const worst = allPcts.length ? Math.min(...allPcts) : null
 
+  // Compound of ALL monthly returns = allTimeTwr; shown as footer row
+  const allTimePct = annualReturn(monthly.map(m => m.pct ?? null))
+
   const TH: React.CSSProperties = {
     padding: '5px 8px',
     fontFamily: 'var(--font-mono)',
@@ -189,6 +192,45 @@ export function MonthlyReturnsPanel({ monthly }: MonthlyReturnsPanelProps) {
               </tr>
             ))}
           </tbody>
+          {/* Celkový řádek: compound všech měsíčních výnosů = allTimeTwr */}
+          <tfoot>
+            <tr>
+              <td style={{
+                padding: '6px 8px 4px 0',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                color: 'var(--text-secondary)',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                borderTop: '1px solid var(--line)',
+              }}>
+                Celkem
+              </td>
+              {/* 12 prázdných buněk za mesíce */}
+              {Array.from({ length: 12 }, (_, mi) => (
+                <td key={mi} style={{ borderTop: '1px solid var(--line)' }} />
+              ))}
+              {/* Celkové zhodnocení */}
+              <td style={{
+                padding: '6px 10px 4px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 13,
+                fontWeight: 700,
+                textAlign: 'center',
+                borderLeft: '1px solid var(--line)',
+                borderTop: '1px solid var(--line)',
+                color: allTimePct === null
+                  ? 'var(--text-tertiary)'
+                  : allTimePct >= 0 ? 'var(--positive)' : 'var(--negative)',
+                background: allTimePct !== null ? cellColor(allTimePct, false) : undefined,
+                borderRadius: 3,
+                whiteSpace: 'nowrap',
+                minWidth: 60,
+              }}>
+                {allTimePct !== null ? fmt(allTimePct) : <span style={{ opacity: 0.2 }}>—</span>}
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </section>

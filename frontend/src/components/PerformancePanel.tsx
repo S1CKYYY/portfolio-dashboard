@@ -59,13 +59,6 @@ function rebaseToReturn(values: number[]): number[] {
   return values.map((value) => value / base - 1)
 }
 
-/** Výnos vzhledem k vloženým penězům: (hodnota - vloženo) / vloženo */
-function investedReturn(values: number[], invested: number[]): number[] {
-  return values.map((v, i) => {
-    const cost = invested[i]
-    return cost > 0 ? v / cost - 1 : 0
-  })
-}
 
 interface PerformancePanelProps {
   history: HistoryPayload
@@ -88,14 +81,30 @@ export function PerformancePanel({ history, summary, returns }: PerformancePanel
     const benchmark = history.benchmark_rebased.slice(start).map(v => v * multiplier)
     const invested = history.cumulative_invested?.slice(start).map(v => v * multiplier) ?? null
     if (view === 'return') {
-      const portfolioReturn = invested ? investedReturn(portfolio, invested) : rebaseToReturn(portfolio)
-      const benchmarkReturn = invested ? investedReturn(benchmark, invested) : rebaseToReturn(benchmark)
+      // TWR lookup: date → cumulative return (chain-linked daily returns)
+      const twrByDate = new Map<string, number>()
+      returns.dates.forEach((d, i) => twrByDate.set(d, returns.cumulative_pct[i]))
+
+      // Map history dates to TWR values; for missing dates interpolate with previous value
+      let lastTwr = 0
+      const rawTwrValues = dates.map(d => {
+        if (twrByDate.has(d)) lastTwr = twrByDate.get(d)!
+        return lastTwr
+      })
+
+      // Normalize to start of current range so sub-period views are correct
+      const twrBase = rawTwrValues[0] ?? 0
+      const portfolioTwr = rawTwrValues.map(v => (1 + v) / (1 + twrBase) - 1)
+
+      // Benchmark: rebase the rebased series to start of period
+      const benchmarkReturn = rebaseToReturn(benchmark)
+
       return [
         {
           id: 'portfolio',
-          label: 'Portfolio',
+          label: 'Portfolio (TWR)',
           color: theme.accent,
-          data: toLineData(dates, portfolioReturn),
+          data: toLineData(dates, portfolioTwr),
         },
         {
           id: 'benchmark',
