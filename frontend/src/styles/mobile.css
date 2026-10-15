@@ -209,6 +209,7 @@
     display: flex !important;
     flex-direction: column;
     gap: var(--space-3);
+    background: transparent;
   }
 
   /* ── Panely ── */

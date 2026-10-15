@@ -24,15 +24,16 @@
   padding: 0 var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  background: var(--line);
-  border-top: 1px solid var(--line);
+  gap: var(--space-3);
+  background: var(--surface-page);
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
 }
 
 .row {
   display: grid;
-  gap: 1px;
-  background: var(--line);
+  gap: var(--space-3);
+  background: transparent;
 }
 
 /* Equity curve with the allocation rail alongside it. */
@@ -61,8 +62,8 @@
 .kpi {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--line);
+  gap: var(--space-3);
+  background: transparent;
 }
 
 .kpi__cell {
@@ -71,11 +72,14 @@
   gap: var(--space-1);
   padding: var(--space-4) var(--space-5);
   background: var(--surface-panel);
-  transition: background-color var(--duration-fast) var(--easing);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  transition: background-color var(--duration-base) var(--easing), border-color var(--duration-base) var(--easing);
 }
 
 .kpi__cell:hover {
   background: var(--surface-hover);
+  border-color: var(--line-strong);
 }
 
 .kpi__label {
@@ -111,7 +115,13 @@
   justify-content: space-between;
   gap: var(--space-8);
   padding: var(--space-6) var(--space-7);
-  background: var(--surface-panel);
+  background: color-mix(in srgb, var(--surface-panel) 88%, transparent);
+  backdrop-filter: var(--topbar-backdrop);
+  -webkit-backdrop-filter: var(--topbar-backdrop);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .topbar__identity {
@@ -206,17 +216,28 @@
   gap: var(--space-2);
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
   color: var(--text-secondary);
 }
 
 .topbar__source-dot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: var(--positive);
+  box-shadow: 0 0 6px var(--positive);
+  animation: pulse-dot 2.5s ease-in-out infinite;
 }
 
 .topbar__source-dot--snapshot {
-  background: var(--accent);
+  background: var(--text-tertiary);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
 }
 
 /* ------------------------------------------------------------------ *

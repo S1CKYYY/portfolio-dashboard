@@ -15,25 +15,29 @@
 
 :root {
   /* ---------------------------------------------------------------- *
-   * Surfaces - a true black page with panels barely lifted off it.    *
+   * Surfaces — deep navy-slate OLED palette.                          *
    *                                                                   *
-   * The page is #000: on a trading floor the display is the only      *
-   * light source, and pure black maximises the contrast ratio of the  *
-   * figures sitting on it. Panels are lifted by only 3-4 points of    *
-   * luminance, so the grid reads as one continuous surface divided by *
-   * rules rather than as a set of stacked slabs.                      *
+   * Pure black (#000) reads as too harsh at screen brightness; deep   *
+   * navy-slate (#020617) gives the same perceived darkness on OLED    *
+   * while adding subtle blue-tinted depth that reads as premium on    *
+   * IPS/LCD displays. Panels are lifted only 3-5 points of luminance, *
+   * so the grid still reads as one continuous surface divided by      *
+   * hairlines rather than a stack of floating cards.                  *
+   *                                                                   *
+   * Palette source: ui-ux-pro-max skill — financial dashboard / OLED. *
    * ---------------------------------------------------------------- */
-  --surface-page: #000000;
-  --surface-panel: #08090b;
-  --surface-header: #0e0f12;
-  --surface-raised: #131519;
-  --surface-hover: #16181c;
-  --surface-active: #1d2025;
+  --surface-page: #020617;
+  --surface-panel: #0b0f1a;
+  --surface-header: #0f1629;
+  --surface-raised: #151e30;
+  --surface-hover: #1a2440;
+  --surface-active: #1e2d48;
 
-  /* Hairlines. --line is the default 1px rule that separates every region. */
-  --line: #1a1c20;
-  --line-strong: #292c32;
-  --line-faint: #121317;
+  /* Hairlines — slightly more visible than before for better panel
+     definition without adding shadow or elevation. */
+  --line: #1e2a3d;
+  --line-strong: #2c3b56;
+  --line-faint: #131c2e;
 
   /* ---------------------------------------------------------------- *
    * Text - high-contrast primary, progressively muted supporting text *
@@ -45,11 +49,13 @@
   --text-inverse: #0a0b0d;
 
   /* ---------------------------------------------------------------- *
-   * Accent - exactly one, used for interaction and the primary series *
+   * Accent — electric blue; distinct from semantic green gains so     *
+   * UI chrome (active state, focus, chart primary series) never reads *
+   * as a positive signal.                                             *
    * ---------------------------------------------------------------- */
-  --accent: #4589ff;
-  --accent-dim: #2f5fb0;
-  --accent-faint: #16233a;
+  --accent: #4f8ef0;
+  --accent-dim: #2c5fa8;
+  --accent-faint: #162440;
 
   /* ---------------------------------------------------------------- *
    * Semantic - sign of a number only (gain / loss / neutral)          *
@@ -65,14 +71,14 @@
    * Data visualisation                                                *
    * ---------------------------------------------------------------- */
 
-  /* Categorical: a restrained steel ramp for allocation breakdowns.
-     Ordered light-to-dark so the largest slice reads strongest. */
-  --viz-cat-1: #7aa5e8;
-  --viz-cat-2: #5b83bd;
-  --viz-cat-3: #446596;
-  --viz-cat-4: #344d72;
-  --viz-cat-5: #2a3c56;
-  --viz-cat-6: #232f42;
+  /* Categorical: steel-blue ramp tuned for the new navy background.
+     Slightly brighter to lift off the deeper surface. */
+  --viz-cat-1: #7eb8f7;
+  --viz-cat-2: #5c97d6;
+  --viz-cat-3: #4278b0;
+  --viz-cat-4: #325d8a;
+  --viz-cat-5: #274669;
+  --viz-cat-6: #1f3654;
 
   /* Sequential: single hue, dark to light, for the correlation heatmap.
      Deliberately not a rainbow - luminance alone encodes magnitude. */
@@ -96,10 +102,11 @@
   --viz-benchmark: #6a7280;
 
   /* ---------------------------------------------------------------- *
-   * Typography                                                        *
+   * Typography — IBM Plex self-hosted (no FOUT, no Google dependency).*
+   * Plex Sans for prose; Plex Mono for all numerals.                  *
    * ---------------------------------------------------------------- */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Fira Code', monospace;
 
   /* Carbon type scale, trimmed to what this dashboard actually uses. */
   --size-micro: 10px;
@@ -154,8 +161,13 @@
   --max-width: 1800px;
   --sidebar-width: 300px;
 
-  /* Deliberately square. Rounded corners read as "card"; this is a terminal. */
-  --radius: 0px;
+  /* 2px radius — barely perceptible corner softening. Keeps the dense
+     data-terminal feel while removing the "unrendered/raw" look that 0px
+     gives on high-DPI retina screens. */
+  --radius: 2px;
+
+  /* Topbar glassmorphism — subtle depth layer behind the headline bar. */
+  --topbar-backdrop: blur(12px) saturate(140%);
 }
 
 /**
