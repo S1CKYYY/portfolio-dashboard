@@ -14,7 +14,6 @@ import {
 import { useMemo } from 'react'
 import {
   formatMoney,
-  formatMoneySigned,
   formatPercent,
   formatPercentSigned,
   formatPrice,
@@ -133,11 +132,20 @@ const columns = column.columns([
       )
     },
   }),
-  column.accessor('unrealized_pnl', {
-    header: 'Nerealizovaný P&L',
-    sortFn: 'basic',
+  column.display({
+    id: 'unrealized_pnl',
+    header: 'P&L (native)',
     meta: { align: 'right' },
-    cell: (info) => <Num tone={signClass(info.getValue())}>{formatMoneySigned(info.getValue())}</Num>,
+    cell: (info) => {
+      const h = info.row.original
+      const pnl = (h.price_native - h.cost_basis_native) * h.quantity
+      const sym = h.currency === 'USD' ? '$' : h.currency === 'GBP' ? '£' : '€'
+      const abs = Math.abs(pnl)
+      const formatted = abs >= 1000
+        ? `${sym}${(abs / 1000).toFixed(1)}k`
+        : `${sym}${abs.toFixed(0)}`
+      return <Num tone={signClass(pnl)}>{pnl >= 0 ? '+' : '-'}{formatted}</Num>
+    },
   }),
   column.display({
     id: 'native_pnl_pct',
@@ -178,9 +186,9 @@ interface HoldingsPanelProps {
 }
 
 export function HoldingsPanel({ holdings, totalValue }: HoldingsPanelProps) {
-  const { displayCurrency, multiplier } = useCurrency()
+  const { multiplier, usdMultiplier } = useCurrency()
   const [selected, setSelected] = useState<typeof holdings[0] | null>(null)
-  // Transformuj hodnoty do zobrazovací měny
+  // Hodnota a celková hodnota v CZK pro sloupec Hodnota a footer
   const displayHoldings = holdings.map(h => ({
     ...h,
     price_base: h.price_base * multiplier,
@@ -197,14 +205,19 @@ export function HoldingsPanel({ holdings, totalValue }: HoldingsPanelProps) {
     initialState: { sorting: [{ id: 'value_base', desc: true }] },
   })
 
-  const totalPnl = useMemo(
-    () => displayHoldings.reduce((sum, holding) => sum + holding.unrealized_pnl, 0),
-    [displayHoldings],
+  // Celkový P&L v CZK: každou pozici převedeme z její native měny do CZK
+  const totalPnlCzk = useMemo(
+    () => holdings.reduce((sum, h) => {
+      const pnlNative = (h.price_native - h.cost_basis_native) * h.quantity
+      const rate = h.currency === 'USD' ? usdMultiplier : multiplier
+      return sum + pnlNative * rate
+    }, 0),
+    [holdings, multiplier, usdMultiplier],
   )
 
   return (
     <>
-    <Panel title="Pozice" subtitle={`${holdings.length} pozic · hodnoty v ${displayCurrency}`}>
+    <Panel title="Pozice" subtitle={`${holdings.length} pozic · P&L v native měně · hodnota v Kč`}>
       <div className="grid__scroll">
         <table className="grid">
           <thead>
@@ -269,7 +282,7 @@ export function HoldingsPanel({ holdings, totalValue }: HoldingsPanelProps) {
                 <Num>{formatPercent(1, 1)}</Num>
               </td>
               <td className="grid__td grid__td--right">
-                <Num tone={signClass(totalPnl)}>{formatMoneySigned(totalPnl)}</Num>
+                <Num tone={signClass(totalPnlCzk)}>{totalPnlCzk >= 0 ? '+' : ''}{Math.round(totalPnlCzk).toLocaleString('cs-CZ')} Kč</Num>
               </td>
               <td className="grid__td" colSpan={3} />
             </tr>

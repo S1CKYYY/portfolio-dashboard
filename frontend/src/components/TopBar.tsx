@@ -76,7 +76,7 @@ function PortfolioSelector() {
 }
 
 export function TopBar({ summary, health, config, page = 'dashboard' as 'dashboard' | 'macro' | 'analysis' | 'transactions', onNavigate }: TopBarProps) {
-  const { displayCurrency, multiplier, toggle } = useCurrency()
+  const { multiplier } = useCurrency()
   const today = summary.changes.day
   const live = config.source === 'api'
   return (
@@ -103,15 +103,6 @@ export function TopBar({ summary, health, config, page = 'dashboard' as 'dashboa
           </div>
           {/* Portfolio split selector – only on main dashboard */}
           {page === 'dashboard' && <PortfolioSelector />}
-          <button
-            type="button"
-            className="segmented__option"
-            onClick={toggle}
-            style={{ fontFamily: 'inherit', fontSize: '0.75rem', letterSpacing: '0.1em', marginLeft: '6px' }}
-            title="Přepnout měnu"
-          >
-            {displayCurrency === 'CZK' ? 'CZK → EUR' : 'EUR → CZK'}
-          </button>
         </div>
         <div className="topbar__deltas">
           <Delta label="Dnes" absolute={today.absolute * multiplier} percent={today.pct} delay={90} />
@@ -153,7 +144,7 @@ export function TopBar({ summary, health, config, page = 'dashboard' as 'dashboa
         />
         <div className="topbar__meta">
           <span>
-            Měna <span className="topbar__meta-value num">{displayCurrency}</span>
+            Měna <span className="topbar__meta-value num">CZK</span>
           </span>
           <span>
             Ke dni <span className="topbar__meta-value num">{formatDate(summary.as_of)}</span>

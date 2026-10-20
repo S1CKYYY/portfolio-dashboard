@@ -280,11 +280,24 @@ class PortfolioAnalytics:
             }
         )
 
+    def _czk_rates(self) -> tuple[float, float]:
+        """Return (eur_czk, usd_czk) spot rates for CZK display in the frontend."""
+        try:
+            import yfinance as yf  # already a project dependency
+            czk_ticker = yf.Ticker("EURCZK=X")
+            eur_czk = float(czk_ticker.fast_info["last_price"])
+        except Exception:
+            eur_czk = 25.3  # safe fallback
+        usd_eur = float(self.market.fx["USD"].iloc[-1]) if "USD" in self.market.fx else 0.89
+        usd_czk = usd_eur * eur_czk
+        return eur_czk, usd_czk
+
     def summary(self) -> dict[str, Any]:
         """``GET /portfolio/summary`` — headline value, P&L and allocations."""
         total_cost = float(sum(p.cost_total_base for p in self.positions))
         total_pnl = self.total_value - total_cost
         tail = self.equity.tail(SPARKLINE_DAYS)
+        eur_czk, usd_czk = self._czk_rates()
 
         return json_safe(
             {
@@ -294,6 +307,8 @@ class PortfolioAnalytics:
                 "total_unrealized_pnl": round_money(total_pnl),
                 "total_unrealized_pnl_pct": round_ratio(total_pnl / total_cost if total_cost else None),
                 "holdings_count": len(self.positions),
+                "czk_rate": round(eur_czk, 3),
+                "usd_czk_rate": round(usd_czk, 3),
                 "changes": {period: self._period_payload(period) for period in PERIODS},
                 "allocation_by_class": self._allocation_breakdown("asset_class"),
                 "allocation_by_region": self._allocation_breakdown("region"),

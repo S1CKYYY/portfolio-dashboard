@@ -1,37 +1,39 @@
 /**
- * CurrencyContext — přepínač CZK / EUR pro celý dashboard.
- * Všechny komponenty čtou multiplier a displayCurrency odtud.
+ * CurrencyContext — hodnoty jsou vždy v CZK.
+ * multiplier    = EUR → CZK kurz
+ * usdMultiplier = USD → CZK kurz
+ * Každá pozice zobrazuje P&L ve své native měně;
+ * součty (TopBar, footer) jsou vždy v CZK.
  */
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, type ReactNode } from 'react'
 
 interface CurrencyCtx {
-  displayCurrency: 'CZK' | 'EUR'
-  multiplier: number
-  toggle: () => void
+  displayCurrency: 'CZK'
+  multiplier: number      // EUR → CZK
+  usdMultiplier: number   // USD → CZK
 }
 
 const CurrencyContext = createContext<CurrencyCtx>({
   displayCurrency: 'CZK',
-  multiplier: 1,
-  toggle: () => {},
+  multiplier: 25.3,
+  usdMultiplier: 22.5,
 })
 
 export function CurrencyProvider({
   czkRate,
+  usdCzkRate,
   children,
 }: {
   czkRate: number
+  usdCzkRate: number
   children: ReactNode
 }) {
-  const [displayCurrency, setDisplayCurrency] = useState<'CZK' | 'EUR'>('CZK')
-  const multiplier = displayCurrency === 'CZK' ? czkRate : 1
-
   return (
     <CurrencyContext.Provider
       value={{
-        displayCurrency,
-        multiplier,
-        toggle: () => setDisplayCurrency((c) => (c === 'CZK' ? 'EUR' : 'CZK')),
+        displayCurrency: 'CZK',
+        multiplier: czkRate,
+        usdMultiplier: usdCzkRate,
       }}
     >
       {children}

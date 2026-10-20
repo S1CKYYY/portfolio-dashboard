@@ -175,9 +175,10 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
   const viewLabel = view === 'passive' ? '🌱 Pasivní ETF' : view === 'picks' ? '🎯 Stock Picks' : null
 
   const czkRate = summary.czk_rate ?? 25.3
+  const usdCzkRate = summary.usd_czk_rate ?? (czkRate * 0.89)
 
   return (
-    <CurrencyProvider czkRate={czkRate}>
+    <CurrencyProvider czkRate={czkRate} usdCzkRate={usdCzkRate}>
     <div className="app">
       <TopBar summary={viewSummary} health={health} config={config} page={page} onNavigate={navigate} />
       {page === 'macro' ? (
