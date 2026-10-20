@@ -180,7 +180,7 @@ function AppInner({ data, config }: { data: NonNullable<ReturnType<typeof useAna
   return (
     <CurrencyProvider czkRate={czkRate} usdCzkRate={usdCzkRate}>
     <div className="app">
-      <TopBar summary={viewSummary} health={health} config={config} page={page} onNavigate={navigate} />
+      <TopBar summary={viewSummary} health={health} config={config} holdings={filteredHoldings} page={page} onNavigate={navigate} />
       {page === 'macro' ? (
         <MacroPage />
       ) : page === 'analysis' ? (

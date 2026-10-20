@@ -3,7 +3,7 @@
  */
 import { formatDate, formatMoneyCompact, formatMoneySigned, formatPercentSigned, signClass } from '../lib/format'
 import type { DataConfig } from '../lib/api'
-import type { Health, SummaryPayload } from '../lib/types'
+import type { Health, Holding, SummaryPayload } from '../lib/types'
 import { AnimatedNumber } from './AnimatedNumber'
 import { useCurrency } from '../lib/currency'
 import { usePortfolio, type PortfolioView } from '../lib/portfolio-context'
@@ -13,6 +13,7 @@ interface TopBarProps {
   summary: SummaryPayload
   health: Health
   config: DataConfig
+  holdings?: Holding[]
   page?: 'dashboard' | 'macro' | 'analysis' | 'transactions'
   onNavigate?: (p: 'dashboard' | 'macro' | 'analysis' | 'transactions') => void
 }
@@ -75,9 +76,18 @@ function PortfolioSelector() {
   )
 }
 
-export function TopBar({ summary, health, config, page = 'dashboard' as 'dashboard' | 'macro' | 'analysis' | 'transactions', onNavigate }: TopBarProps) {
-  const { multiplier } = useCurrency()
+export function TopBar({ summary, health, config, holdings, page = 'dashboard' as 'dashboard' | 'macro' | 'analysis' | 'transactions', onNavigate }: TopBarProps) {
+  const { multiplier, usdMultiplier } = useCurrency()
   const today = summary.changes.day
+
+  // P&L v CZK: každá pozice × svůj kurz (USD nebo EUR)
+  const totalPnlCzk = holdings && holdings.length > 0
+    ? holdings.reduce((sum, h) => {
+        const pnlNative = (h.price_native - h.cost_basis_native) * h.quantity
+        const rate = h.currency === 'USD' ? usdMultiplier : multiplier
+        return sum + pnlNative * rate
+      }, 0)
+    : summary.total_unrealized_pnl * multiplier
   const live = config.source === 'api'
   return (
     <header className="topbar">
@@ -114,7 +124,7 @@ export function TopBar({ summary, health, config, page = 'dashboard' as 'dashboa
           />
           <Delta
             label="Celkem"
-            absolute={summary.total_unrealized_pnl * multiplier}
+            absolute={totalPnlCzk}
             percent={summary.total_unrealized_pnl_pct}
             delay={210}
           />
