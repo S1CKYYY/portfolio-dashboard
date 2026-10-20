@@ -1,8 +1,45 @@
 {
-  "generated_at": "2026-10-17T00:04:10.751012+00:00",
-  "data_as_of": "2026-10-17",
-  "finnhub_fetched_at": "2026-10-17T00:04:36.691270+00:00",
-  "earnings": [],
+  "generated_at": "2026-10-20T00:49:59.369315+00:00",
+  "data_as_of": "2026-10-20",
+  "finnhub_fetched_at": "2026-10-20T00:50:24.209998+00:00",
+  "earnings": [
+    {
+      "ticker": "NFLX",
+      "name": "NFLX",
+      "date": "2027-01-18",
+      "time": "after_market",
+      "eps_estimate": 0.7462,
+      "revenue_estimate": 13785929187,
+      "days_until": 90,
+      "history": [
+        {
+          "period": "2026-06-30",
+          "actual": 0.8,
+          "estimate": 0.803,
+          "beat": false
+        },
+        {
+          "period": "2026-03-31",
+          "actual": 0.7,
+          "estimate": 0.7791,
+          "beat": false
+        },
+        {
+          "period": "2025-12-31",
+          "actual": 0.56,
+          "estimate": 0.5628,
+          "beat": false
+        },
+        {
+          "period": "2025-09-30",
+          "actual": 0.587,
+          "estimate": 0.7106,
+          "beat": false
+        }
+      ],
+      "beat_rate": 0.0
+    }
+  ],
   "insider": [
     {
       "ticker": "BRK-B",
@@ -40,7 +77,7 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 173,
+      "sell_count": 168,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
@@ -1891,61 +1928,6 @@
           "value_usd": 0.0,
           "date": "2026-04-27",
           "filing_date": "2026-04-29"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 86413,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-04-20",
-          "filing_date": "2026-04-22"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7802,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-04-20",
-          "filing_date": "2026-04-22"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 2429,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-04-20",
-          "filing_date": "2026-04-22"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7802,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-04-20",
-          "filing_date": "2026-04-22"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 9631,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-04-20",
-          "filing_date": "2026-04-22"
         }
       ]
     },
@@ -2413,7 +2395,7 @@
       "buy_count": 0,
       "sell_count": 23,
       "net_value_usd": 0.0,
-      "mspr": -13.975,
+      "mspr": -100.0,
       "transactions": [
         {
           "ticker": "MSFT",
