@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-10-21T19:27:04.105265+00:00",
-  "data_as_of": "2026-10-21",
-  "finnhub_fetched_at": "2026-10-21T19:27:29.660629+00:00",
+  "generated_at": "2026-10-22T13:42:13.696220+00:00",
+  "data_as_of": "2026-10-22",
+  "finnhub_fetched_at": "2026-10-22T13:42:40.668636+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
       "name": "NFLX",
       "date": "2027-01-18",
       "time": "after_market",
-      "eps_estimate": 0.7462,
-      "revenue_estimate": 13785929187,
-      "days_until": 89,
+      "eps_estimate": 0.7012,
+      "revenue_estimate": 13720825881,
+      "days_until": 88,
       "history": [
         {
           "period": "2026-09-30",
           "actual": 0.87,
-          "estimate": 0.8388,
+          "estimate": 0.8391,
           "beat": true
         },
         {
