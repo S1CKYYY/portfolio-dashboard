@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-27T14:20:12.680995+00:00",
-  "data_as_of": "2026-10-27",
-  "finnhub_fetched_at": "2026-10-27T14:20:38.413320+00:00",
+  "generated_at": "2026-10-28T15:01:05.912823+00:00",
+  "data_as_of": "2026-10-28",
+  "finnhub_fetched_at": "2026-10-28T15:01:48.211961+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.6966,
       "revenue_estimate": 13712561403,
-      "days_until": 83,
+      "days_until": 82,
       "history": [
         {
           "period": "2026-09-30",
@@ -38,6 +38,78 @@
         }
       ],
       "beat_rate": 0.25
+    },
+    {
+      "ticker": "META",
+      "name": "META",
+      "date": "2027-01-26",
+      "time": "after_market",
+      "eps_estimate": 8.5226,
+      "revenue_estimate": 76052616208,
+      "days_until": 90,
+      "history": [
+        {
+          "period": "2026-09-30",
+          "actual": 7.4,
+          "estimate": 5.7889,
+          "beat": true
+        },
+        {
+          "period": "2026-06-30",
+          "actual": 6.18,
+          "estimate": 7.3594,
+          "beat": false
+        },
+        {
+          "period": "2026-03-31",
+          "actual": 7.31,
+          "estimate": 6.923,
+          "beat": true
+        },
+        {
+          "period": "2025-12-31",
+          "actual": 8.88,
+          "estimate": 8.3992,
+          "beat": true
+        }
+      ],
+      "beat_rate": 0.75
+    },
+    {
+      "ticker": "MSFT",
+      "name": "MSFT",
+      "date": "2027-01-26",
+      "time": "unknown",
+      "eps_estimate": 4.9359,
+      "revenue_estimate": 97505441308,
+      "days_until": 90,
+      "history": [
+        {
+          "period": "2026-06-30",
+          "actual": 4.74,
+          "estimate": 4.3274,
+          "beat": true
+        },
+        {
+          "period": "2026-03-31",
+          "actual": 4.27,
+          "estimate": 4.1432,
+          "beat": true
+        },
+        {
+          "period": "2025-12-31",
+          "actual": 4.14,
+          "estimate": 4.0345,
+          "beat": true
+        },
+        {
+          "period": "2025-09-30",
+          "actual": 4.13,
+          "estimate": 3.7391,
+          "beat": true
+        }
+      ],
+      "beat_rate": 1.0
     }
   ],
   "insider": [
