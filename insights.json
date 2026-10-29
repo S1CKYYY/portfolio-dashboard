@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-28T20:26:18.292350+00:00",
-  "data_as_of": "2026-10-28",
-  "finnhub_fetched_at": "2026-10-28T20:26:54.459790+00:00",
+  "generated_at": "2026-10-29T01:25:09.238897+00:00",
+  "data_as_of": "2026-10-29",
+  "finnhub_fetched_at": "2026-10-29T01:25:35.989035+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.6966,
       "revenue_estimate": 13712561403,
-      "days_until": 82,
+      "days_until": 81,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "after_market",
       "eps_estimate": 8.5226,
       "revenue_estimate": 76052616208,
-      "days_until": 90,
+      "days_until": 89,
       "history": [
         {
           "period": "2026-09-30",
@@ -82,8 +82,14 @@
       "time": "unknown",
       "eps_estimate": 4.9359,
       "revenue_estimate": 97505441308,
-      "days_until": 90,
+      "days_until": 89,
       "history": [
+        {
+          "period": "2026-09-30",
+          "actual": 4.89,
+          "estimate": 4.8165,
+          "beat": true
+        },
         {
           "period": "2026-06-30",
           "actual": 4.74,
@@ -100,12 +106,6 @@
           "period": "2025-12-31",
           "actual": 4.14,
           "estimate": 4.0345,
-          "beat": true
-        },
-        {
-          "period": "2025-09-30",
-          "actual": 4.13,
-          "estimate": 3.7391,
           "beat": true
         }
       ],
@@ -149,7 +149,7 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 168,
+      "sell_count": 167,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
@@ -1989,17 +1989,6 @@
           "value_usd": 0.0,
           "date": "2026-05-04",
           "filing_date": "2026-05-06"
-        },
-        {
-          "ticker": "META",
-          "name": "Alford Peggy",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 2704,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-01",
-          "filing_date": "2026-05-05"
         }
       ]
     },
@@ -2197,6 +2186,39 @@
       "net_value_usd": 0.0,
       "mspr": 100.0,
       "transactions": [
+        {
+          "ticker": "NFLX",
+          "name": "SMITH BRADFORD L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 79690,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-10-26",
+          "filing_date": "2026-10-27"
+        },
+        {
+          "ticker": "NFLX",
+          "name": "SMITH BRADFORD L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 83890,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-10-26",
+          "filing_date": "2026-10-27"
+        },
+        {
+          "ticker": "NFLX",
+          "name": "SMITH BRADFORD L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 85690,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-10-26",
+          "filing_date": "2026-10-27"
+        },
         {
           "ticker": "NFLX",
           "name": "BARTON RICHARD N",
@@ -2416,39 +2438,6 @@
           "value_usd": 0.0,
           "date": "2026-05-05",
           "filing_date": "2026-05-05"
-        },
-        {
-          "ticker": "NFLX",
-          "name": "HASTINGS REED",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 3940,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-01",
-          "filing_date": "2026-05-04"
-        },
-        {
-          "ticker": "NFLX",
-          "name": "HASTINGS REED",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 117274,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-01",
-          "filing_date": "2026-05-04"
-        },
-        {
-          "ticker": "NFLX",
-          "name": "HASTINGS REED",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 223065,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-01",
-          "filing_date": "2026-05-04"
         }
       ]
     },
