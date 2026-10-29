@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-29T01:25:09.238897+00:00",
+  "generated_at": "2026-10-29T15:09:16.933632+00:00",
   "data_as_of": "2026-10-29",
-  "finnhub_fetched_at": "2026-10-29T01:25:35.989035+00:00",
+  "finnhub_fetched_at": "2026-10-29T15:09:48.738265+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -2184,7 +2184,7 @@
       "buy_count": 0,
       "sell_count": 23,
       "net_value_usd": 0.0,
-      "mspr": 100.0,
+      "mspr": -13.609,
       "transactions": [
         {
           "ticker": "NFLX",
