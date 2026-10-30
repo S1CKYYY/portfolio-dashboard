@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-29T20:24:55.141742+00:00",
-  "data_as_of": "2026-10-29",
-  "finnhub_fetched_at": "2026-10-29T20:25:20.803713+00:00",
+  "generated_at": "2026-10-30T01:26:46.912328+00:00",
+  "data_as_of": "2026-10-30",
+  "finnhub_fetched_at": "2026-10-30T01:27:11.669712+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.6966,
       "revenue_estimate": 13712561403,
-      "days_until": 81,
+      "days_until": 80,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "after_market",
       "eps_estimate": 8.5226,
       "revenue_estimate": 76052616208,
-      "days_until": 89,
+      "days_until": 88,
       "history": [
         {
           "period": "2026-09-30",
@@ -82,7 +82,7 @@
       "time": "unknown",
       "eps_estimate": 4.9359,
       "revenue_estimate": 97505441308,
-      "days_until": 89,
+      "days_until": 88,
       "history": [
         {
           "period": "2026-09-30",
@@ -149,10 +149,76 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 167,
+      "sell_count": 173,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
+        {
+          "ticker": "META",
+          "name": "Alford Peggy",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 2450,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-10-26",
+          "filing_date": "2026-10-28"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 75397,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-10-26",
+          "filing_date": "2026-10-28"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 5588,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-10-26",
+          "filing_date": "2026-10-28"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 890,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-10-26",
+          "filing_date": "2026-10-28"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 5588,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-10-26",
+          "filing_date": "2026-10-28"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 5040,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-10-26",
+          "filing_date": "2026-10-28"
+        },
         {
           "ticker": "META",
           "name": "Olivan Javier",
