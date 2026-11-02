@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-31T01:15:38.238041+00:00",
-  "data_as_of": "2026-10-31",
-  "finnhub_fetched_at": "2026-10-31T01:16:02.712200+00:00",
+  "generated_at": "2026-11-02T18:09:47.710976+00:00",
+  "data_as_of": "2026-11-02",
+  "finnhub_fetched_at": "2026-11-02T18:10:20.266610+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.6966,
       "revenue_estimate": 13712561403,
-      "days_until": 79,
+      "days_until": 77,
       "history": [
         {
           "period": "2026-09-30",
@@ -44,14 +44,14 @@
       "name": "META",
       "date": "2027-01-26",
       "time": "after_market",
-      "eps_estimate": 8.5226,
-      "revenue_estimate": 76052616208,
-      "days_until": 87,
+      "eps_estimate": 8.5691,
+      "revenue_estimate": 76707087764,
+      "days_until": 85,
       "history": [
         {
           "period": "2026-09-30",
           "actual": 7.4,
-          "estimate": 5.7889,
+          "estimate": 6.8723,
           "beat": true
         },
         {
@@ -80,14 +80,14 @@
       "name": "MSFT",
       "date": "2027-01-26",
       "time": "unknown",
-      "eps_estimate": 4.9359,
-      "revenue_estimate": 97505441308,
-      "days_until": 87,
+      "eps_estimate": 4.9704,
+      "revenue_estimate": 98542884012,
+      "days_until": 85,
       "history": [
         {
           "period": "2026-09-30",
           "actual": 4.89,
-          "estimate": 4.8165,
+          "estimate": 4.824,
           "beat": true
         },
         {
@@ -149,7 +149,7 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 173,
+      "sell_count": 168,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
@@ -2000,61 +2000,6 @@
           "value_usd": 0.0,
           "date": "2026-05-11",
           "filing_date": "2026-05-13"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 85597,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-04",
-          "filing_date": "2026-05-06"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7638,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-04",
-          "filing_date": "2026-05-06"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 2315,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-04",
-          "filing_date": "2026-05-06"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7638,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-04",
-          "filing_date": "2026-05-06"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7779,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-04",
-          "filing_date": "2026-05-06"
         }
       ]
     },
@@ -2248,9 +2193,9 @@
       "ticker": "NFLX",
       "company_name": "NFLX",
       "buy_count": 0,
-      "sell_count": 23,
+      "sell_count": 19,
       "net_value_usd": 0.0,
-      "mspr": -13.609,
+      "mspr": -15.633,
       "transactions": [
         {
           "ticker": "NFLX",
@@ -2460,50 +2405,6 @@
           "value_usd": 0.0,
           "date": "2026-05-07",
           "filing_date": "2026-05-07"
-        },
-        {
-          "ticker": "NFLX",
-          "name": "SARANDOS THEODORE A",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 284804,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-05",
-          "filing_date": "2026-05-05"
-        },
-        {
-          "ticker": "NFLX",
-          "name": "SARANDOS THEODORE A",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 291843,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-05",
-          "filing_date": "2026-05-05"
-        },
-        {
-          "ticker": "NFLX",
-          "name": "SARANDOS THEODORE A",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 299099,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-05",
-          "filing_date": "2026-05-05"
-        },
-        {
-          "ticker": "NFLX",
-          "name": "HYMAN DAVID A",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 316100,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-05",
-          "filing_date": "2026-05-05"
         }
       ]
     },
