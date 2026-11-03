@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-02T23:10:49.933724+00:00",
-  "data_as_of": "2026-11-02",
-  "finnhub_fetched_at": "2026-11-02T23:11:15.172655+00:00",
+  "generated_at": "2026-11-03T03:11:11.165735+00:00",
+  "data_as_of": "2026-11-03",
+  "finnhub_fetched_at": "2026-11-03T03:11:35.911223+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.6966,
       "revenue_estimate": 13712561403,
-      "days_until": 77,
+      "days_until": 76,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "after_market",
       "eps_estimate": 8.5691,
       "revenue_estimate": 76707087764,
-      "days_until": 85,
+      "days_until": 84,
       "history": [
         {
           "period": "2026-09-30",
@@ -82,7 +82,7 @@
       "time": "unknown",
       "eps_estimate": 4.9704,
       "revenue_estimate": 98542884012,
-      "days_until": 85,
+      "days_until": 84,
       "history": [
         {
           "period": "2026-09-30",
@@ -116,34 +116,11 @@
     {
       "ticker": "BRK-B",
       "company_name": "BRK-B",
-      "buy_count": 2,
+      "buy_count": 0,
       "sell_count": 0,
       "net_value_usd": 0.0,
       "mspr": -0.02,
-      "transactions": [
-        {
-          "ticker": "BRK-B",
-          "name": "O'Sullivan Michael J.",
-          "title": "",
-          "transaction_type": "P",
-          "shares": 663,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-06",
-          "filing_date": "2026-05-06"
-        },
-        {
-          "ticker": "BRK-B",
-          "name": "O'Sullivan Michael J.",
-          "title": "",
-          "transaction_type": "P",
-          "shares": 610,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-06",
-          "filing_date": "2026-05-06"
-        }
-      ]
+      "transactions": []
     },
     {
       "ticker": "META",
