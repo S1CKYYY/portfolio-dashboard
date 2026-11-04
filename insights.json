@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-03T21:10:32.815992+00:00",
-  "data_as_of": "2026-11-03",
-  "finnhub_fetched_at": "2026-11-03T21:11:02.816229+00:00",
+  "generated_at": "2026-11-04T01:46:49.385954+00:00",
+  "data_as_of": "2026-11-04",
+  "finnhub_fetched_at": "2026-11-04T01:47:14.751785+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.6966,
       "revenue_estimate": 13712561403,
-      "days_until": 76,
+      "days_until": 75,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "after_market",
       "eps_estimate": 8.5691,
       "revenue_estimate": 76707087764,
-      "days_until": 84,
+      "days_until": 83,
       "history": [
         {
           "period": "2026-09-30",
@@ -82,7 +82,7 @@
       "time": "unknown",
       "eps_estimate": 4.9704,
       "revenue_estimate": 98542884012,
-      "days_until": 84,
+      "days_until": 83,
       "history": [
         {
           "period": "2026-09-30",
@@ -2170,7 +2170,7 @@
       "ticker": "NFLX",
       "company_name": "NFLX",
       "buy_count": 0,
-      "sell_count": 19,
+      "sell_count": 17,
       "net_value_usd": 0.0,
       "mspr": -15.633,
       "transactions": [
@@ -2360,28 +2360,6 @@
           "value_usd": 0.0,
           "date": "2026-06-01",
           "filing_date": "2026-06-02"
-        },
-        {
-          "ticker": "NFLX",
-          "name": "Peters Gregory K",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 120931,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-07",
-          "filing_date": "2026-05-07"
-        },
-        {
-          "ticker": "NFLX",
-          "name": "Neumann Spencer Adam",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 73787,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-07",
-          "filing_date": "2026-05-07"
         }
       ]
     },
