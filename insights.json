@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-05T21:30:41.075565+00:00",
-  "data_as_of": "2026-11-05",
-  "finnhub_fetched_at": "2026-11-05T21:31:08.999560+00:00",
+  "generated_at": "2026-11-06T01:55:48.657017+00:00",
+  "data_as_of": "2026-11-06",
+  "finnhub_fetched_at": "2026-11-06T01:56:12.966405+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.6966,
       "revenue_estimate": 13712561403,
-      "days_until": 74,
+      "days_until": 73,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "after_market",
       "eps_estimate": 8.5691,
       "revenue_estimate": 76707087764,
-      "days_until": 82,
+      "days_until": 81,
       "history": [
         {
           "period": "2026-09-30",
@@ -82,7 +82,7 @@
       "time": "unknown",
       "eps_estimate": 4.9704,
       "revenue_estimate": 98542884012,
-      "days_until": 82,
+      "days_until": 81,
       "history": [
         {
           "period": "2026-09-30",
@@ -126,10 +126,153 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 168,
+      "sell_count": 181,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 74989,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 5506,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 833,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 5506,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 4094,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Andreessen Marc L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 0,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Andreessen Marc L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 64,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Andreessen Marc L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 1356,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Andreessen Marc L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 3342,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Andreessen Marc L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 7913,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Andreessen Marc L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 12542,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Andreessen Marc L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 14506,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
+        {
+          "ticker": "META",
+          "name": "Andreessen Marc L",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 15378,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-02",
+          "filing_date": "2026-11-04"
+        },
         {
           "ticker": "META",
           "name": "Alford Peggy",
@@ -2170,10 +2313,21 @@
       "ticker": "NFLX",
       "company_name": "NFLX",
       "buy_count": 0,
-      "sell_count": 17,
+      "sell_count": 18,
       "net_value_usd": 0.0,
       "mspr": 100.0,
       "transactions": [
+        {
+          "ticker": "NFLX",
+          "name": "HYMAN DAVID A",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 166100,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-04",
+          "filing_date": "2026-11-04"
+        },
         {
           "ticker": "NFLX",
           "name": "SMITH BRADFORD L",
