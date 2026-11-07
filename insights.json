@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-06T20:58:34.596899+00:00",
-  "data_as_of": "2026-11-06",
-  "finnhub_fetched_at": "2026-11-06T20:59:00.254897+00:00",
+  "generated_at": "2026-11-07T01:27:49.083171+00:00",
+  "data_as_of": "2026-11-07",
+  "finnhub_fetched_at": "2026-11-07T01:28:13.613325+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.6966,
       "revenue_estimate": 13712561403,
-      "days_until": 73,
+      "days_until": 72,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "after_market",
       "eps_estimate": 8.5691,
       "revenue_estimate": 76707087764,
-      "days_until": 81,
+      "days_until": 80,
       "history": [
         {
           "period": "2026-09-30",
@@ -82,7 +82,7 @@
       "time": "unknown",
       "eps_estimate": 4.9704,
       "revenue_estimate": 98542884012,
-      "days_until": 81,
+      "days_until": 80,
       "history": [
         {
           "period": "2026-09-30",
@@ -2313,10 +2313,32 @@
       "ticker": "NFLX",
       "company_name": "NFLX",
       "buy_count": 0,
-      "sell_count": 18,
+      "sell_count": 20,
       "net_value_usd": 0.0,
       "mspr": 100.0,
       "transactions": [
+        {
+          "ticker": "NFLX",
+          "name": "SARANDOS THEODORE A",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 178954,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-04",
+          "filing_date": "2026-11-05"
+        },
+        {
+          "ticker": "NFLX",
+          "name": "Neumann Spencer Adam",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 73787,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-04",
+          "filing_date": "2026-11-05"
+        },
         {
           "ticker": "NFLX",
           "name": "HYMAN DAVID A",
