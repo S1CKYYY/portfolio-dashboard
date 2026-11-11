@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-10T21:22:27.648696+00:00",
-  "data_as_of": "2026-11-10",
-  "finnhub_fetched_at": "2026-11-10T21:22:53.603575+00:00",
+  "generated_at": "2026-11-11T01:36:41.367474+00:00",
+  "data_as_of": "2026-11-11",
+  "finnhub_fetched_at": "2026-11-11T01:37:08.386061+00:00",
   "earnings": [
     {
       "ticker": "NFLX",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.6966,
       "revenue_estimate": 13712561403,
-      "days_until": 69,
+      "days_until": 68,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "after_market",
       "eps_estimate": 8.5691,
       "revenue_estimate": 76707087764,
-      "days_until": 77,
+      "days_until": 76,
       "history": [
         {
           "period": "2026-09-30",
@@ -82,7 +82,7 @@
       "time": "unknown",
       "eps_estimate": 4.9647,
       "revenue_estimate": 98628699009,
-      "days_until": 77,
+      "days_until": 76,
       "history": [
         {
           "period": "2026-09-30",
@@ -2497,7 +2497,7 @@
       "ticker": "MSFT",
       "company_name": "MSFT",
       "buy_count": 0,
-      "sell_count": 23,
+      "sell_count": 22,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
@@ -2742,17 +2742,6 @@
           "value_usd": 0.0,
           "date": "2026-06-01",
           "filing_date": "2026-06-02"
-        },
-        {
-          "ticker": "MSFT",
-          "name": "Coleman Amy",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 46003,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-14",
-          "filing_date": "2026-05-18"
         }
       ]
     }
