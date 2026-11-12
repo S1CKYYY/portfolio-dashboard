@@ -1,44 +1,8 @@
 {
-  "generated_at": "2026-11-11T22:05:49.816563+00:00",
-  "data_as_of": "2026-11-11",
-  "finnhub_fetched_at": "2026-11-11T22:06:16.039690+00:00",
+  "generated_at": "2026-11-12T02:36:30.222911+00:00",
+  "data_as_of": "2026-11-12",
+  "finnhub_fetched_at": "2026-11-12T02:36:55.551418+00:00",
   "earnings": [
-    {
-      "ticker": "NFLX",
-      "name": "NFLX",
-      "date": "2027-01-18",
-      "time": "after_market",
-      "eps_estimate": 0.6966,
-      "revenue_estimate": 13712561403,
-      "days_until": 68,
-      "history": [
-        {
-          "period": "2026-09-30",
-          "actual": 0.87,
-          "estimate": 0.8391,
-          "beat": true
-        },
-        {
-          "period": "2026-06-30",
-          "actual": 0.8,
-          "estimate": 0.803,
-          "beat": false
-        },
-        {
-          "period": "2026-03-31",
-          "actual": 0.7,
-          "estimate": 0.7791,
-          "beat": false
-        },
-        {
-          "period": "2025-12-31",
-          "actual": 0.56,
-          "estimate": 0.5628,
-          "beat": false
-        }
-      ],
-      "beat_rate": 0.25
-    },
     {
       "ticker": "META",
       "name": "META",
@@ -46,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 8.5691,
       "revenue_estimate": 76707087764,
-      "days_until": 76,
+      "days_until": 75,
       "history": [
         {
           "period": "2026-09-30",
@@ -82,7 +46,7 @@
       "time": "unknown",
       "eps_estimate": 4.9647,
       "revenue_estimate": 98628699009,
-      "days_until": 76,
+      "days_until": 75,
       "history": [
         {
           "period": "2026-09-30",
@@ -126,7 +90,7 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 176,
+      "sell_count": 175,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
@@ -2054,17 +2018,6 @@
           "value_usd": 0.0,
           "date": "2026-05-18",
           "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "LI SUSAN J",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 15346,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-15",
-          "filing_date": "2026-05-19"
         }
       ]
     },
@@ -2258,10 +2211,21 @@
       "ticker": "NFLX",
       "company_name": "NFLX",
       "buy_count": 0,
-      "sell_count": 20,
+      "sell_count": 21,
       "net_value_usd": 0.0,
       "mspr": -25.148,
       "transactions": [
+        {
+          "ticker": "NFLX",
+          "name": "Peters Gregory K",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 119412,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-09",
+          "filing_date": "2026-11-10"
+        },
         {
           "ticker": "NFLX",
           "name": "SARANDOS THEODORE A",
@@ -2497,10 +2461,32 @@
       "ticker": "MSFT",
       "company_name": "MSFT",
       "buy_count": 0,
-      "sell_count": 22,
+      "sell_count": 24,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
+        {
+          "ticker": "MSFT",
+          "name": "Hood Amy",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 548091,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-09",
+          "filing_date": "2026-11-10"
+        },
+        {
+          "ticker": "MSFT",
+          "name": "Hood Amy",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 549484,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-09",
+          "filing_date": "2026-11-10"
+        },
         {
           "ticker": "MSFT",
           "name": "Hood Amy",
