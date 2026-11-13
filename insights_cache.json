@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-12T21:53:06.806698+00:00",
-  "data_as_of": "2026-11-12",
-  "finnhub_fetched_at": "2026-11-12T21:53:33.714584+00:00",
+  "generated_at": "2026-11-13T02:17:43.044417+00:00",
+  "data_as_of": "2026-11-13",
+  "finnhub_fetched_at": "2026-11-13T02:18:07.997440+00:00",
   "earnings": [
     {
       "ticker": "META",
@@ -9,8 +9,8 @@
       "date": "2027-01-26",
       "time": "after_market",
       "eps_estimate": 8.5691,
-      "revenue_estimate": 76707087764,
-      "days_until": 75,
+      "revenue_estimate": 76722852813,
+      "days_until": 74,
       "history": [
         {
           "period": "2026-09-30",
@@ -45,8 +45,8 @@
       "date": "2027-01-26",
       "time": "unknown",
       "eps_estimate": 4.9647,
-      "revenue_estimate": 98628699009,
-      "days_until": 75,
+      "revenue_estimate": 98626664160,
+      "days_until": 74,
       "history": [
         {
           "period": "2026-09-30",
