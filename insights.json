@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-13T21:29:20.621159+00:00",
-  "data_as_of": "2026-11-13",
-  "finnhub_fetched_at": "2026-11-13T21:29:46.618559+00:00",
+  "generated_at": "2026-11-14T01:54:48.400921+00:00",
+  "data_as_of": "2026-11-14",
+  "finnhub_fetched_at": "2026-11-14T01:55:14.027443+00:00",
   "earnings": [
     {
       "ticker": "META",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 8.5691,
       "revenue_estimate": 76722852813,
-      "days_until": 74,
+      "days_until": 73,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "unknown",
       "eps_estimate": 4.9647,
       "revenue_estimate": 98626664160,
-      "days_until": 74,
+      "days_until": 73,
       "history": [
         {
           "period": "2026-09-30",
@@ -90,10 +90,65 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 175,
+      "sell_count": 180,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 74581,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-09",
+          "filing_date": "2026-11-12"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 5424,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-09",
+          "filing_date": "2026-11-12"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 776,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-09",
+          "filing_date": "2026-11-12"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 5424,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-09",
+          "filing_date": "2026-11-12"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 3148,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-09",
+          "filing_date": "2026-11-12"
+        },
         {
           "ticker": "META",
           "name": "Olivan Javier",
@@ -2461,10 +2516,21 @@
       "ticker": "MSFT",
       "company_name": "MSFT",
       "buy_count": 0,
-      "sell_count": 24,
+      "sell_count": 25,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
+        {
+          "ticker": "MSFT",
+          "name": "Numoto Takeshi",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 54412,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-10",
+          "filing_date": "2026-11-12"
+        },
         {
           "ticker": "MSFT",
           "name": "Hood Amy",
