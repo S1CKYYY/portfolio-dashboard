@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-14T01:54:48.400921+00:00",
-  "data_as_of": "2026-11-14",
-  "finnhub_fetched_at": "2026-11-14T01:55:14.027443+00:00",
+  "generated_at": "2026-11-16T18:18:43.717738+00:00",
+  "data_as_of": "2026-11-16",
+  "finnhub_fetched_at": "2026-11-16T18:19:18.539462+00:00",
   "earnings": [
     {
       "ticker": "META",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 8.5691,
       "revenue_estimate": 76722852813,
-      "days_until": 73,
+      "days_until": 71,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "unknown",
       "eps_estimate": 4.9647,
       "revenue_estimate": 98626664160,
-      "days_until": 73,
+      "days_until": 71,
       "history": [
         {
           "period": "2026-09-30",
@@ -90,7 +90,7 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 180,
+      "sell_count": 160,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
@@ -1853,226 +1853,6 @@
           "value_usd": 0.0,
           "date": "2026-05-26",
           "filing_date": "2026-05-28"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 84781,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7474,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 2201,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7474,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 14660,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Bosworth Andrew",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 414,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Bosworth Andrew",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 468,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Bosworth Andrew",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 668,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Bosworth Andrew",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 2671,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Bosworth Andrew",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 3682,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Bosworth Andrew",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 5912,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Bosworth Andrew",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7061,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "Bosworth Andrew",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7861,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "LI SUSAN J",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 13186,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "LI SUSAN J",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 13268,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "LI SUSAN J",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 14416,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "LI SUSAN J",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 16760,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "LI SUSAN J",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 18569,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "LI SUSAN J",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 20619,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
-        },
-        {
-          "ticker": "META",
-          "name": "LI SUSAN J",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 21855,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-18",
-          "filing_date": "2026-05-19"
         }
       ]
     },
