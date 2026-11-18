@@ -1,81 +1,8 @@
 {
-  "generated_at": "2026-11-17T23:02:23.641531+00:00",
-  "data_as_of": "2026-11-17",
-  "finnhub_fetched_at": "2026-11-17T23:02:50.153700+00:00",
-  "earnings": [
-    {
-      "ticker": "META",
-      "name": "META",
-      "date": "2027-01-26",
-      "time": "after_market",
-      "eps_estimate": 8.5681,
-      "revenue_estimate": 76722852813,
-      "days_until": 70,
-      "history": [
-        {
-          "period": "2026-09-30",
-          "actual": 7.4,
-          "estimate": 6.8723,
-          "beat": true
-        },
-        {
-          "period": "2026-06-30",
-          "actual": 6.18,
-          "estimate": 7.3594,
-          "beat": false
-        },
-        {
-          "period": "2026-03-31",
-          "actual": 7.31,
-          "estimate": 6.923,
-          "beat": true
-        },
-        {
-          "period": "2025-12-31",
-          "actual": 8.88,
-          "estimate": 8.3992,
-          "beat": true
-        }
-      ],
-      "beat_rate": 0.75
-    },
-    {
-      "ticker": "MSFT",
-      "name": "MSFT",
-      "date": "2027-01-26",
-      "time": "unknown",
-      "eps_estimate": 4.9626,
-      "revenue_estimate": 98626664160,
-      "days_until": 70,
-      "history": [
-        {
-          "period": "2026-09-30",
-          "actual": 4.89,
-          "estimate": 4.824,
-          "beat": true
-        },
-        {
-          "period": "2026-06-30",
-          "actual": 4.74,
-          "estimate": 4.3274,
-          "beat": true
-        },
-        {
-          "period": "2026-03-31",
-          "actual": 4.27,
-          "estimate": 4.1432,
-          "beat": true
-        },
-        {
-          "period": "2025-12-31",
-          "actual": 4.14,
-          "estimate": 4.0345,
-          "beat": true
-        }
-      ],
-      "beat_rate": 1.0
-    }
-  ],
+  "generated_at": "2026-11-18T03:14:54.598786+00:00",
+  "data_as_of": "2026-11-18",
+  "finnhub_fetched_at": "2026-11-18T03:15:26.110313+00:00",
+  "earnings": [],
   "insider": [
     {
       "ticker": "BRK-B",
