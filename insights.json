@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-18T22:39:27.930224+00:00",
-  "data_as_of": "2026-11-18",
-  "finnhub_fetched_at": "2026-11-18T22:39:56.150307+00:00",
+  "generated_at": "2026-11-19T02:53:33.190486+00:00",
+  "data_as_of": "2026-11-19",
+  "finnhub_fetched_at": "2026-11-19T02:54:02.350218+00:00",
   "earnings": [],
   "insider": [
     {
@@ -17,10 +17,76 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 160,
+      "sell_count": 166,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 74173,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-16",
+          "filing_date": "2026-11-17"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 5342,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-16",
+          "filing_date": "2026-11-17"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 719,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-16",
+          "filing_date": "2026-11-17"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 5342,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-16",
+          "filing_date": "2026-11-17"
+        },
+        {
+          "ticker": "META",
+          "name": "Olivan Javier",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 10853,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-16",
+          "filing_date": "2026-11-17"
+        },
+        {
+          "ticker": "META",
+          "name": "LI SUSAN J",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 15346,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-15",
+          "filing_date": "2026-11-17"
+        },
         {
           "ticker": "META",
           "name": "Olivan Javier",
