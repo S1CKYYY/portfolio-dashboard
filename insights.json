@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-20T22:17:23.189993+00:00",
-  "data_as_of": "2026-11-20",
-  "finnhub_fetched_at": "2026-11-20T22:17:47.604998+00:00",
+  "generated_at": "2026-11-21T02:55:34.290890+00:00",
+  "data_as_of": "2026-11-21",
+  "finnhub_fetched_at": "2026-11-21T02:55:58.872905+00:00",
   "earnings": [],
   "insider": [
     {
@@ -17,10 +17,109 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 166,
+      "sell_count": 175,
       "net_value_usd": 0.0,
       "mspr": -49.839,
       "transactions": [
+        {
+          "ticker": "META",
+          "name": "LI SUSAN J",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 13186,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-17",
+          "filing_date": "2026-11-19"
+        },
+        {
+          "ticker": "META",
+          "name": "LI SUSAN J",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 13266,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-17",
+          "filing_date": "2026-11-19"
+        },
+        {
+          "ticker": "META",
+          "name": "LI SUSAN J",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 13546,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-17",
+          "filing_date": "2026-11-19"
+        },
+        {
+          "ticker": "META",
+          "name": "LI SUSAN J",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 14156,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-17",
+          "filing_date": "2026-11-19"
+        },
+        {
+          "ticker": "META",
+          "name": "LI SUSAN J",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 15385,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-17",
+          "filing_date": "2026-11-19"
+        },
+        {
+          "ticker": "META",
+          "name": "LI SUSAN J",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 18654,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-17",
+          "filing_date": "2026-11-19"
+        },
+        {
+          "ticker": "META",
+          "name": "LI SUSAN J",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 21587,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-17",
+          "filing_date": "2026-11-19"
+        },
+        {
+          "ticker": "META",
+          "name": "Mahoney Curtis J.",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 2796,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-17",
+          "filing_date": "2026-11-19"
+        },
+        {
+          "ticker": "META",
+          "name": "Bosworth Andrew",
+          "title": "",
+          "transaction_type": "S",
+          "shares": 1242,
+          "price": 0.0,
+          "value_usd": 0.0,
+          "date": "2026-11-17",
+          "filing_date": "2026-11-19"
+        },
         {
           "ticker": "META",
           "name": "Olivan Javier",
