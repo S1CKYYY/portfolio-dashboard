@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-21T02:55:34.290890+00:00",
-  "data_as_of": "2026-11-21",
-  "finnhub_fetched_at": "2026-11-21T02:55:58.872905+00:00",
+  "generated_at": "2026-11-23T20:02:34.890750+00:00",
+  "data_as_of": "2026-11-23",
+  "finnhub_fetched_at": "2026-11-23T20:03:05.965841+00:00",
   "earnings": [],
   "insider": [
     {
@@ -17,9 +17,9 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 175,
+      "sell_count": 170,
       "net_value_usd": 0.0,
-      "mspr": -49.839,
+      "mspr": -52.51,
       "transactions": [
         {
           "ticker": "META",
@@ -1890,61 +1890,6 @@
           "value_usd": 0.0,
           "date": "2026-05-27",
           "filing_date": "2026-05-29"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 84373,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-26",
-          "filing_date": "2026-05-28"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7392,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-26",
-          "filing_date": "2026-05-28"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 2144,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-26",
-          "filing_date": "2026-05-28"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 7392,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-26",
-          "filing_date": "2026-05-28"
-        },
-        {
-          "ticker": "META",
-          "name": "Olivan Javier",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 13823,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-26",
-          "filing_date": "2026-05-28"
         }
       ]
     },
