@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-23T20:02:34.890750+00:00",
-  "data_as_of": "2026-11-23",
-  "finnhub_fetched_at": "2026-11-23T20:03:05.965841+00:00",
+  "generated_at": "2026-11-24T02:27:09.101583+00:00",
+  "data_as_of": "2026-11-24",
+  "finnhub_fetched_at": "2026-11-24T02:27:36.549284+00:00",
   "earnings": [],
   "insider": [
     {
@@ -17,7 +17,7 @@
       "ticker": "META",
       "company_name": "META",
       "buy_count": 0,
-      "sell_count": 170,
+      "sell_count": 169,
       "net_value_usd": 0.0,
       "mspr": -52.51,
       "transactions": [
@@ -1879,17 +1879,6 @@
           "value_usd": 0.0,
           "date": "2026-06-01",
           "filing_date": "2026-06-03"
-        },
-        {
-          "ticker": "META",
-          "name": "Mahoney Curtis J.",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 1118,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-27",
-          "filing_date": "2026-05-29"
         }
       ]
     },
@@ -1897,7 +1886,7 @@
       "ticker": "VST",
       "company_name": "VST",
       "buy_count": 3,
-      "sell_count": 13,
+      "sell_count": 12,
       "net_value_usd": 0.0,
       "mspr": -100.0,
       "transactions": [
@@ -2065,17 +2054,6 @@
           "value_usd": 0.0,
           "date": "2026-06-02",
           "filing_date": "2026-06-04"
-        },
-        {
-          "ticker": "VST",
-          "name": "Montemayor Margaret",
-          "title": "",
-          "transaction_type": "S",
-          "shares": 14360,
-          "price": 0.0,
-          "value_usd": 0.0,
-          "date": "2026-05-27",
-          "filing_date": "2026-05-29"
         }
       ]
     },
