@@ -1,8 +1,45 @@
 {
-  "generated_at": "2026-11-24T23:59:20.495845+00:00",
-  "data_as_of": "2026-11-24",
-  "finnhub_fetched_at": "2026-11-24T23:59:44.664036+00:00",
-  "earnings": [],
+  "generated_at": "2026-11-25T04:42:10.186837+00:00",
+  "data_as_of": "2026-11-25",
+  "finnhub_fetched_at": "2026-11-25T04:42:35.617173+00:00",
+  "earnings": [
+    {
+      "ticker": "VICI",
+      "name": "VICI",
+      "date": "2027-02-23",
+      "time": "after_market",
+      "eps_estimate": 0.7322,
+      "revenue_estimate": 1091205547,
+      "days_until": 90,
+      "history": [
+        {
+          "period": "2026-09-30",
+          "actual": 0.31,
+          "estimate": 0.7282,
+          "beat": false
+        },
+        {
+          "period": "2026-06-30",
+          "actual": 0.48,
+          "estimate": 0.725,
+          "beat": false
+        },
+        {
+          "period": "2026-03-31",
+          "actual": 0.82,
+          "estimate": 0.7166,
+          "beat": true
+        },
+        {
+          "period": "2025-12-31",
+          "actual": 0.57,
+          "estimate": 0.698,
+          "beat": false
+        }
+      ],
+      "beat_rate": 0.25
+    }
+  ],
   "insider": [
     {
       "ticker": "BRK-B",
