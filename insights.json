@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-26T23:56:00.352067+00:00",
-  "data_as_of": "2026-11-26",
-  "finnhub_fetched_at": "2026-11-26T23:56:25.331985+00:00",
+  "generated_at": "2026-11-27T03:53:06.744077+00:00",
+  "data_as_of": "2026-11-27",
+  "finnhub_fetched_at": "2026-11-27T03:53:32.371987+00:00",
   "earnings": [
     {
       "ticker": "VICI",
@@ -10,7 +10,7 @@
       "time": "after_market",
       "eps_estimate": 0.7322,
       "revenue_estimate": 1091205547,
-      "days_until": 89,
+      "days_until": 88,
       "history": [
         {
           "period": "2026-09-30",
@@ -46,7 +46,7 @@
       "time": "after_market",
       "eps_estimate": 1.9859,
       "revenue_estimate": 5992563451,
-      "days_until": 90,
+      "days_until": 89,
       "history": [
         {
           "period": "2026-09-30",
